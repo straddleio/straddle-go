@@ -237,8 +237,8 @@ func (r CustomerReviewV1DataCustomerDetailsType) IsKnown() bool {
 
 // Compliance profile for individual customers
 type CustomerReviewV1DataCustomerDetailsComplianceProfile struct {
-	// Date of birth in YYYY-MM-DD format.
-	Dob time.Time `json:"dob,nullable" format:"date"`
+	// This field can have the runtime type of [time.Time], [string].
+	Dob interface{} `json:"dob"`
 	// Full 9-digit Employer Identification Number for businesses. This data is
 	// required to trigger Patriot Act compliant Know Your Business (KYB) verification.
 	// Only valid where customer type is 'business'.

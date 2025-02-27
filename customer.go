@@ -560,8 +560,8 @@ func (r CustomerUnmaskedV1DataType) IsKnown() bool {
 
 // Compliance profile for individual customers
 type CustomerUnmaskedV1DataComplianceProfile struct {
-	// Date of birth in YYYY-MM-DD format.
-	Dob time.Time `json:"dob,nullable" format:"date"`
+	// This field can have the runtime type of [time.Time], [string].
+	Dob interface{} `json:"dob"`
 	// Full 9-digit Employer Identification Number for businesses. This data is
 	// required to trigger Patriot Act compliant KYB verification. Only valid where
 	// customer type is 'business'.
@@ -868,8 +868,8 @@ func (r CustomerV1DataType) IsKnown() bool {
 
 // Compliance profile for individual customers
 type CustomerV1DataComplianceProfile struct {
-	// Date of birth in YYYY-MM-DD format.
-	Dob time.Time `json:"dob,nullable" format:"date"`
+	// This field can have the runtime type of [time.Time], [string].
+	Dob interface{} `json:"dob"`
 	// Full 9-digit Employer Identification Number for businesses. This data is
 	// required to trigger Patriot Act compliant Know Your Business (KYB) verification.
 	// Only valid where customer type is 'business'.
@@ -1160,8 +1160,7 @@ func (r CustomerNewParamsType) IsKnown() bool {
 // An object containing the customer's compliance profile. This is optional, but if
 // provided, all required fields must be present for the appropriate customer type.
 type CustomerNewParamsComplianceProfile struct {
-	// Date of birth in YYYY-MM-DD format.
-	Dob param.Field[time.Time] `json:"dob" format:"date"`
+	Dob param.Field[interface{}] `json:"dob"`
 	// Full 9-digit Employer Identification Number for businesses. This data is
 	// required to trigger Patriot Act compliant KYB verification. Only valid where
 	// customer type is 'business'.
@@ -1290,8 +1289,7 @@ func (r CustomerUpdateParamsStatus) IsKnown() bool {
 
 // Compliance profile for individual customers
 type CustomerUpdateParamsComplianceProfile struct {
-	// Date of birth in YYYY-MM-DD format.
-	Dob param.Field[time.Time] `json:"dob" format:"date"`
+	Dob param.Field[interface{}] `json:"dob"`
 	// Full 9-digit Employer Identification Number for businesses. This data is
 	// required to trigger Patriot Act compliant KYB verification. Only valid where
 	// customer type is 'business'.
