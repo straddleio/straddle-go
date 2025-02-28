@@ -49,7 +49,7 @@ func TestEmbedAccountNewWithOptionalParams(t *testing.T) {
 			LegalName: straddle.F("legal_name"),
 			Phone:     straddle.F("+46991022"),
 			SupportChannels: straddle.F(straddle.SupportChannelsV1Param{
-				Email: straddle.F("dev@stainlessapi.com"),
+				Email: straddle.F("dev@stainless.com"),
 				Phone: straddle.F("+46991022"),
 				URL:   straddle.F("https://example.com"),
 			}),
@@ -109,7 +109,7 @@ func TestEmbedAccountUpdateWithOptionalParams(t *testing.T) {
 				LegalName: straddle.F("legal_name"),
 				Phone:     straddle.F("+46991022"),
 				SupportChannels: straddle.F(straddle.SupportChannelsV1Param{
-					Email: straddle.F("dev@stainlessapi.com"),
+					Email: straddle.F("dev@stainless.com"),
 					Phone: straddle.F("+46991022"),
 					URL:   straddle.F("https://example.com"),
 				}),

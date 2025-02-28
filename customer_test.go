@@ -84,7 +84,7 @@ func TestCustomerUpdateWithOptionalParams(t *testing.T) {
 			Device: straddle.F(straddle.DeviceUnmaskedV1Param{
 				IPAddress: straddle.F("192.168.1.1"),
 			}),
-			Email:  straddle.F("dev@stainlessapi.com"),
+			Email:  straddle.F("dev@stainless.com"),
 			Name:   straddle.F("name"),
 			Phone:  straddle.F("+46991022"),
 			Status: straddle.F(straddle.CustomerUpdateParamsStatusPending),
