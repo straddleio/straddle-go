@@ -69,7 +69,7 @@ func (r pageNumberSchemaJSON) RawJSON() string {
 // will not return an error
 func (r *PageNumberSchema[T]) GetNextPage() (res *PageNumberSchema[T], err error) {
 	u := r.cfg.Request.URL
-	currentPage, err := strconv.Atoi(u.Query().Get("page_number"))
+	currentPage, err := strconv.ParseInt(u.Query().Get("page_number"), 10, 64)
 	if err != nil {
 		currentPage = 1
 	}
