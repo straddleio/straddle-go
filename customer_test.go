@@ -12,6 +12,7 @@ import (
 	"github.com/stainless-sdks/straddle-go"
 	"github.com/stainless-sdks/straddle-go/internal/testutil"
 	"github.com/stainless-sdks/straddle-go/option"
+	"github.com/stainless-sdks/straddle-go/shared"
 )
 
 func TestCustomerNewWithOptionalParams(t *testing.T) {
@@ -27,21 +28,21 @@ func TestCustomerNewWithOptionalParams(t *testing.T) {
 		option.WithAPIKey("My API Key"),
 	)
 	_, err := client.Customers.New(context.TODO(), straddle.CustomerNewParams{
-		Device: straddle.F(straddle.DeviceUnmaskedV1Param{
+		Device: straddle.F(shared.DeviceUnmaskedV1Param{
 			IPAddress: straddle.F("192.168.1.1"),
 		}),
 		Email: straddle.F("ron.swanson@pawnee.com"),
 		Name:  straddle.F("Ron Swanson"),
 		Phone: straddle.F("+12128675309"),
-		Type:  straddle.F(straddle.CustomerNewParamsTypeIndividual),
-		Address: straddle.F(straddle.CustomerAddressV1Param{
+		Type:  straddle.F(shared.CustomerTypeV1Individual),
+		Address: straddle.F(shared.AddressV11Param{
 			Address1: straddle.F("123 Main St"),
 			City:     straddle.F("Anytown"),
 			State:    straddle.F("CA"),
 			Zip:      straddle.F("94105"),
 			Address2: straddle.Null[string](),
 		}),
-		ComplianceProfile: straddle.F[straddle.CustomerNewParamsComplianceProfileUnion](straddle.CustomerNewParamsComplianceProfileIndividualComplianceProfile{
+		ComplianceProfile: straddle.F[shared.ComplianceProfileUnmaskedV1UnionParam](shared.ComplianceProfileUnmaskedV1IndividualComplianceProfileParam{
 			Dob:               straddle.F(time.Now()),
 			Ssn:               straddle.F("210-69-1329"),
 			Ein:               straddle.F("ein"),
@@ -81,21 +82,21 @@ func TestCustomerUpdateWithOptionalParams(t *testing.T) {
 		context.TODO(),
 		"182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e",
 		straddle.CustomerUpdateParams{
-			Device: straddle.F(straddle.DeviceUnmaskedV1Param{
+			Device: straddle.F(shared.DeviceUnmaskedV1Param{
 				IPAddress: straddle.F("192.168.1.1"),
 			}),
 			Email:  straddle.F("dev@stainless.com"),
 			Name:   straddle.F("name"),
 			Phone:  straddle.F("+46991022"),
 			Status: straddle.F(straddle.CustomerUpdateParamsStatusPending),
-			Address: straddle.F(straddle.CustomerAddressV1Param{
+			Address: straddle.F(shared.AddressV11Param{
 				Address1: straddle.F("123 Main St"),
 				City:     straddle.F("Anytown"),
 				State:    straddle.F("CA"),
 				Zip:      straddle.F("94105"),
 				Address2: straddle.Null[string](),
 			}),
-			ComplianceProfile: straddle.F[straddle.CustomerUpdateParamsComplianceProfileUnion](straddle.CustomerUpdateParamsComplianceProfileIndividualComplianceProfile{
+			ComplianceProfile: straddle.F[shared.ComplianceProfileUnmaskedV1UnionParam](shared.ComplianceProfileUnmaskedV1IndividualComplianceProfileParam{
 				Dob:               straddle.F(time.Now()),
 				Ssn:               straddle.F("210-69-1329"),
 				Ein:               straddle.F("ein"),
@@ -142,9 +143,9 @@ func TestCustomerListWithOptionalParams(t *testing.T) {
 		PageSize:          straddle.F(int64(0)),
 		SearchText:        straddle.F("search_text"),
 		SortBy:            straddle.F(straddle.CustomerListParamsSortByName),
-		SortOrder:         straddle.F(straddle.CustomerListParamsSortOrderAsc),
-		Status:            straddle.F([]straddle.CustomerListParamsStatus{straddle.CustomerListParamsStatusPending}),
-		Types:             straddle.F([]straddle.CustomerListParamsType{straddle.CustomerListParamsTypeIndividual}),
+		SortOrder:         straddle.F(shared.SortOrderAsc),
+		Status:            straddle.F([]shared.CustomerStatusV1{shared.CustomerStatusV1Pending}),
+		Types:             straddle.F([]shared.CustomerTypeV1{shared.CustomerTypeV1Individual}),
 		CorrelationID:     straddle.F("Correlation-Id"),
 		RequestID:         straddle.F("Request-Id"),
 		StraddleAccountID: straddle.F("182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e"),

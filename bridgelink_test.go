@@ -11,6 +11,7 @@ import (
 	"github.com/stainless-sdks/straddle-go"
 	"github.com/stainless-sdks/straddle-go/internal/testutil"
 	"github.com/stainless-sdks/straddle-go/option"
+	"github.com/stainless-sdks/straddle-go/shared"
 )
 
 func TestBridgeLinkBankAccountWithOptionalParams(t *testing.T) {
@@ -27,7 +28,7 @@ func TestBridgeLinkBankAccountWithOptionalParams(t *testing.T) {
 	)
 	_, err := client.Bridge.Link.BankAccount(context.TODO(), straddle.BridgeLinkBankAccountParams{
 		AccountNumber: straddle.F("account_number"),
-		AccountType:   straddle.F(straddle.BridgeLinkBankAccountParamsAccountTypeChecking),
+		AccountType:   straddle.F(shared.AccountTypeV1Checking),
 		CustomerID:    straddle.F("182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e"),
 		RoutingNumber: straddle.F("xxxxxxxxx"),
 		Metadata: straddle.F(map[string]string{

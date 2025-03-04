@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
-	"time"
 
 	"github.com/stainless-sdks/straddle-go/internal/apijson"
 	"github.com/stainless-sdks/straddle-go/internal/apiquery"
@@ -41,7 +40,7 @@ func NewEmbedOrganizationService(opts ...option.RequestOption) (r *EmbedOrganiza
 // Creates a new organization related to your Straddle integration. Organizations
 // can be used to group related accounts and manage permissions across multiple
 // users.
-func (r *EmbedOrganizationService) New(ctx context.Context, params EmbedOrganizationNewParams, opts ...option.RequestOption) (res *OrganizationV1, err error) {
+func (r *EmbedOrganizationService) New(ctx context.Context, params EmbedOrganizationNewParams, opts ...option.RequestOption) (res *shared.ItemResponseOfOrganizationV1, err error) {
 	if params.CorrelationID.Present {
 		opts = append(opts, option.WithHeader("correlation-id", fmt.Sprintf("%s", params.CorrelationID)))
 	}
@@ -58,7 +57,7 @@ func (r *EmbedOrganizationService) New(ctx context.Context, params EmbedOrganiza
 // organizations are returned sorted by creation date, with the most recently
 // created organizations appearing first. This endpoint supports advanced sorting
 // and filtering options to help you find specific organizations.
-func (r *EmbedOrganizationService) List(ctx context.Context, params EmbedOrganizationListParams, opts ...option.RequestOption) (res *pagination.PageNumberSchema[OrganizationPagedV1Data], err error) {
+func (r *EmbedOrganizationService) List(ctx context.Context, params EmbedOrganizationListParams, opts ...option.RequestOption) (res *pagination.PageNumberSchema[shared.OrganizationV1], err error) {
 	var raw *http.Response
 	if params.CorrelationID.Present {
 		opts = append(opts, option.WithHeader("correlation-id", fmt.Sprintf("%s", params.CorrelationID)))
@@ -85,14 +84,14 @@ func (r *EmbedOrganizationService) List(ctx context.Context, params EmbedOrganiz
 // organizations are returned sorted by creation date, with the most recently
 // created organizations appearing first. This endpoint supports advanced sorting
 // and filtering options to help you find specific organizations.
-func (r *EmbedOrganizationService) ListAutoPaging(ctx context.Context, params EmbedOrganizationListParams, opts ...option.RequestOption) *pagination.PageNumberSchemaAutoPager[OrganizationPagedV1Data] {
+func (r *EmbedOrganizationService) ListAutoPaging(ctx context.Context, params EmbedOrganizationListParams, opts ...option.RequestOption) *pagination.PageNumberSchemaAutoPager[shared.OrganizationV1] {
 	return pagination.NewPageNumberSchemaAutoPager(r.List(ctx, params, opts...))
 }
 
 // Retrieves the details of an Organization that has previously been created.
 // Supply the unique organization ID that was returned from your previous request,
 // and Straddle will return the corresponding organization information.
-func (r *EmbedOrganizationService) Get(ctx context.Context, organizationID string, query EmbedOrganizationGetParams, opts ...option.RequestOption) (res *OrganizationV1, err error) {
+func (r *EmbedOrganizationService) Get(ctx context.Context, organizationID string, query EmbedOrganizationGetParams, opts ...option.RequestOption) (res *shared.ItemResponseOfOrganizationV1, err error) {
 	if query.CorrelationID.Present {
 		opts = append(opts, option.WithHeader("correlation-id", fmt.Sprintf("%s", query.CorrelationID)))
 	}
@@ -110,7 +109,7 @@ func (r *EmbedOrganizationService) Get(ctx context.Context, organizationID strin
 }
 
 type OrganizationPagedV1 struct {
-	Data []OrganizationPagedV1Data `json:"data,required"`
+	Data []shared.OrganizationV1 `json:"data,required"`
 	// Metadata about the API request, including an identifier, timestamp, and
 	// pagination details.
 	Meta shared.PagedResponseMetadata `json:"meta,required"`
@@ -143,45 +142,6 @@ func (r organizationPagedV1JSON) RawJSON() string {
 	return r.raw
 }
 
-type OrganizationPagedV1Data struct {
-	// Straddle's unique identifier for the organization.
-	ID string `json:"id,required" format:"uuid"`
-	// Timestamp of when the organization was created.
-	CreatedAt time.Time `json:"created_at,required" format:"date-time"`
-	// The name of the organization.
-	Name string `json:"name,required"`
-	// Timestamp of the most recent update to the organization.
-	UpdatedAt time.Time `json:"updated_at,required" format:"date-time"`
-	// Unique identifier for the organization in your database, used for
-	// cross-referencing between Straddle and your systems.
-	ExternalID string `json:"external_id,nullable"`
-	// Up to 20 additional user-defined key-value pairs. Useful for storing additional
-	// information about the organization in a structured format.
-	Metadata map[string]string           `json:"metadata,nullable"`
-	JSON     organizationPagedV1DataJSON `json:"-"`
-}
-
-// organizationPagedV1DataJSON contains the JSON metadata for the struct
-// [OrganizationPagedV1Data]
-type organizationPagedV1DataJSON struct {
-	ID          apijson.Field
-	CreatedAt   apijson.Field
-	Name        apijson.Field
-	UpdatedAt   apijson.Field
-	ExternalID  apijson.Field
-	Metadata    apijson.Field
-	raw         string
-	ExtraFields map[string]apijson.Field
-}
-
-func (r *OrganizationPagedV1Data) UnmarshalJSON(data []byte) (err error) {
-	return apijson.UnmarshalRoot(data, r)
-}
-
-func (r organizationPagedV1DataJSON) RawJSON() string {
-	return r.raw
-}
-
 // Indicates the structure of the returned content.
 //
 //   - "object" means the `data` field contains a single JSON object.
@@ -201,101 +161,6 @@ const (
 func (r OrganizationPagedV1ResponseType) IsKnown() bool {
 	switch r {
 	case OrganizationPagedV1ResponseTypeObject, OrganizationPagedV1ResponseTypeArray, OrganizationPagedV1ResponseTypeError, OrganizationPagedV1ResponseTypeNone:
-		return true
-	}
-	return false
-}
-
-type OrganizationV1 struct {
-	Data OrganizationV1Data `json:"data,required"`
-	// Metadata about the API request, including an identifier and timestamp.
-	Meta shared.ResponseMetadata `json:"meta,required"`
-	// Indicates the structure of the returned content.
-	//
-	//   - "object" means the `data` field contains a single JSON object.
-	//   - "array" means the `data` field contains an array of objects.
-	//   - "error" means the `data` field contains an error object with details of the
-	//     issue.
-	//   - "none" means no data is returned.
-	ResponseType OrganizationV1ResponseType `json:"response_type,required"`
-	JSON         organizationV1JSON         `json:"-"`
-}
-
-// organizationV1JSON contains the JSON metadata for the struct [OrganizationV1]
-type organizationV1JSON struct {
-	Data         apijson.Field
-	Meta         apijson.Field
-	ResponseType apijson.Field
-	raw          string
-	ExtraFields  map[string]apijson.Field
-}
-
-func (r *OrganizationV1) UnmarshalJSON(data []byte) (err error) {
-	return apijson.UnmarshalRoot(data, r)
-}
-
-func (r organizationV1JSON) RawJSON() string {
-	return r.raw
-}
-
-type OrganizationV1Data struct {
-	// Straddle's unique identifier for the organization.
-	ID string `json:"id,required" format:"uuid"`
-	// Timestamp of when the organization was created.
-	CreatedAt time.Time `json:"created_at,required" format:"date-time"`
-	// The name of the organization.
-	Name string `json:"name,required"`
-	// Timestamp of the most recent update to the organization.
-	UpdatedAt time.Time `json:"updated_at,required" format:"date-time"`
-	// Unique identifier for the organization in your database, used for
-	// cross-referencing between Straddle and your systems.
-	ExternalID string `json:"external_id,nullable"`
-	// Up to 20 additional user-defined key-value pairs. Useful for storing additional
-	// information about the organization in a structured format.
-	Metadata map[string]string      `json:"metadata,nullable"`
-	JSON     organizationV1DataJSON `json:"-"`
-}
-
-// organizationV1DataJSON contains the JSON metadata for the struct
-// [OrganizationV1Data]
-type organizationV1DataJSON struct {
-	ID          apijson.Field
-	CreatedAt   apijson.Field
-	Name        apijson.Field
-	UpdatedAt   apijson.Field
-	ExternalID  apijson.Field
-	Metadata    apijson.Field
-	raw         string
-	ExtraFields map[string]apijson.Field
-}
-
-func (r *OrganizationV1Data) UnmarshalJSON(data []byte) (err error) {
-	return apijson.UnmarshalRoot(data, r)
-}
-
-func (r organizationV1DataJSON) RawJSON() string {
-	return r.raw
-}
-
-// Indicates the structure of the returned content.
-//
-//   - "object" means the `data` field contains a single JSON object.
-//   - "array" means the `data` field contains an array of objects.
-//   - "error" means the `data` field contains an error object with details of the
-//     issue.
-//   - "none" means no data is returned.
-type OrganizationV1ResponseType string
-
-const (
-	OrganizationV1ResponseTypeObject OrganizationV1ResponseType = "object"
-	OrganizationV1ResponseTypeArray  OrganizationV1ResponseType = "array"
-	OrganizationV1ResponseTypeError  OrganizationV1ResponseType = "error"
-	OrganizationV1ResponseTypeNone   OrganizationV1ResponseType = "none"
-)
-
-func (r OrganizationV1ResponseType) IsKnown() bool {
-	switch r {
-	case OrganizationV1ResponseTypeObject, OrganizationV1ResponseTypeArray, OrganizationV1ResponseTypeError, OrganizationV1ResponseTypeNone:
 		return true
 	}
 	return false

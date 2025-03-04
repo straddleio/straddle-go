@@ -47,12 +47,12 @@ func main() {
 		option.WithAPIKey("My API Key"), // defaults to os.LookupEnv("STRADDLE_API_KEY")
 		option.WithEnvironmentSandbox(), // defaults to option.WithEnvironmentProduction()
 	)
-	chargeV1, err := client.Charges.New(context.TODO(), straddle.ChargeNewParams{
+	chargeV1ItemResponse, err := client.Charges.New(context.TODO(), straddle.ChargeNewParams{
 		Amount: straddle.F(int64(0)),
-		Config: straddle.F(straddle.ChargeNewParamsConfig{
-			BalanceCheck: straddle.F(straddle.ChargeNewParamsConfigBalanceCheckRequired),
+		Config: straddle.F(shared.ChargeConfigurationV1Param{
+			BalanceCheck: straddle.F(shared.ChargeConfigurationV1BalanceCheckRequired),
 		}),
-		ConsentType: straddle.F(straddle.ChargeNewParamsConsentTypeInternet),
+		ConsentType: straddle.F(shared.ConsentTypeV1Internet),
 		Currency:    straddle.F("currency"),
 		Description: straddle.F("Monthly subscription fee"),
 		Device: straddle.F(shared.DeviceInfoV1Param{
@@ -65,7 +65,7 @@ func main() {
 	if err != nil {
 		panic(err.Error())
 	}
-	fmt.Printf("%+v\n", chargeV1.Data)
+	fmt.Printf("%+v\n", chargeV1ItemResponse.Data)
 }
 
 ```
@@ -210,10 +210,10 @@ To handle errors, we recommend that you use the `errors.As` pattern:
 ```go
 _, err := client.Charges.New(context.TODO(), straddle.ChargeNewParams{
 	Amount: straddle.F(int64(0)),
-	Config: straddle.F(straddle.ChargeNewParamsConfig{
-		BalanceCheck: straddle.F(straddle.ChargeNewParamsConfigBalanceCheckRequired),
+	Config: straddle.F(shared.ChargeConfigurationV1Param{
+		BalanceCheck: straddle.F(shared.ChargeConfigurationV1BalanceCheckRequired),
 	}),
-	ConsentType: straddle.F(straddle.ChargeNewParamsConsentTypeInternet),
+	ConsentType: straddle.F(shared.ConsentTypeV1Internet),
 	Currency:    straddle.F("currency"),
 	Description: straddle.F("Monthly subscription fee"),
 	Device: straddle.F(shared.DeviceInfoV1Param{
@@ -251,10 +251,10 @@ client.Charges.New(
 	ctx,
 	straddle.ChargeNewParams{
 		Amount: straddle.F(int64(0)),
-		Config: straddle.F(straddle.ChargeNewParamsConfig{
-			BalanceCheck: straddle.F(straddle.ChargeNewParamsConfigBalanceCheckRequired),
+		Config: straddle.F(shared.ChargeConfigurationV1Param{
+			BalanceCheck: straddle.F(shared.ChargeConfigurationV1BalanceCheckRequired),
 		}),
-		ConsentType: straddle.F(straddle.ChargeNewParamsConsentTypeInternet),
+		ConsentType: straddle.F(shared.ConsentTypeV1Internet),
 		Currency:    straddle.F("currency"),
 		Description: straddle.F("Monthly subscription fee"),
 		Device: straddle.F(shared.DeviceInfoV1Param{
@@ -301,10 +301,10 @@ client.Charges.New(
 	context.TODO(),
 	straddle.ChargeNewParams{
 		Amount: straddle.F(int64(0)),
-		Config: straddle.F(straddle.ChargeNewParamsConfig{
-			BalanceCheck: straddle.F(straddle.ChargeNewParamsConfigBalanceCheckRequired),
+		Config: straddle.F(shared.ChargeConfigurationV1Param{
+			BalanceCheck: straddle.F(shared.ChargeConfigurationV1BalanceCheckRequired),
 		}),
-		ConsentType: straddle.F(straddle.ChargeNewParamsConsentTypeInternet),
+		ConsentType: straddle.F(shared.ConsentTypeV1Internet),
 		Currency:    straddle.F("currency"),
 		Description: straddle.F("Monthly subscription fee"),
 		Device: straddle.F(shared.DeviceInfoV1Param{
@@ -326,14 +326,14 @@ you need to examine response headers, status codes, or other details.
 ```go
 // Create a variable to store the HTTP response
 var response *http.Response
-chargeV1, err := client.Charges.New(
+chargeV1ItemResponse, err := client.Charges.New(
 	context.TODO(),
 	straddle.ChargeNewParams{
 		Amount: straddle.F(int64(0)),
-		Config: straddle.F(straddle.ChargeNewParamsConfig{
-			BalanceCheck: straddle.F(straddle.ChargeNewParamsConfigBalanceCheckRequired),
+		Config: straddle.F(shared.ChargeConfigurationV1Param{
+			BalanceCheck: straddle.F(shared.ChargeConfigurationV1BalanceCheckRequired),
 		}),
-		ConsentType: straddle.F(straddle.ChargeNewParamsConsentTypeInternet),
+		ConsentType: straddle.F(shared.ConsentTypeV1Internet),
 		Currency:    straddle.F("currency"),
 		Description: straddle.F("Monthly subscription fee"),
 		Device: straddle.F(shared.DeviceInfoV1Param{
@@ -348,7 +348,7 @@ chargeV1, err := client.Charges.New(
 if err != nil {
 	// handle error
 }
-fmt.Printf("%+v\n", chargeV1)
+fmt.Printf("%+v\n", chargeV1ItemResponse)
 
 fmt.Printf("Status Code: %d\n", response.StatusCode)
 fmt.Printf("Headers: %+#v\n", response.Header)
