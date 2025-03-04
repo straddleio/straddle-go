@@ -12,6 +12,7 @@ import (
 	"github.com/stainless-sdks/straddle-go"
 	"github.com/stainless-sdks/straddle-go/internal/testutil"
 	"github.com/stainless-sdks/straddle-go/option"
+	"github.com/stainless-sdks/straddle-go/shared"
 )
 
 func TestEmbedRepresentativeNewWithOptionalParams(t *testing.T) {
@@ -33,7 +34,7 @@ func TestEmbedRepresentativeNewWithOptionalParams(t *testing.T) {
 		FirstName:    straddle.F("first_name"),
 		LastName:     straddle.F("last_name"),
 		MobileNumber: straddle.F("+12128675309"),
-		Relationship: straddle.F(straddle.EmbedRepresentativeNewParamsRelationship{
+		Relationship: straddle.F(shared.RelationshipV1Param{
 			Control:          straddle.F(true),
 			Owner:            straddle.F(true),
 			Primary:          straddle.F(true),
@@ -75,7 +76,7 @@ func TestEmbedRepresentativeUpdateWithOptionalParams(t *testing.T) {
 			FirstName:    straddle.F("Ron"),
 			LastName:     straddle.F("Swanson"),
 			MobileNumber: straddle.F("+12128675309"),
-			Relationship: straddle.F(straddle.EmbedRepresentativeUpdateParamsRelationship{
+			Relationship: straddle.F(shared.RelationshipV1Param{
 				Control:          straddle.F(true),
 				Owner:            straddle.F(true),
 				Primary:          straddle.F(true),

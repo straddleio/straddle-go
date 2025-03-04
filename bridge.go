@@ -63,8 +63,8 @@ type BridgeTokenV1 struct {
 	//   - "error" means the `data` field contains an error object with details of the
 	//     issue.
 	//   - "none" means no data is returned.
-	ResponseType BridgeTokenV1ResponseType `json:"response_type,required"`
-	JSON         bridgeTokenV1JSON         `json:"-"`
+	ResponseType shared.ResponseTypeEnum `json:"response_type,required"`
+	JSON         bridgeTokenV1JSON       `json:"-"`
 }
 
 // bridgeTokenV1JSON contains the JSON metadata for the struct [BridgeTokenV1]
@@ -104,30 +104,6 @@ func (r *BridgeTokenV1Data) UnmarshalJSON(data []byte) (err error) {
 
 func (r bridgeTokenV1DataJSON) RawJSON() string {
 	return r.raw
-}
-
-// Indicates the structure of the returned content.
-//
-//   - "object" means the `data` field contains a single JSON object.
-//   - "array" means the `data` field contains an array of objects.
-//   - "error" means the `data` field contains an error object with details of the
-//     issue.
-//   - "none" means no data is returned.
-type BridgeTokenV1ResponseType string
-
-const (
-	BridgeTokenV1ResponseTypeObject BridgeTokenV1ResponseType = "object"
-	BridgeTokenV1ResponseTypeArray  BridgeTokenV1ResponseType = "array"
-	BridgeTokenV1ResponseTypeError  BridgeTokenV1ResponseType = "error"
-	BridgeTokenV1ResponseTypeNone   BridgeTokenV1ResponseType = "none"
-)
-
-func (r BridgeTokenV1ResponseType) IsKnown() bool {
-	switch r {
-	case BridgeTokenV1ResponseTypeObject, BridgeTokenV1ResponseTypeArray, BridgeTokenV1ResponseTypeError, BridgeTokenV1ResponseTypeNone:
-		return true
-	}
-	return false
 }
 
 type BridgeInitializeParams struct {

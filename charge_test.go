@@ -29,10 +29,10 @@ func TestChargeNewWithOptionalParams(t *testing.T) {
 	)
 	_, err := client.Charges.New(context.TODO(), straddle.ChargeNewParams{
 		Amount: straddle.F(int64(0)),
-		Config: straddle.F(straddle.ChargeNewParamsConfig{
-			BalanceCheck: straddle.F(straddle.ChargeNewParamsConfigBalanceCheckRequired),
+		Config: straddle.F(shared.ChargeConfigurationV1Param{
+			BalanceCheck: straddle.F(shared.ChargeConfigurationV1BalanceCheckRequired),
 		}),
-		ConsentType: straddle.F(straddle.ChargeNewParamsConsentTypeInternet),
+		ConsentType: straddle.F(shared.ConsentTypeV1Internet),
 		Currency:    straddle.F("currency"),
 		Description: straddle.F("Monthly subscription fee"),
 		Device: straddle.F(shared.DeviceInfoV1Param{
@@ -109,7 +109,9 @@ func TestChargeCancelWithOptionalParams(t *testing.T) {
 		context.TODO(),
 		"182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e",
 		straddle.ChargeCancelParams{
-			Reason:            straddle.F("reason"),
+			UpdateChargeStatusV1Request: shared.UpdateChargeStatusV1RequestParam{
+				Reason: straddle.F("reason"),
+			},
 			CorrelationID:     straddle.F("Correlation-Id"),
 			RequestID:         straddle.F("Request-Id"),
 			StraddleAccountID: straddle.F("182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e"),
@@ -170,7 +172,9 @@ func TestChargeHoldWithOptionalParams(t *testing.T) {
 		context.TODO(),
 		"182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e",
 		straddle.ChargeHoldParams{
-			Reason:            straddle.F("reason"),
+			UpdateChargeStatusV1Request: shared.UpdateChargeStatusV1RequestParam{
+				Reason: straddle.F("reason"),
+			},
 			CorrelationID:     straddle.F("Correlation-Id"),
 			RequestID:         straddle.F("Request-Id"),
 			StraddleAccountID: straddle.F("182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e"),
@@ -201,7 +205,9 @@ func TestChargeReleaseWithOptionalParams(t *testing.T) {
 		context.TODO(),
 		"182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e",
 		straddle.ChargeReleaseParams{
-			Reason:            straddle.F("reason"),
+			UpdateChargeStatusV1Request: shared.UpdateChargeStatusV1RequestParam{
+				Reason: straddle.F("reason"),
+			},
 			CorrelationID:     straddle.F("Correlation-Id"),
 			RequestID:         straddle.F("Request-Id"),
 			StraddleAccountID: straddle.F("182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e"),

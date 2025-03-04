@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"reflect"
 	"time"
 
 	"github.com/stainless-sdks/straddle-go/internal/apijson"
@@ -15,7 +14,6 @@ import (
 	"github.com/stainless-sdks/straddle-go/internal/requestconfig"
 	"github.com/stainless-sdks/straddle-go/option"
 	"github.com/stainless-sdks/straddle-go/shared"
-	"github.com/tidwall/gjson"
 )
 
 // CustomerReviewService contains methods and other services that help with
@@ -41,7 +39,7 @@ func NewCustomerReviewService(opts ...option.RequestOption) (r *CustomerReviewSe
 // to modify the outcome of a customer risk screening and is useful for correcting
 // or updating the status of a customer's verification. Note that this endpoint is
 // only available for customers with a current status of `review`.
-func (r *CustomerReviewService) Decision(ctx context.Context, id string, params CustomerReviewDecisionParams, opts ...option.RequestOption) (res *CustomerV1, err error) {
+func (r *CustomerReviewService) Decision(ctx context.Context, id string, params CustomerReviewDecisionParams, opts ...option.RequestOption) (res *shared.CustomerV1ItemResponse, err error) {
 	if params.CorrelationID.Present {
 		opts = append(opts, option.WithHeader("Correlation-Id", fmt.Sprintf("%s", params.CorrelationID)))
 	}
@@ -101,8 +99,8 @@ type CustomerReviewV1 struct {
 	//   - "error" means the `data` field contains an error object with details of the
 	//     issue.
 	//   - "none" means no data is returned.
-	ResponseType CustomerReviewV1ResponseType `json:"response_type,required"`
-	JSON         customerReviewV1JSON         `json:"-"`
+	ResponseType shared.ResponseTypeEnum `json:"response_type,required"`
+	JSON         customerReviewV1JSON    `json:"-"`
 }
 
 // customerReviewV1JSON contains the JSON metadata for the struct
@@ -124,7 +122,7 @@ func (r customerReviewV1JSON) RawJSON() string {
 }
 
 type CustomerReviewV1Data struct {
-	CustomerDetails CustomerReviewV1DataCustomerDetails `json:"customer_details,required"`
+	CustomerDetails shared.CustomerV1                   `json:"customer_details,required"`
 	IdentityDetails CustomerReviewV1DataIdentityDetails `json:"identity_details"`
 	JSON            customerReviewV1DataJSON            `json:"-"`
 }
@@ -146,293 +144,13 @@ func (r customerReviewV1DataJSON) RawJSON() string {
 	return r.raw
 }
 
-type CustomerReviewV1DataCustomerDetails struct {
-	// Unique identifier for the customer.
-	ID string `json:"id,required" format:"uuid"`
-	// Timestamp of when the customer record was created.
-	CreatedAt time.Time `json:"created_at,required" format:"date-time"`
-	// The customer's email address.
-	Email string `json:"email,required" format:"email"`
-	// Full name of the individual or business name.
-	Name string `json:"name,required"`
-	// The customer's phone number in E.164 format.
-	Phone  string                                    `json:"phone,required"`
-	Status CustomerReviewV1DataCustomerDetailsStatus `json:"status,required"`
-	Type   CustomerReviewV1DataCustomerDetailsType   `json:"type,required"`
-	// Timestamp of the most recent update to the customer record.
-	UpdatedAt time.Time         `json:"updated_at,required" format:"date-time"`
-	Address   CustomerAddressV1 `json:"address,nullable"`
-	// Compliance profile for individual customers
-	ComplianceProfile CustomerReviewV1DataCustomerDetailsComplianceProfile `json:"compliance_profile"`
-	Device            CustomerReviewV1DataCustomerDetailsDevice            `json:"device"`
-	// Unique identifier for the customer in your database, used for cross-referencing
-	// between Straddle and your systems.
-	ExternalID string `json:"external_id,nullable"`
-	// Up to 20 additional user-defined key-value pairs. Useful for storing additional
-	// information about the customer in a structured format.
-	Metadata map[string]string                       `json:"metadata,nullable"`
-	JSON     customerReviewV1DataCustomerDetailsJSON `json:"-"`
-}
-
-// customerReviewV1DataCustomerDetailsJSON contains the JSON metadata for the
-// struct [CustomerReviewV1DataCustomerDetails]
-type customerReviewV1DataCustomerDetailsJSON struct {
-	ID                apijson.Field
-	CreatedAt         apijson.Field
-	Email             apijson.Field
-	Name              apijson.Field
-	Phone             apijson.Field
-	Status            apijson.Field
-	Type              apijson.Field
-	UpdatedAt         apijson.Field
-	Address           apijson.Field
-	ComplianceProfile apijson.Field
-	Device            apijson.Field
-	ExternalID        apijson.Field
-	Metadata          apijson.Field
-	raw               string
-	ExtraFields       map[string]apijson.Field
-}
-
-func (r *CustomerReviewV1DataCustomerDetails) UnmarshalJSON(data []byte) (err error) {
-	return apijson.UnmarshalRoot(data, r)
-}
-
-func (r customerReviewV1DataCustomerDetailsJSON) RawJSON() string {
-	return r.raw
-}
-
-type CustomerReviewV1DataCustomerDetailsStatus string
-
-const (
-	CustomerReviewV1DataCustomerDetailsStatusPending  CustomerReviewV1DataCustomerDetailsStatus = "pending"
-	CustomerReviewV1DataCustomerDetailsStatusReview   CustomerReviewV1DataCustomerDetailsStatus = "review"
-	CustomerReviewV1DataCustomerDetailsStatusVerified CustomerReviewV1DataCustomerDetailsStatus = "verified"
-	CustomerReviewV1DataCustomerDetailsStatusInactive CustomerReviewV1DataCustomerDetailsStatus = "inactive"
-	CustomerReviewV1DataCustomerDetailsStatusRejected CustomerReviewV1DataCustomerDetailsStatus = "rejected"
-)
-
-func (r CustomerReviewV1DataCustomerDetailsStatus) IsKnown() bool {
-	switch r {
-	case CustomerReviewV1DataCustomerDetailsStatusPending, CustomerReviewV1DataCustomerDetailsStatusReview, CustomerReviewV1DataCustomerDetailsStatusVerified, CustomerReviewV1DataCustomerDetailsStatusInactive, CustomerReviewV1DataCustomerDetailsStatusRejected:
-		return true
-	}
-	return false
-}
-
-type CustomerReviewV1DataCustomerDetailsType string
-
-const (
-	CustomerReviewV1DataCustomerDetailsTypeIndividual CustomerReviewV1DataCustomerDetailsType = "individual"
-	CustomerReviewV1DataCustomerDetailsTypeBusiness   CustomerReviewV1DataCustomerDetailsType = "business"
-)
-
-func (r CustomerReviewV1DataCustomerDetailsType) IsKnown() bool {
-	switch r {
-	case CustomerReviewV1DataCustomerDetailsTypeIndividual, CustomerReviewV1DataCustomerDetailsTypeBusiness:
-		return true
-	}
-	return false
-}
-
-// Compliance profile for individual customers
-type CustomerReviewV1DataCustomerDetailsComplianceProfile struct {
-	// This field can have the runtime type of [time.Time], [string].
-	Dob interface{} `json:"dob"`
-	// Full 9-digit Employer Identification Number for businesses. This data is
-	// required to trigger Patriot Act compliant Know Your Business (KYB) verification.
-	// Only valid where customer type is 'business'.
-	Ein string `json:"ein,nullable" format:"**-*******"`
-	// The official name of the business. This name should be correlated with the ein
-	// value. Only valid where customer type is 'business'.
-	LegalBusinessName string `json:"legal_business_name,nullable"`
-	// Social Security Number in the format XXX-XX-XXXX.
-	Ssn string `json:"ssn,nullable"`
-	// URL of the company's official website. Only valid where customer type is
-	// 'business'.
-	Website string                                                   `json:"website,nullable"`
-	JSON    customerReviewV1DataCustomerDetailsComplianceProfileJSON `json:"-"`
-	union   CustomerReviewV1DataCustomerDetailsComplianceProfileUnion
-}
-
-// customerReviewV1DataCustomerDetailsComplianceProfileJSON contains the JSON
-// metadata for the struct [CustomerReviewV1DataCustomerDetailsComplianceProfile]
-type customerReviewV1DataCustomerDetailsComplianceProfileJSON struct {
-	Dob               apijson.Field
-	Ein               apijson.Field
-	LegalBusinessName apijson.Field
-	Ssn               apijson.Field
-	Website           apijson.Field
-	raw               string
-	ExtraFields       map[string]apijson.Field
-}
-
-func (r customerReviewV1DataCustomerDetailsComplianceProfileJSON) RawJSON() string {
-	return r.raw
-}
-
-func (r *CustomerReviewV1DataCustomerDetailsComplianceProfile) UnmarshalJSON(data []byte) (err error) {
-	*r = CustomerReviewV1DataCustomerDetailsComplianceProfile{}
-	err = apijson.UnmarshalRoot(data, &r.union)
-	if err != nil {
-		return err
-	}
-	return apijson.Port(r.union, &r)
-}
-
-// AsUnion returns a [CustomerReviewV1DataCustomerDetailsComplianceProfileUnion]
-// interface which you can cast to the specific types for more type safety.
-//
-// Possible runtime types of the union are
-// [CustomerReviewV1DataCustomerDetailsComplianceProfileIndividualComplianceProfile],
-// [CustomerReviewV1DataCustomerDetailsComplianceProfileBusinessComplianceProfile].
-func (r CustomerReviewV1DataCustomerDetailsComplianceProfile) AsUnion() CustomerReviewV1DataCustomerDetailsComplianceProfileUnion {
-	return r.union
-}
-
-// Compliance profile for individual customers
-//
-// Union satisfied by
-// [CustomerReviewV1DataCustomerDetailsComplianceProfileIndividualComplianceProfile]
-// or
-// [CustomerReviewV1DataCustomerDetailsComplianceProfileBusinessComplianceProfile].
-type CustomerReviewV1DataCustomerDetailsComplianceProfileUnion interface {
-	implementsCustomerReviewV1DataCustomerDetailsComplianceProfile()
-}
-
-func init() {
-	apijson.RegisterUnion(
-		reflect.TypeOf((*CustomerReviewV1DataCustomerDetailsComplianceProfileUnion)(nil)).Elem(),
-		"",
-		apijson.UnionVariant{
-			TypeFilter: gjson.JSON,
-			Type:       reflect.TypeOf(CustomerReviewV1DataCustomerDetailsComplianceProfileIndividualComplianceProfile{}),
-		},
-		apijson.UnionVariant{
-			TypeFilter: gjson.JSON,
-			Type:       reflect.TypeOf(CustomerReviewV1DataCustomerDetailsComplianceProfileBusinessComplianceProfile{}),
-		},
-	)
-}
-
-// Compliance profile for individual customers
-type CustomerReviewV1DataCustomerDetailsComplianceProfileIndividualComplianceProfile struct {
-	// Date of birth in YYYY-MM-DD format.
-	Dob time.Time `json:"dob,required" format:"date"`
-	// Social Security Number in the format XXX-XX-XXXX.
-	Ssn string `json:"ssn,required"`
-	// Full 9-digit Employer Identification Number for businesses. This data is
-	// required to trigger Patriot Act compliant Know Your Business (KYB) verification.
-	// Only valid where customer type is 'business'.
-	Ein string `json:"ein,nullable" format:"**-*******"`
-	// The official name of the business. This name should be correlated with the ein
-	// value. Only valid where customer type is 'business'.
-	LegalBusinessName string `json:"legal_business_name,nullable"`
-	// URL of the company's official website. Only valid where customer type is
-	// 'business'.
-	Website string                                                                              `json:"website,nullable"`
-	JSON    customerReviewV1DataCustomerDetailsComplianceProfileIndividualComplianceProfileJSON `json:"-"`
-}
-
-// customerReviewV1DataCustomerDetailsComplianceProfileIndividualComplianceProfileJSON
-// contains the JSON metadata for the struct
-// [CustomerReviewV1DataCustomerDetailsComplianceProfileIndividualComplianceProfile]
-type customerReviewV1DataCustomerDetailsComplianceProfileIndividualComplianceProfileJSON struct {
-	Dob               apijson.Field
-	Ssn               apijson.Field
-	Ein               apijson.Field
-	LegalBusinessName apijson.Field
-	Website           apijson.Field
-	raw               string
-	ExtraFields       map[string]apijson.Field
-}
-
-func (r *CustomerReviewV1DataCustomerDetailsComplianceProfileIndividualComplianceProfile) UnmarshalJSON(data []byte) (err error) {
-	return apijson.UnmarshalRoot(data, r)
-}
-
-func (r customerReviewV1DataCustomerDetailsComplianceProfileIndividualComplianceProfileJSON) RawJSON() string {
-	return r.raw
-}
-
-func (r CustomerReviewV1DataCustomerDetailsComplianceProfileIndividualComplianceProfile) implementsCustomerReviewV1DataCustomerDetailsComplianceProfile() {
-}
-
-// Compliance profile for business customers
-type CustomerReviewV1DataCustomerDetailsComplianceProfileBusinessComplianceProfile struct {
-	// Employer Identification Number in the format XX-XXXXXXX.
-	Ein string `json:"ein,required"`
-	// The official registered name of the business. This name should be correlated
-	// with the `ein` value.
-	LegalBusinessName string `json:"legal_business_name,required"`
-	// Date of birth for individual customers in ISO 8601 format (YYYY-MM-DD). This
-	// data is required to trigger Patriot Act compliant Know Your Customer (KYC)
-	// verification. Required if SSN is provided. Only valid where customer type is
-	// 'individual'.
-	Dob string `json:"dob,nullable" format:"****-**-**"`
-	// Full 9-digit Social Security Number or government identifier for individuals.
-	// This data is required to trigger Patriot Act compliant KYC verification.
-	// Required if DOB is provided. Only valid where customer type is 'individual'.
-	Ssn string `json:"ssn,nullable" format:"***-**-****"`
-	// Business website URL.
-	Website string                                                                            `json:"website" format:"uri"`
-	JSON    customerReviewV1DataCustomerDetailsComplianceProfileBusinessComplianceProfileJSON `json:"-"`
-}
-
-// customerReviewV1DataCustomerDetailsComplianceProfileBusinessComplianceProfileJSON
-// contains the JSON metadata for the struct
-// [CustomerReviewV1DataCustomerDetailsComplianceProfileBusinessComplianceProfile]
-type customerReviewV1DataCustomerDetailsComplianceProfileBusinessComplianceProfileJSON struct {
-	Ein               apijson.Field
-	LegalBusinessName apijson.Field
-	Dob               apijson.Field
-	Ssn               apijson.Field
-	Website           apijson.Field
-	raw               string
-	ExtraFields       map[string]apijson.Field
-}
-
-func (r *CustomerReviewV1DataCustomerDetailsComplianceProfileBusinessComplianceProfile) UnmarshalJSON(data []byte) (err error) {
-	return apijson.UnmarshalRoot(data, r)
-}
-
-func (r customerReviewV1DataCustomerDetailsComplianceProfileBusinessComplianceProfileJSON) RawJSON() string {
-	return r.raw
-}
-
-func (r CustomerReviewV1DataCustomerDetailsComplianceProfileBusinessComplianceProfile) implementsCustomerReviewV1DataCustomerDetailsComplianceProfile() {
-}
-
-type CustomerReviewV1DataCustomerDetailsDevice struct {
-	// The customer's IP address at the time of profile creation. Use `0.0.0.0` to
-	// represent an offline customer registration.
-	IPAddress string                                        `json:"ip_address,required" format:"ipv4"`
-	JSON      customerReviewV1DataCustomerDetailsDeviceJSON `json:"-"`
-}
-
-// customerReviewV1DataCustomerDetailsDeviceJSON contains the JSON metadata for the
-// struct [CustomerReviewV1DataCustomerDetailsDevice]
-type customerReviewV1DataCustomerDetailsDeviceJSON struct {
-	IPAddress   apijson.Field
-	raw         string
-	ExtraFields map[string]apijson.Field
-}
-
-func (r *CustomerReviewV1DataCustomerDetailsDevice) UnmarshalJSON(data []byte) (err error) {
-	return apijson.UnmarshalRoot(data, r)
-}
-
-func (r customerReviewV1DataCustomerDetailsDeviceJSON) RawJSON() string {
-	return r.raw
-}
-
 type CustomerReviewV1DataIdentityDetails struct {
 	// Detailed breakdown of the customer verification results, including decisions,
 	// risk scores, correlation score, and more.
 	Breakdown CustomerReviewV1DataIdentityDetailsBreakdown `json:"breakdown,required"`
 	// Timestamp of when the review was initiated.
-	CreatedAt time.Time                                   `json:"created_at,required" format:"date-time"`
-	Decision  CustomerReviewV1DataIdentityDetailsDecision `json:"decision,required"`
+	CreatedAt time.Time                 `json:"created_at,required" format:"date-time"`
+	Decision  shared.IdentityDecisionV1 `json:"decision,required"`
 	// Unique identifier for the review.
 	ReviewID string `json:"review_id,required" format:"uuid"`
 	// Timestamp of the most recent update to the review.
@@ -472,11 +190,11 @@ func (r customerReviewV1DataIdentityDetailsJSON) RawJSON() string {
 // Detailed breakdown of the customer verification results, including decisions,
 // risk scores, correlation score, and more.
 type CustomerReviewV1DataIdentityDetailsBreakdown struct {
-	Address   IdentityVerificationBreakdownV1                  `json:"address"`
-	Email     IdentityVerificationBreakdownV1                  `json:"email"`
-	Fraud     IdentityVerificationBreakdownV1                  `json:"fraud"`
-	Phone     IdentityVerificationBreakdownV1                  `json:"phone"`
-	Synthetic IdentityVerificationBreakdownV1                  `json:"synthetic"`
+	Address   shared.IdentityVerificationBreakdownV1           `json:"address"`
+	Email     shared.IdentityVerificationBreakdownV1           `json:"email"`
+	Fraud     shared.IdentityVerificationBreakdownV1           `json:"fraud"`
+	Phone     shared.IdentityVerificationBreakdownV1           `json:"phone"`
+	Synthetic shared.IdentityVerificationBreakdownV1           `json:"synthetic"`
 	JSON      customerReviewV1DataIdentityDetailsBreakdownJSON `json:"-"`
 }
 
@@ -500,29 +218,13 @@ func (r customerReviewV1DataIdentityDetailsBreakdownJSON) RawJSON() string {
 	return r.raw
 }
 
-type CustomerReviewV1DataIdentityDetailsDecision string
-
-const (
-	CustomerReviewV1DataIdentityDetailsDecisionAccept CustomerReviewV1DataIdentityDetailsDecision = "accept"
-	CustomerReviewV1DataIdentityDetailsDecisionReject CustomerReviewV1DataIdentityDetailsDecision = "reject"
-	CustomerReviewV1DataIdentityDetailsDecisionReview CustomerReviewV1DataIdentityDetailsDecision = "review"
-)
-
-func (r CustomerReviewV1DataIdentityDetailsDecision) IsKnown() bool {
-	switch r {
-	case CustomerReviewV1DataIdentityDetailsDecisionAccept, CustomerReviewV1DataIdentityDetailsDecisionReject, CustomerReviewV1DataIdentityDetailsDecisionReview:
-		return true
-	}
-	return false
-}
-
 type CustomerReviewV1DataIdentityDetailsKYC struct {
 	// Boolean values indicating the result of each validation in the KYC process.
 	Validations CustomerReviewV1DataIdentityDetailsKYCValidations `json:"validations,required"`
 	// List of specific result codes from the KYC screening process.
-	Codes    []string                                       `json:"codes,nullable"`
-	Decision CustomerReviewV1DataIdentityDetailsKYCDecision `json:"decision"`
-	JSON     customerReviewV1DataIdentityDetailsKYCJSON     `json:"-"`
+	Codes    []string                                   `json:"codes,nullable"`
+	Decision shared.IdentityDecisionV1                  `json:"decision"`
+	JSON     customerReviewV1DataIdentityDetailsKYCJSON `json:"-"`
 }
 
 // customerReviewV1DataIdentityDetailsKYCJSON contains the JSON metadata for the
@@ -583,29 +285,13 @@ func (r customerReviewV1DataIdentityDetailsKYCValidationsJSON) RawJSON() string 
 	return r.raw
 }
 
-type CustomerReviewV1DataIdentityDetailsKYCDecision string
-
-const (
-	CustomerReviewV1DataIdentityDetailsKYCDecisionAccept CustomerReviewV1DataIdentityDetailsKYCDecision = "accept"
-	CustomerReviewV1DataIdentityDetailsKYCDecisionReject CustomerReviewV1DataIdentityDetailsKYCDecision = "reject"
-	CustomerReviewV1DataIdentityDetailsKYCDecisionReview CustomerReviewV1DataIdentityDetailsKYCDecision = "review"
-)
-
-func (r CustomerReviewV1DataIdentityDetailsKYCDecision) IsKnown() bool {
-	switch r {
-	case CustomerReviewV1DataIdentityDetailsKYCDecisionAccept, CustomerReviewV1DataIdentityDetailsKYCDecisionReject, CustomerReviewV1DataIdentityDetailsKYCDecisionReview:
-		return true
-	}
-	return false
-}
-
 type CustomerReviewV1DataIdentityDetailsNetworkAlerts struct {
 	// Any alerts or flags raised during the consortium alert screening.
 	Alerts []string `json:"alerts,nullable"`
 	// List of specific result codes from the consortium alert screening.
-	Codes    []string                                                 `json:"codes,nullable"`
-	Decision CustomerReviewV1DataIdentityDetailsNetworkAlertsDecision `json:"decision"`
-	JSON     customerReviewV1DataIdentityDetailsNetworkAlertsJSON     `json:"-"`
+	Codes    []string                                             `json:"codes,nullable"`
+	Decision shared.IdentityDecisionV1                            `json:"decision"`
+	JSON     customerReviewV1DataIdentityDetailsNetworkAlertsJSON `json:"-"`
 }
 
 // customerReviewV1DataIdentityDetailsNetworkAlertsJSON contains the JSON metadata
@@ -626,26 +312,10 @@ func (r customerReviewV1DataIdentityDetailsNetworkAlertsJSON) RawJSON() string {
 	return r.raw
 }
 
-type CustomerReviewV1DataIdentityDetailsNetworkAlertsDecision string
-
-const (
-	CustomerReviewV1DataIdentityDetailsNetworkAlertsDecisionAccept CustomerReviewV1DataIdentityDetailsNetworkAlertsDecision = "accept"
-	CustomerReviewV1DataIdentityDetailsNetworkAlertsDecisionReject CustomerReviewV1DataIdentityDetailsNetworkAlertsDecision = "reject"
-	CustomerReviewV1DataIdentityDetailsNetworkAlertsDecisionReview CustomerReviewV1DataIdentityDetailsNetworkAlertsDecision = "review"
-)
-
-func (r CustomerReviewV1DataIdentityDetailsNetworkAlertsDecision) IsKnown() bool {
-	switch r {
-	case CustomerReviewV1DataIdentityDetailsNetworkAlertsDecisionAccept, CustomerReviewV1DataIdentityDetailsNetworkAlertsDecisionReject, CustomerReviewV1DataIdentityDetailsNetworkAlertsDecisionReview:
-		return true
-	}
-	return false
-}
-
 type CustomerReviewV1DataIdentityDetailsWatchList struct {
 	// Specific codes related to the Straddle watchlist screening results.
-	Codes    []string                                             `json:"codes,nullable"`
-	Decision CustomerReviewV1DataIdentityDetailsWatchListDecision `json:"decision"`
+	Codes    []string                  `json:"codes,nullable"`
+	Decision shared.IdentityDecisionV1 `json:"decision"`
 	// Information about any matches found during screening.
 	Matched []string                                         `json:"matched,nullable"`
 	JSON    customerReviewV1DataIdentityDetailsWatchListJSON `json:"-"`
@@ -667,94 +337,6 @@ func (r *CustomerReviewV1DataIdentityDetailsWatchList) UnmarshalJSON(data []byte
 
 func (r customerReviewV1DataIdentityDetailsWatchListJSON) RawJSON() string {
 	return r.raw
-}
-
-type CustomerReviewV1DataIdentityDetailsWatchListDecision string
-
-const (
-	CustomerReviewV1DataIdentityDetailsWatchListDecisionAccept CustomerReviewV1DataIdentityDetailsWatchListDecision = "accept"
-	CustomerReviewV1DataIdentityDetailsWatchListDecisionReject CustomerReviewV1DataIdentityDetailsWatchListDecision = "reject"
-	CustomerReviewV1DataIdentityDetailsWatchListDecisionReview CustomerReviewV1DataIdentityDetailsWatchListDecision = "review"
-)
-
-func (r CustomerReviewV1DataIdentityDetailsWatchListDecision) IsKnown() bool {
-	switch r {
-	case CustomerReviewV1DataIdentityDetailsWatchListDecisionAccept, CustomerReviewV1DataIdentityDetailsWatchListDecisionReject, CustomerReviewV1DataIdentityDetailsWatchListDecisionReview:
-		return true
-	}
-	return false
-}
-
-// Indicates the structure of the returned content.
-//
-//   - "object" means the `data` field contains a single JSON object.
-//   - "array" means the `data` field contains an array of objects.
-//   - "error" means the `data` field contains an error object with details of the
-//     issue.
-//   - "none" means no data is returned.
-type CustomerReviewV1ResponseType string
-
-const (
-	CustomerReviewV1ResponseTypeObject CustomerReviewV1ResponseType = "object"
-	CustomerReviewV1ResponseTypeArray  CustomerReviewV1ResponseType = "array"
-	CustomerReviewV1ResponseTypeError  CustomerReviewV1ResponseType = "error"
-	CustomerReviewV1ResponseTypeNone   CustomerReviewV1ResponseType = "none"
-)
-
-func (r CustomerReviewV1ResponseType) IsKnown() bool {
-	switch r {
-	case CustomerReviewV1ResponseTypeObject, CustomerReviewV1ResponseTypeArray, CustomerReviewV1ResponseTypeError, CustomerReviewV1ResponseTypeNone:
-		return true
-	}
-	return false
-}
-
-type IdentityVerificationBreakdownV1 struct {
-	// List of specific result codes from the fraud and risk screening.
-	Codes []string `json:"codes,nullable"`
-	// Represents the strength of the correlation between provided and known
-	// information. A higher score indicates a stronger correlation.
-	CorrelationScore float64                                 `json:"correlation_score,nullable"`
-	Decision         IdentityVerificationBreakdownV1Decision `json:"decision"`
-	// Predicts the inherent risk associated with the customer for a given module. A
-	// higher score indicates a greater likelihood of fraud.
-	RiskScore float64                             `json:"risk_score,nullable"`
-	JSON      identityVerificationBreakdownV1JSON `json:"-"`
-}
-
-// identityVerificationBreakdownV1JSON contains the JSON metadata for the struct
-// [IdentityVerificationBreakdownV1]
-type identityVerificationBreakdownV1JSON struct {
-	Codes            apijson.Field
-	CorrelationScore apijson.Field
-	Decision         apijson.Field
-	RiskScore        apijson.Field
-	raw              string
-	ExtraFields      map[string]apijson.Field
-}
-
-func (r *IdentityVerificationBreakdownV1) UnmarshalJSON(data []byte) (err error) {
-	return apijson.UnmarshalRoot(data, r)
-}
-
-func (r identityVerificationBreakdownV1JSON) RawJSON() string {
-	return r.raw
-}
-
-type IdentityVerificationBreakdownV1Decision string
-
-const (
-	IdentityVerificationBreakdownV1DecisionAccept IdentityVerificationBreakdownV1Decision = "accept"
-	IdentityVerificationBreakdownV1DecisionReject IdentityVerificationBreakdownV1Decision = "reject"
-	IdentityVerificationBreakdownV1DecisionReview IdentityVerificationBreakdownV1Decision = "review"
-)
-
-func (r IdentityVerificationBreakdownV1Decision) IsKnown() bool {
-	switch r {
-	case IdentityVerificationBreakdownV1DecisionAccept, IdentityVerificationBreakdownV1DecisionReject, IdentityVerificationBreakdownV1DecisionReview:
-		return true
-	}
-	return false
 }
 
 type CustomerReviewDecisionParams struct {

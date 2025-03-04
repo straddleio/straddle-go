@@ -11,6 +11,7 @@ import (
 	"github.com/stainless-sdks/straddle-go/internal/param"
 	"github.com/stainless-sdks/straddle-go/internal/requestconfig"
 	"github.com/stainless-sdks/straddle-go/option"
+	"github.com/stainless-sdks/straddle-go/shared"
 )
 
 // BridgeLinkService contains methods and other services that help with interacting
@@ -35,7 +36,7 @@ func NewBridgeLinkService(opts ...option.RequestOption) (r *BridgeLinkService) {
 // Use Bridge to create a new paykey using a bank routing and account number as the
 // source. This endpoint allows you to create a secure payment token linked to a
 // specific bank account.
-func (r *BridgeLinkService) BankAccount(ctx context.Context, params BridgeLinkBankAccountParams, opts ...option.RequestOption) (res *PaykeyV1, err error) {
+func (r *BridgeLinkService) BankAccount(ctx context.Context, params BridgeLinkBankAccountParams, opts ...option.RequestOption) (res *shared.PaykeyV1ItemResponse, err error) {
 	if params.CorrelationID.Present {
 		opts = append(opts, option.WithHeader("Correlation-Id", fmt.Sprintf("%s", params.CorrelationID)))
 	}
@@ -54,7 +55,7 @@ func (r *BridgeLinkService) BankAccount(ctx context.Context, params BridgeLinkBa
 // Use Bridge to create a new paykey using a Plaid token as the source. This
 // endpoint allows you to create a secure payment token linked to a bank account
 // authenticated through Plaid.
-func (r *BridgeLinkService) Plaid(ctx context.Context, params BridgeLinkPlaidParams, opts ...option.RequestOption) (res *PaykeyV1, err error) {
+func (r *BridgeLinkService) Plaid(ctx context.Context, params BridgeLinkPlaidParams, opts ...option.RequestOption) (res *shared.PaykeyV1ItemResponse, err error) {
 	if params.CorrelationID.Present {
 		opts = append(opts, option.WithHeader("Correlation-Id", fmt.Sprintf("%s", params.CorrelationID)))
 	}
@@ -72,8 +73,8 @@ func (r *BridgeLinkService) Plaid(ctx context.Context, params BridgeLinkPlaidPar
 
 type BridgeLinkBankAccountParams struct {
 	// The bank account number.
-	AccountNumber param.Field[string]                                 `json:"account_number,required"`
-	AccountType   param.Field[BridgeLinkBankAccountParamsAccountType] `json:"account_type,required"`
+	AccountNumber param.Field[string]               `json:"account_number,required"`
+	AccountType   param.Field[shared.AccountTypeV1] `json:"account_type,required"`
 	// Unique identifier of the related customer object.
 	CustomerID param.Field[string] `json:"customer_id,required" format:"uuid"`
 	// The routing number of the bank account.
@@ -88,21 +89,6 @@ type BridgeLinkBankAccountParams struct {
 
 func (r BridgeLinkBankAccountParams) MarshalJSON() (data []byte, err error) {
 	return apijson.MarshalRoot(r)
-}
-
-type BridgeLinkBankAccountParamsAccountType string
-
-const (
-	BridgeLinkBankAccountParamsAccountTypeChecking BridgeLinkBankAccountParamsAccountType = "checking"
-	BridgeLinkBankAccountParamsAccountTypeSavings  BridgeLinkBankAccountParamsAccountType = "savings"
-)
-
-func (r BridgeLinkBankAccountParamsAccountType) IsKnown() bool {
-	switch r {
-	case BridgeLinkBankAccountParamsAccountTypeChecking, BridgeLinkBankAccountParamsAccountTypeSavings:
-		return true
-	}
-	return false
 }
 
 type BridgeLinkPlaidParams struct {
