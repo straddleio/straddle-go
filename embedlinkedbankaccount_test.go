@@ -11,7 +11,6 @@ import (
 	"github.com/stainless-sdks/straddle-go"
 	"github.com/stainless-sdks/straddle-go/internal/testutil"
 	"github.com/stainless-sdks/straddle-go/option"
-	"github.com/stainless-sdks/straddle-go/shared"
 )
 
 func TestEmbedLinkedBankAccountNewWithOptionalParams(t *testing.T) {
@@ -28,7 +27,7 @@ func TestEmbedLinkedBankAccountNewWithOptionalParams(t *testing.T) {
 	)
 	_, err := client.Embed.LinkedBankAccounts.New(context.TODO(), straddle.EmbedLinkedBankAccountNewParams{
 		AccountID: straddle.F("182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e"),
-		BankAccount: straddle.F(shared.BankAccountV1RequestParam{
+		BankAccount: straddle.F(straddle.EmbedLinkedBankAccountNewParamsBankAccount{
 			AccountHolder: straddle.F("account_holder"),
 			AccountNumber: straddle.F("account_number"),
 			RoutingNumber: straddle.F("xxxxxxxxx"),
@@ -64,7 +63,7 @@ func TestEmbedLinkedBankAccountUpdateWithOptionalParams(t *testing.T) {
 		context.TODO(),
 		"182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e",
 		straddle.EmbedLinkedBankAccountUpdateParams{
-			BankAccount: straddle.F(shared.BankAccountV1RequestParam{
+			BankAccount: straddle.F(straddle.EmbedLinkedBankAccountUpdateParamsBankAccount{
 				AccountHolder: straddle.F("account_holder"),
 				AccountNumber: straddle.F("account_number"),
 				RoutingNumber: straddle.F("xxxxxxxxx"),

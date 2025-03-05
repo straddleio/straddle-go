@@ -12,7 +12,6 @@ import (
 	"github.com/stainless-sdks/straddle-go"
 	"github.com/stainless-sdks/straddle-go/internal/testutil"
 	"github.com/stainless-sdks/straddle-go/option"
-	"github.com/stainless-sdks/straddle-go/shared"
 )
 
 func TestFundingEventListWithOptionalParams(t *testing.T) {
@@ -30,12 +29,12 @@ func TestFundingEventListWithOptionalParams(t *testing.T) {
 	_, err := client.FundingEvents.List(context.TODO(), straddle.FundingEventListParams{
 		CreatedFrom:       straddle.F(time.Now()),
 		CreatedTo:         straddle.F(time.Now()),
-		Direction:         straddle.F(shared.TransferDirectionV1Deposit),
-		EventType:         straddle.F(shared.FundingEventTypeV1ChargeDeposit),
+		Direction:         straddle.F(straddle.FundingEventListParamsDirectionDeposit),
+		EventType:         straddle.F(straddle.FundingEventListParamsEventTypeChargeDeposit),
 		PageNumber:        straddle.F(int64(0)),
 		PageSize:          straddle.F(int64(0)),
 		SortBy:            straddle.F(straddle.FundingEventListParamsSortByTransferDate),
-		SortOrder:         straddle.F(shared.SortOrderAsc),
+		SortOrder:         straddle.F(straddle.FundingEventListParamsSortOrderAsc),
 		TraceNumber:       straddle.F("trace_number"),
 		CorrelationID:     straddle.F("Correlation-Id"),
 		RequestID:         straddle.F("Request-Id"),
