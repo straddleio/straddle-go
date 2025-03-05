@@ -106,9 +106,7 @@ func TestPayoutCancelWithOptionalParams(t *testing.T) {
 		context.TODO(),
 		"182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e",
 		straddle.PayoutCancelParams{
-			UpdatePayoutStatusV1Request: shared.UpdatePayoutStatusV1RequestParam{
-				Reason: straddle.F("reason"),
-			},
+			Reason:            straddle.F("reason"),
 			CorrelationID:     straddle.F("Correlation-Id"),
 			RequestID:         straddle.F("Request-Id"),
 			StraddleAccountID: straddle.F("182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e"),
@@ -169,9 +167,7 @@ func TestPayoutHoldWithOptionalParams(t *testing.T) {
 		context.TODO(),
 		"182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e",
 		straddle.PayoutHoldParams{
-			UpdatePayoutStatusV1Request: shared.UpdatePayoutStatusV1RequestParam{
-				Reason: straddle.F("reason"),
-			},
+			Reason:            straddle.F("reason"),
 			CorrelationID:     straddle.F("Correlation-Id"),
 			RequestID:         straddle.F("Request-Id"),
 			StraddleAccountID: straddle.F("182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e"),
@@ -202,9 +198,7 @@ func TestPayoutReleaseWithOptionalParams(t *testing.T) {
 		context.TODO(),
 		"182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e",
 		straddle.PayoutReleaseParams{
-			UpdatePayoutStatusV1Request: shared.UpdatePayoutStatusV1RequestParam{
-				Reason: straddle.F("reason"),
-			},
+			Reason:            straddle.F("reason"),
 			CorrelationID:     straddle.F("Correlation-Id"),
 			RequestID:         straddle.F("Request-Id"),
 			StraddleAccountID: straddle.F("182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e"),

@@ -12,7 +12,6 @@ import (
 	"github.com/stainless-sdks/straddle-go"
 	"github.com/stainless-sdks/straddle-go/internal/testutil"
 	"github.com/stainless-sdks/straddle-go/option"
-	"github.com/stainless-sdks/straddle-go/shared"
 )
 
 func TestPaymentListWithOptionalParams(t *testing.T) {
@@ -30,8 +29,8 @@ func TestPaymentListWithOptionalParams(t *testing.T) {
 	_, err := client.Payments.List(context.TODO(), straddle.PaymentListParams{
 		CustomerID:        straddle.F("182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e"),
 		DefaultPageSize:   straddle.F(int64(0)),
-		DefaultSort:       straddle.F(shared.PaymentSortByV1CreatedAt),
-		DefaultSortOrder:  straddle.F(shared.SortOrderAsc),
+		DefaultSort:       straddle.F(straddle.PaymentListParamsDefaultSortCreatedAt),
+		DefaultSortOrder:  straddle.F(straddle.PaymentListParamsDefaultSortOrderAsc),
 		ExternalID:        straddle.F("external_id"),
 		FundingID:         straddle.F("182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e"),
 		MaxAmount:         straddle.F(int64(0)),
@@ -47,11 +46,11 @@ func TestPaymentListWithOptionalParams(t *testing.T) {
 		Paykey:            straddle.F("paykey"),
 		PaykeyID:          straddle.F("182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e"),
 		PaymentID:         straddle.F("182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e"),
-		PaymentStatus:     straddle.F([]shared.PaymentStatusV1{shared.PaymentStatusV1Created}),
-		PaymentType:       straddle.F([]shared.PaymentTypeV1{shared.PaymentTypeV1Charge}),
+		PaymentStatus:     straddle.F([]straddle.PaymentListParamsPaymentStatus{straddle.PaymentListParamsPaymentStatusCreated}),
+		PaymentType:       straddle.F([]straddle.PaymentListParamsPaymentType{straddle.PaymentListParamsPaymentTypeCharge}),
 		SearchText:        straddle.F("search_text"),
-		SortBy:            straddle.F(shared.PaymentSortByV1CreatedAt),
-		SortOrder:         straddle.F(shared.SortOrderAsc),
+		SortBy:            straddle.F(straddle.PaymentListParamsSortByCreatedAt),
+		SortOrder:         straddle.F(straddle.PaymentListParamsSortOrderAsc),
 		CorrelationID:     straddle.F("Correlation-Id"),
 		RequestID:         straddle.F("Request-Id"),
 		StraddleAccountID: straddle.F("182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e"),

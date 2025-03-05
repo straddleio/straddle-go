@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"time"
 
 	"github.com/stainless-sdks/straddle-go/internal/apijson"
 	"github.com/stainless-sdks/straddle-go/internal/apiquery"
@@ -39,7 +40,7 @@ func NewEmbedAccountCapabilityRequestService(opts ...option.RequestOption) (r *E
 
 // Submits a request to enable a specific capability for an account. Use this
 // endpoint to request additional features or services for an account.
-func (r *EmbedAccountCapabilityRequestService) New(ctx context.Context, accountID string, params EmbedAccountCapabilityRequestNewParams, opts ...option.RequestOption) (res *shared.PagedResponseOfCapabilityRequestV1, err error) {
+func (r *EmbedAccountCapabilityRequestService) New(ctx context.Context, accountID string, params EmbedAccountCapabilityRequestNewParams, opts ...option.RequestOption) (res *CapabilityRequestPagedV1, err error) {
 	if params.CorrelationID.Present {
 		opts = append(opts, option.WithHeader("correlation-id", fmt.Sprintf("%s", params.CorrelationID)))
 	}
@@ -59,7 +60,7 @@ func (r *EmbedAccountCapabilityRequestService) New(ctx context.Context, accountI
 // Retrieves a list of capability requests associated with an account. The requests
 // are returned sorted by creation date, with the most recent requests appearing
 // first. This endpoint supports advanced sorting and filtering options.
-func (r *EmbedAccountCapabilityRequestService) List(ctx context.Context, accountID string, params EmbedAccountCapabilityRequestListParams, opts ...option.RequestOption) (res *pagination.PageNumberSchema[shared.PagedResponseOfCapabilityRequestV1Data], err error) {
+func (r *EmbedAccountCapabilityRequestService) List(ctx context.Context, accountID string, params EmbedAccountCapabilityRequestListParams, opts ...option.RequestOption) (res *pagination.PageNumberSchema[CapabilityRequestPagedV1Data], err error) {
 	var raw *http.Response
 	if params.CorrelationID.Present {
 		opts = append(opts, option.WithHeader("correlation-id", fmt.Sprintf("%s", params.CorrelationID)))
@@ -89,8 +90,170 @@ func (r *EmbedAccountCapabilityRequestService) List(ctx context.Context, account
 // Retrieves a list of capability requests associated with an account. The requests
 // are returned sorted by creation date, with the most recent requests appearing
 // first. This endpoint supports advanced sorting and filtering options.
-func (r *EmbedAccountCapabilityRequestService) ListAutoPaging(ctx context.Context, accountID string, params EmbedAccountCapabilityRequestListParams, opts ...option.RequestOption) *pagination.PageNumberSchemaAutoPager[shared.PagedResponseOfCapabilityRequestV1Data] {
+func (r *EmbedAccountCapabilityRequestService) ListAutoPaging(ctx context.Context, accountID string, params EmbedAccountCapabilityRequestListParams, opts ...option.RequestOption) *pagination.PageNumberSchemaAutoPager[CapabilityRequestPagedV1Data] {
 	return pagination.NewPageNumberSchemaAutoPager(r.List(ctx, accountID, params, opts...))
+}
+
+type CapabilityRequestPagedV1 struct {
+	Data []CapabilityRequestPagedV1Data `json:"data,required"`
+	// Metadata about the API request, including an identifier, timestamp, and
+	// pagination details.
+	Meta shared.PagedResponseMetadata `json:"meta,required"`
+	// Indicates the structure of the returned content.
+	//
+	//   - "object" means the `data` field contains a single JSON object.
+	//   - "array" means the `data` field contains an array of objects.
+	//   - "error" means the `data` field contains an error object with details of the
+	//     issue.
+	//   - "none" means no data is returned.
+	ResponseType CapabilityRequestPagedV1ResponseType `json:"response_type,required"`
+	JSON         capabilityRequestPagedV1JSON         `json:"-"`
+}
+
+// capabilityRequestPagedV1JSON contains the JSON metadata for the struct
+// [CapabilityRequestPagedV1]
+type capabilityRequestPagedV1JSON struct {
+	Data         apijson.Field
+	Meta         apijson.Field
+	ResponseType apijson.Field
+	raw          string
+	ExtraFields  map[string]apijson.Field
+}
+
+func (r *CapabilityRequestPagedV1) UnmarshalJSON(data []byte) (err error) {
+	return apijson.UnmarshalRoot(data, r)
+}
+
+func (r capabilityRequestPagedV1JSON) RawJSON() string {
+	return r.raw
+}
+
+type CapabilityRequestPagedV1Data struct {
+	// Unique identifier for the capability request.
+	ID string `json:"id,required" format:"uuid"`
+	// The unique identifier of the account associated with this capability request.
+	AccountID string `json:"account_id,required" format:"uuid"`
+	// The category of the requested capability. Use `payment_type` for charges and
+	// payouts, `customer_type` to define `individuals` or `businesses`, and
+	// `consent_type` for `signed_agreement` or `internet` payment authorization.
+	Category CapabilityRequestPagedV1DataCategory `json:"category,required"`
+	// Timestamp of when the capability request was created.
+	CreatedAt time.Time `json:"created_at,required" format:"date-time"`
+	// The current status of the capability request.
+	Status CapabilityRequestPagedV1DataStatus `json:"status,required"`
+	// The specific type of capability being requested within the category.
+	Type CapabilityRequestPagedV1DataType `json:"type,required"`
+	// Timestamp of the most recent update to the capability request.
+	UpdatedAt time.Time `json:"updated_at,required" format:"date-time"`
+	// Any specific settings or configurations related to the requested capability.
+	Settings map[string]interface{}           `json:"settings,nullable"`
+	JSON     capabilityRequestPagedV1DataJSON `json:"-"`
+}
+
+// capabilityRequestPagedV1DataJSON contains the JSON metadata for the struct
+// [CapabilityRequestPagedV1Data]
+type capabilityRequestPagedV1DataJSON struct {
+	ID          apijson.Field
+	AccountID   apijson.Field
+	Category    apijson.Field
+	CreatedAt   apijson.Field
+	Status      apijson.Field
+	Type        apijson.Field
+	UpdatedAt   apijson.Field
+	Settings    apijson.Field
+	raw         string
+	ExtraFields map[string]apijson.Field
+}
+
+func (r *CapabilityRequestPagedV1Data) UnmarshalJSON(data []byte) (err error) {
+	return apijson.UnmarshalRoot(data, r)
+}
+
+func (r capabilityRequestPagedV1DataJSON) RawJSON() string {
+	return r.raw
+}
+
+// The category of the requested capability. Use `payment_type` for charges and
+// payouts, `customer_type` to define `individuals` or `businesses`, and
+// `consent_type` for `signed_agreement` or `internet` payment authorization.
+type CapabilityRequestPagedV1DataCategory string
+
+const (
+	CapabilityRequestPagedV1DataCategoryPaymentType  CapabilityRequestPagedV1DataCategory = "payment_type"
+	CapabilityRequestPagedV1DataCategoryCustomerType CapabilityRequestPagedV1DataCategory = "customer_type"
+	CapabilityRequestPagedV1DataCategoryConsentType  CapabilityRequestPagedV1DataCategory = "consent_type"
+)
+
+func (r CapabilityRequestPagedV1DataCategory) IsKnown() bool {
+	switch r {
+	case CapabilityRequestPagedV1DataCategoryPaymentType, CapabilityRequestPagedV1DataCategoryCustomerType, CapabilityRequestPagedV1DataCategoryConsentType:
+		return true
+	}
+	return false
+}
+
+// The current status of the capability request.
+type CapabilityRequestPagedV1DataStatus string
+
+const (
+	CapabilityRequestPagedV1DataStatusActive    CapabilityRequestPagedV1DataStatus = "active"
+	CapabilityRequestPagedV1DataStatusInactive  CapabilityRequestPagedV1DataStatus = "inactive"
+	CapabilityRequestPagedV1DataStatusInReview  CapabilityRequestPagedV1DataStatus = "in_review"
+	CapabilityRequestPagedV1DataStatusRejected  CapabilityRequestPagedV1DataStatus = "rejected"
+	CapabilityRequestPagedV1DataStatusApproved  CapabilityRequestPagedV1DataStatus = "approved"
+	CapabilityRequestPagedV1DataStatusReviewing CapabilityRequestPagedV1DataStatus = "reviewing"
+)
+
+func (r CapabilityRequestPagedV1DataStatus) IsKnown() bool {
+	switch r {
+	case CapabilityRequestPagedV1DataStatusActive, CapabilityRequestPagedV1DataStatusInactive, CapabilityRequestPagedV1DataStatusInReview, CapabilityRequestPagedV1DataStatusRejected, CapabilityRequestPagedV1DataStatusApproved, CapabilityRequestPagedV1DataStatusReviewing:
+		return true
+	}
+	return false
+}
+
+// The specific type of capability being requested within the category.
+type CapabilityRequestPagedV1DataType string
+
+const (
+	CapabilityRequestPagedV1DataTypeCharges         CapabilityRequestPagedV1DataType = "charges"
+	CapabilityRequestPagedV1DataTypePayouts         CapabilityRequestPagedV1DataType = "payouts"
+	CapabilityRequestPagedV1DataTypeIndividuals     CapabilityRequestPagedV1DataType = "individuals"
+	CapabilityRequestPagedV1DataTypeBusinesses      CapabilityRequestPagedV1DataType = "businesses"
+	CapabilityRequestPagedV1DataTypeSignedAgreement CapabilityRequestPagedV1DataType = "signed_agreement"
+	CapabilityRequestPagedV1DataTypeInternet        CapabilityRequestPagedV1DataType = "internet"
+)
+
+func (r CapabilityRequestPagedV1DataType) IsKnown() bool {
+	switch r {
+	case CapabilityRequestPagedV1DataTypeCharges, CapabilityRequestPagedV1DataTypePayouts, CapabilityRequestPagedV1DataTypeIndividuals, CapabilityRequestPagedV1DataTypeBusinesses, CapabilityRequestPagedV1DataTypeSignedAgreement, CapabilityRequestPagedV1DataTypeInternet:
+		return true
+	}
+	return false
+}
+
+// Indicates the structure of the returned content.
+//
+//   - "object" means the `data` field contains a single JSON object.
+//   - "array" means the `data` field contains an array of objects.
+//   - "error" means the `data` field contains an error object with details of the
+//     issue.
+//   - "none" means no data is returned.
+type CapabilityRequestPagedV1ResponseType string
+
+const (
+	CapabilityRequestPagedV1ResponseTypeObject CapabilityRequestPagedV1ResponseType = "object"
+	CapabilityRequestPagedV1ResponseTypeArray  CapabilityRequestPagedV1ResponseType = "array"
+	CapabilityRequestPagedV1ResponseTypeError  CapabilityRequestPagedV1ResponseType = "error"
+	CapabilityRequestPagedV1ResponseTypeNone   CapabilityRequestPagedV1ResponseType = "none"
+)
+
+func (r CapabilityRequestPagedV1ResponseType) IsKnown() bool {
+	switch r {
+	case CapabilityRequestPagedV1ResponseTypeObject, CapabilityRequestPagedV1ResponseTypeArray, CapabilityRequestPagedV1ResponseTypeError, CapabilityRequestPagedV1ResponseTypeNone:
+		return true
+	}
+	return false
 }
 
 type EmbedAccountCapabilityRequestNewParams struct {

@@ -26,12 +26,12 @@ func TestUsage(t *testing.T) {
 		option.WithBaseURL(baseURL),
 		option.WithAPIKey("My API Key"),
 	)
-	chargeV1ItemResponse, err := client.Charges.New(context.TODO(), straddle.ChargeNewParams{
+	chargeV1, err := client.Charges.New(context.TODO(), straddle.ChargeNewParams{
 		Amount: straddle.F(int64(0)),
-		Config: straddle.F(shared.ChargeConfigurationV1Param{
-			BalanceCheck: straddle.F(shared.ChargeConfigurationV1BalanceCheckRequired),
+		Config: straddle.F(straddle.ChargeNewParamsConfig{
+			BalanceCheck: straddle.F(straddle.ChargeNewParamsConfigBalanceCheckRequired),
 		}),
-		ConsentType: straddle.F(shared.ConsentTypeV1Internet),
+		ConsentType: straddle.F(straddle.ChargeNewParamsConsentTypeInternet),
 		Currency:    straddle.F("currency"),
 		Description: straddle.F("Monthly subscription fee"),
 		Device: straddle.F(shared.DeviceInfoV1Param{
@@ -44,5 +44,5 @@ func TestUsage(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	t.Logf("%+v\n", chargeV1ItemResponse.Data)
+	t.Logf("%+v\n", chargeV1.Data)
 }

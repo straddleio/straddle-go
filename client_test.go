@@ -40,10 +40,10 @@ func TestUserAgentHeader(t *testing.T) {
 	)
 	client.Charges.New(context.Background(), straddle.ChargeNewParams{
 		Amount: straddle.F(int64(0)),
-		Config: straddle.F(shared.ChargeConfigurationV1Param{
-			BalanceCheck: straddle.F(shared.ChargeConfigurationV1BalanceCheckRequired),
+		Config: straddle.F(straddle.ChargeNewParamsConfig{
+			BalanceCheck: straddle.F(straddle.ChargeNewParamsConfigBalanceCheckRequired),
 		}),
-		ConsentType: straddle.F(shared.ConsentTypeV1Internet),
+		ConsentType: straddle.F(straddle.ChargeNewParamsConsentTypeInternet),
 		Currency:    straddle.F("currency"),
 		Description: straddle.F("Monthly subscription fee"),
 		Device: straddle.F(shared.DeviceInfoV1Param{
@@ -77,10 +77,10 @@ func TestRetryAfter(t *testing.T) {
 	)
 	_, err := client.Charges.New(context.Background(), straddle.ChargeNewParams{
 		Amount: straddle.F(int64(0)),
-		Config: straddle.F(shared.ChargeConfigurationV1Param{
-			BalanceCheck: straddle.F(shared.ChargeConfigurationV1BalanceCheckRequired),
+		Config: straddle.F(straddle.ChargeNewParamsConfig{
+			BalanceCheck: straddle.F(straddle.ChargeNewParamsConfigBalanceCheckRequired),
 		}),
-		ConsentType: straddle.F(shared.ConsentTypeV1Internet),
+		ConsentType: straddle.F(straddle.ChargeNewParamsConsentTypeInternet),
 		Currency:    straddle.F("currency"),
 		Description: straddle.F("Monthly subscription fee"),
 		Device: straddle.F(shared.DeviceInfoV1Param{
@@ -125,10 +125,10 @@ func TestDeleteRetryCountHeader(t *testing.T) {
 	)
 	_, err := client.Charges.New(context.Background(), straddle.ChargeNewParams{
 		Amount: straddle.F(int64(0)),
-		Config: straddle.F(shared.ChargeConfigurationV1Param{
-			BalanceCheck: straddle.F(shared.ChargeConfigurationV1BalanceCheckRequired),
+		Config: straddle.F(straddle.ChargeNewParamsConfig{
+			BalanceCheck: straddle.F(straddle.ChargeNewParamsConfigBalanceCheckRequired),
 		}),
-		ConsentType: straddle.F(shared.ConsentTypeV1Internet),
+		ConsentType: straddle.F(straddle.ChargeNewParamsConsentTypeInternet),
 		Currency:    straddle.F("currency"),
 		Description: straddle.F("Monthly subscription fee"),
 		Device: straddle.F(shared.DeviceInfoV1Param{
@@ -168,10 +168,10 @@ func TestOverwriteRetryCountHeader(t *testing.T) {
 	)
 	_, err := client.Charges.New(context.Background(), straddle.ChargeNewParams{
 		Amount: straddle.F(int64(0)),
-		Config: straddle.F(shared.ChargeConfigurationV1Param{
-			BalanceCheck: straddle.F(shared.ChargeConfigurationV1BalanceCheckRequired),
+		Config: straddle.F(straddle.ChargeNewParamsConfig{
+			BalanceCheck: straddle.F(straddle.ChargeNewParamsConfigBalanceCheckRequired),
 		}),
-		ConsentType: straddle.F(shared.ConsentTypeV1Internet),
+		ConsentType: straddle.F(straddle.ChargeNewParamsConsentTypeInternet),
 		Currency:    straddle.F("currency"),
 		Description: straddle.F("Monthly subscription fee"),
 		Device: straddle.F(shared.DeviceInfoV1Param{
@@ -210,10 +210,10 @@ func TestRetryAfterMs(t *testing.T) {
 	)
 	_, err := client.Charges.New(context.Background(), straddle.ChargeNewParams{
 		Amount: straddle.F(int64(0)),
-		Config: straddle.F(shared.ChargeConfigurationV1Param{
-			BalanceCheck: straddle.F(shared.ChargeConfigurationV1BalanceCheckRequired),
+		Config: straddle.F(straddle.ChargeNewParamsConfig{
+			BalanceCheck: straddle.F(straddle.ChargeNewParamsConfigBalanceCheckRequired),
 		}),
-		ConsentType: straddle.F(shared.ConsentTypeV1Internet),
+		ConsentType: straddle.F(straddle.ChargeNewParamsConsentTypeInternet),
 		Currency:    straddle.F("currency"),
 		Description: straddle.F("Monthly subscription fee"),
 		Device: straddle.F(shared.DeviceInfoV1Param{
@@ -246,10 +246,10 @@ func TestContextCancel(t *testing.T) {
 	cancel()
 	_, err := client.Charges.New(cancelCtx, straddle.ChargeNewParams{
 		Amount: straddle.F(int64(0)),
-		Config: straddle.F(shared.ChargeConfigurationV1Param{
-			BalanceCheck: straddle.F(shared.ChargeConfigurationV1BalanceCheckRequired),
+		Config: straddle.F(straddle.ChargeNewParamsConfig{
+			BalanceCheck: straddle.F(straddle.ChargeNewParamsConfigBalanceCheckRequired),
 		}),
-		ConsentType: straddle.F(shared.ConsentTypeV1Internet),
+		ConsentType: straddle.F(straddle.ChargeNewParamsConsentTypeInternet),
 		Currency:    straddle.F("currency"),
 		Description: straddle.F("Monthly subscription fee"),
 		Device: straddle.F(shared.DeviceInfoV1Param{
@@ -279,10 +279,10 @@ func TestContextCancelDelay(t *testing.T) {
 	defer cancel()
 	_, err := client.Charges.New(cancelCtx, straddle.ChargeNewParams{
 		Amount: straddle.F(int64(0)),
-		Config: straddle.F(shared.ChargeConfigurationV1Param{
-			BalanceCheck: straddle.F(shared.ChargeConfigurationV1BalanceCheckRequired),
+		Config: straddle.F(straddle.ChargeNewParamsConfig{
+			BalanceCheck: straddle.F(straddle.ChargeNewParamsConfigBalanceCheckRequired),
 		}),
-		ConsentType: straddle.F(shared.ConsentTypeV1Internet),
+		ConsentType: straddle.F(straddle.ChargeNewParamsConsentTypeInternet),
 		Currency:    straddle.F("currency"),
 		Description: straddle.F("Monthly subscription fee"),
 		Device: straddle.F(shared.DeviceInfoV1Param{
@@ -318,10 +318,10 @@ func TestContextDeadline(t *testing.T) {
 		)
 		_, err := client.Charges.New(deadlineCtx, straddle.ChargeNewParams{
 			Amount: straddle.F(int64(0)),
-			Config: straddle.F(shared.ChargeConfigurationV1Param{
-				BalanceCheck: straddle.F(shared.ChargeConfigurationV1BalanceCheckRequired),
+			Config: straddle.F(straddle.ChargeNewParamsConfig{
+				BalanceCheck: straddle.F(straddle.ChargeNewParamsConfigBalanceCheckRequired),
 			}),
-			ConsentType: straddle.F(shared.ConsentTypeV1Internet),
+			ConsentType: straddle.F(straddle.ChargeNewParamsConsentTypeInternet),
 			Currency:    straddle.F("currency"),
 			Description: straddle.F("Monthly subscription fee"),
 			Device: straddle.F(shared.DeviceInfoV1Param{

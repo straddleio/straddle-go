@@ -11,7 +11,6 @@ import (
 	"github.com/stainless-sdks/straddle-go"
 	"github.com/stainless-sdks/straddle-go/internal/testutil"
 	"github.com/stainless-sdks/straddle-go/option"
-	"github.com/stainless-sdks/straddle-go/shared"
 )
 
 func TestPaykeyListWithOptionalParams(t *testing.T) {
@@ -31,8 +30,8 @@ func TestPaykeyListWithOptionalParams(t *testing.T) {
 		PageNumber:        straddle.F(int64(0)),
 		PageSize:          straddle.F(int64(0)),
 		SortBy:            straddle.F(straddle.PaykeyListParamsSortByInstitutionName),
-		SortOrder:         straddle.F(shared.SortOrderAsc),
-		Status:            straddle.F([]shared.PaykeyStatusV1{shared.PaykeyStatusV1Pending}),
+		SortOrder:         straddle.F(straddle.PaykeyListParamsSortOrderAsc),
+		Status:            straddle.F([]straddle.PaykeyListParamsStatus{straddle.PaykeyListParamsStatusPending}),
 		CorrelationID:     straddle.F("Correlation-Id"),
 		RequestID:         straddle.F("Request-Id"),
 		StraddleAccountID: straddle.F("182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e"),

@@ -24,7 +24,6 @@ type Client struct {
 	FundingEvents *FundingEventService
 	Payments      *PaymentService
 	Payouts       *PayoutService
-	Reports       *ReportService
 }
 
 // NewClient generates a new client with the default option read from the
@@ -48,7 +47,6 @@ func NewClient(opts ...option.RequestOption) (r *Client) {
 	r.FundingEvents = NewFundingEventService(opts...)
 	r.Payments = NewPaymentService(opts...)
 	r.Payouts = NewPayoutService(opts...)
-	r.Reports = NewReportService(opts...)
 
 	return
 }

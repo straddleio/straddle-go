@@ -12,7 +12,6 @@ import (
 	"github.com/stainless-sdks/straddle-go"
 	"github.com/stainless-sdks/straddle-go/internal/testutil"
 	"github.com/stainless-sdks/straddle-go/option"
-	"github.com/stainless-sdks/straddle-go/shared"
 )
 
 func TestEmbedAccountNewWithOptionalParams(t *testing.T) {
@@ -30,7 +29,7 @@ func TestEmbedAccountNewWithOptionalParams(t *testing.T) {
 	_, err := client.Embed.Accounts.New(context.TODO(), straddle.EmbedAccountNewParams{
 		AccessLevel: straddle.F(straddle.EmbedAccountNewParamsAccessLevelStandard),
 		AccountType: straddle.F(straddle.EmbedAccountNewParamsAccountTypeBusiness),
-		BusinessProfile: straddle.F(shared.BusinessProfileV1Param{
+		BusinessProfile: straddle.F(straddle.BusinessProfileV1Param{
 			Name:    straddle.F("name"),
 			Website: straddle.F("https://example.com"),
 			Address: straddle.F(straddle.AddressV1Param{
@@ -90,7 +89,7 @@ func TestEmbedAccountUpdateWithOptionalParams(t *testing.T) {
 		context.TODO(),
 		"182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e",
 		straddle.EmbedAccountUpdateParams{
-			BusinessProfile: straddle.F(shared.BusinessProfileV1Param{
+			BusinessProfile: straddle.F(straddle.BusinessProfileV1Param{
 				Name:    straddle.F("name"),
 				Website: straddle.F("https://example.com"),
 				Address: straddle.F(straddle.AddressV1Param{
@@ -209,9 +208,9 @@ func TestEmbedAccountOnboardWithOptionalParams(t *testing.T) {
 		context.TODO(),
 		"182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e",
 		straddle.EmbedAccountOnboardParams{
-			TermsOfService: straddle.F(shared.TermsOfServiceV1Param{
+			TermsOfService: straddle.F(straddle.TermsOfServiceV1Param{
 				AcceptedDate:      straddle.F(time.Now()),
-				AgreementType:     straddle.F(shared.TermsOfServiceV1AgreementTypeEmbedded),
+				AgreementType:     straddle.F(straddle.TermsOfServiceV1AgreementTypeEmbedded),
 				AcceptedIP:        straddle.F("accepted_ip"),
 				AcceptedUserAgent: straddle.F("accepted_user_agent"),
 				AgreementURL:      straddle.F("agreement_url"),
