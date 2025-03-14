@@ -163,7 +163,7 @@ type CustomerReviewV1DataCustomerDetails struct {
 	UpdatedAt time.Time         `json:"updated_at,required" format:"date-time"`
 	Address   CustomerAddressV1 `json:"address,nullable"`
 	// Compliance profile for individual customers
-	ComplianceProfile CustomerReviewV1DataCustomerDetailsComplianceProfile `json:"compliance_profile"`
+	ComplianceProfile CustomerReviewV1DataCustomerDetailsComplianceProfile `json:"compliance_profile,nullable"`
 	Device            CustomerReviewV1DataCustomerDetailsDevice            `json:"device"`
 	// Unique identifier for the customer in your database, used for cross-referencing
 	// between Straddle and your systems.
@@ -237,7 +237,7 @@ func (r CustomerReviewV1DataCustomerDetailsType) IsKnown() bool {
 
 // Compliance profile for individual customers
 type CustomerReviewV1DataCustomerDetailsComplianceProfile struct {
-	// This field can have the runtime type of [time.Time], [string].
+	// This field can have the runtime type of [string], [time.Time].
 	Dob interface{} `json:"dob"`
 	// Full 9-digit Employer Identification Number for businesses. This data is
 	// required to trigger Patriot Act compliant Know Your Business (KYB) verification.
@@ -246,8 +246,10 @@ type CustomerReviewV1DataCustomerDetailsComplianceProfile struct {
 	// The official name of the business. This name should be correlated with the ein
 	// value. Only valid where customer type is 'business'.
 	LegalBusinessName string `json:"legal_business_name,nullable"`
-	// Social Security Number in the format XXX-XX-XXXX.
-	Ssn string `json:"ssn,nullable"`
+	// Full 9-digit Social Security Number or government identifier for individuals.
+	// This data is required to trigger Patriot Act compliant KYC verification.
+	// Required if DOB is provided. Only valid where customer type is 'individual'.
+	Ssn string `json:"ssn,nullable" format:"***-**-****"`
 	// URL of the company's official website. Only valid where customer type is
 	// 'business'.
 	Website string                                                   `json:"website,nullable"`
@@ -284,6 +286,7 @@ func (r *CustomerReviewV1DataCustomerDetailsComplianceProfile) UnmarshalJSON(dat
 // interface which you can cast to the specific types for more type safety.
 //
 // Possible runtime types of the union are
+// [CustomerReviewV1DataCustomerDetailsComplianceProfileObject],
 // [CustomerReviewV1DataCustomerDetailsComplianceProfileIndividualComplianceProfile],
 // [CustomerReviewV1DataCustomerDetailsComplianceProfileBusinessComplianceProfile].
 func (r CustomerReviewV1DataCustomerDetailsComplianceProfile) AsUnion() CustomerReviewV1DataCustomerDetailsComplianceProfileUnion {
@@ -292,7 +295,7 @@ func (r CustomerReviewV1DataCustomerDetailsComplianceProfile) AsUnion() Customer
 
 // Compliance profile for individual customers
 //
-// Union satisfied by
+// Union satisfied by [CustomerReviewV1DataCustomerDetailsComplianceProfileObject],
 // [CustomerReviewV1DataCustomerDetailsComplianceProfileIndividualComplianceProfile]
 // or
 // [CustomerReviewV1DataCustomerDetailsComplianceProfileBusinessComplianceProfile].
@@ -306,6 +309,10 @@ func init() {
 		"",
 		apijson.UnionVariant{
 			TypeFilter: gjson.JSON,
+			Type:       reflect.TypeOf(CustomerReviewV1DataCustomerDetailsComplianceProfileObject{}),
+		},
+		apijson.UnionVariant{
+			TypeFilter: gjson.JSON,
 			Type:       reflect.TypeOf(CustomerReviewV1DataCustomerDetailsComplianceProfileIndividualComplianceProfile{}),
 		},
 		apijson.UnionVariant{
@@ -313,6 +320,53 @@ func init() {
 			Type:       reflect.TypeOf(CustomerReviewV1DataCustomerDetailsComplianceProfileBusinessComplianceProfile{}),
 		},
 	)
+}
+
+type CustomerReviewV1DataCustomerDetailsComplianceProfileObject struct {
+	// Date of birth for individual customers in ISO 8601 format (YYYY-MM-DD). This
+	// data is required to trigger Patriot Act compliant Know Your Customer (KYC)
+	// verification. Required if SSN is provided. Only valid where customer type is
+	// 'individual'.
+	Dob string `json:"dob,nullable" format:"****-**-**"`
+	// Full 9-digit Employer Identification Number for businesses. This data is
+	// required to trigger Patriot Act compliant Know Your Business (KYB) verification.
+	// Only valid where customer type is 'business'.
+	Ein string `json:"ein,nullable" format:"**-*******"`
+	// The official name of the business. This name should be correlated with the ein
+	// value. Only valid where customer type is 'business'.
+	LegalBusinessName string `json:"legal_business_name,nullable"`
+	// Full 9-digit Social Security Number or government identifier for individuals.
+	// This data is required to trigger Patriot Act compliant KYC verification.
+	// Required if DOB is provided. Only valid where customer type is 'individual'.
+	Ssn string `json:"ssn,nullable" format:"***-**-****"`
+	// URL of the company's official website. Only valid where customer type is
+	// 'business'.
+	Website string                                                         `json:"website,nullable"`
+	JSON    customerReviewV1DataCustomerDetailsComplianceProfileObjectJSON `json:"-"`
+}
+
+// customerReviewV1DataCustomerDetailsComplianceProfileObjectJSON contains the JSON
+// metadata for the struct
+// [CustomerReviewV1DataCustomerDetailsComplianceProfileObject]
+type customerReviewV1DataCustomerDetailsComplianceProfileObjectJSON struct {
+	Dob               apijson.Field
+	Ein               apijson.Field
+	LegalBusinessName apijson.Field
+	Ssn               apijson.Field
+	Website           apijson.Field
+	raw               string
+	ExtraFields       map[string]apijson.Field
+}
+
+func (r *CustomerReviewV1DataCustomerDetailsComplianceProfileObject) UnmarshalJSON(data []byte) (err error) {
+	return apijson.UnmarshalRoot(data, r)
+}
+
+func (r customerReviewV1DataCustomerDetailsComplianceProfileObjectJSON) RawJSON() string {
+	return r.raw
+}
+
+func (r CustomerReviewV1DataCustomerDetailsComplianceProfileObject) implementsCustomerReviewV1DataCustomerDetailsComplianceProfile() {
 }
 
 // Compliance profile for individual customers
