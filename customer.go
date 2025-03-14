@@ -583,7 +583,7 @@ func (r CustomerUnmaskedV1DataType) IsKnown() bool {
 
 // Compliance profile for individual customers
 type CustomerUnmaskedV1DataComplianceProfile struct {
-	// This field can have the runtime type of [time.Time], [string].
+	// This field can have the runtime type of [string], [time.Time].
 	Dob interface{} `json:"dob"`
 	// Full 9-digit Employer Identification Number for businesses. This data is
 	// required to trigger Patriot Act compliant KYB verification. Only valid where
@@ -592,8 +592,10 @@ type CustomerUnmaskedV1DataComplianceProfile struct {
 	// The official name of the business. This name should be correlated with the ein
 	// value. Only valid where customer type is 'business'.
 	LegalBusinessName string `json:"legal_business_name,nullable"`
-	// Social Security Number in the format XXX-XX-XXXX.
-	Ssn string `json:"ssn,nullable"`
+	// Full 9-digit Social Security Number or government identifier for individuals.
+	// This data is required to trigger Patriot Act compliant KYC verification.
+	// Required if DOB is provided. Only valid where customer type is 'individual'.
+	Ssn string `json:"ssn,nullable" format:"***-**-****"`
 	// URL of the company's official website.
 	Website string                                      `json:"website,nullable"`
 	JSON    customerUnmaskedV1DataComplianceProfileJSON `json:"-"`
@@ -629,6 +631,7 @@ func (r *CustomerUnmaskedV1DataComplianceProfile) UnmarshalJSON(data []byte) (er
 // you can cast to the specific types for more type safety.
 //
 // Possible runtime types of the union are
+// [CustomerUnmaskedV1DataComplianceProfileObject],
 // [CustomerUnmaskedV1DataComplianceProfileIndividualComplianceProfile],
 // [CustomerUnmaskedV1DataComplianceProfileBusinessComplianceProfile].
 func (r CustomerUnmaskedV1DataComplianceProfile) AsUnion() CustomerUnmaskedV1DataComplianceProfileUnion {
@@ -637,7 +640,7 @@ func (r CustomerUnmaskedV1DataComplianceProfile) AsUnion() CustomerUnmaskedV1Dat
 
 // Compliance profile for individual customers
 //
-// Union satisfied by
+// Union satisfied by [CustomerUnmaskedV1DataComplianceProfileObject],
 // [CustomerUnmaskedV1DataComplianceProfileIndividualComplianceProfile] or
 // [CustomerUnmaskedV1DataComplianceProfileBusinessComplianceProfile].
 type CustomerUnmaskedV1DataComplianceProfileUnion interface {
@@ -650,6 +653,10 @@ func init() {
 		"",
 		apijson.UnionVariant{
 			TypeFilter: gjson.JSON,
+			Type:       reflect.TypeOf(CustomerUnmaskedV1DataComplianceProfileObject{}),
+		},
+		apijson.UnionVariant{
+			TypeFilter: gjson.JSON,
 			Type:       reflect.TypeOf(CustomerUnmaskedV1DataComplianceProfileIndividualComplianceProfile{}),
 		},
 		apijson.UnionVariant{
@@ -657,6 +664,50 @@ func init() {
 			Type:       reflect.TypeOf(CustomerUnmaskedV1DataComplianceProfileBusinessComplianceProfile{}),
 		},
 	)
+}
+
+type CustomerUnmaskedV1DataComplianceProfileObject struct {
+	// Date of birth for individual customers in ISO 8601 format (YYYY-MM-DD). This
+	// data is required to trigger Patriot Act compliant KYC verification. Required if
+	// SSN is provided. Only valid where customer type is 'individual'.
+	Dob string `json:"dob,nullable" format:"****-**-**"`
+	// Full 9-digit Employer Identification Number for businesses. This data is
+	// required to trigger Patriot Act compliant KYB verification. Only valid where
+	// customer type is 'business'.
+	Ein string `json:"ein,nullable" format:"**-*******"`
+	// The official name of the business. This name should be correlated with the ein
+	// value. Only valid where customer type is 'business'.
+	LegalBusinessName string `json:"legal_business_name,nullable"`
+	// Full 9-digit Social Security Number or government identifier for individuals.
+	// This data is required to trigger Patriot Act compliant KYC verification.
+	// Required if DOB is provided. Only valid where customer type is 'individual'.
+	Ssn string `json:"ssn,nullable" format:"***-**-****"`
+	// URL of the company's official website.
+	Website string                                            `json:"website,nullable"`
+	JSON    customerUnmaskedV1DataComplianceProfileObjectJSON `json:"-"`
+}
+
+// customerUnmaskedV1DataComplianceProfileObjectJSON contains the JSON metadata for
+// the struct [CustomerUnmaskedV1DataComplianceProfileObject]
+type customerUnmaskedV1DataComplianceProfileObjectJSON struct {
+	Dob               apijson.Field
+	Ein               apijson.Field
+	LegalBusinessName apijson.Field
+	Ssn               apijson.Field
+	Website           apijson.Field
+	raw               string
+	ExtraFields       map[string]apijson.Field
+}
+
+func (r *CustomerUnmaskedV1DataComplianceProfileObject) UnmarshalJSON(data []byte) (err error) {
+	return apijson.UnmarshalRoot(data, r)
+}
+
+func (r customerUnmaskedV1DataComplianceProfileObjectJSON) RawJSON() string {
+	return r.raw
+}
+
+func (r CustomerUnmaskedV1DataComplianceProfileObject) implementsCustomerUnmaskedV1DataComplianceProfile() {
 }
 
 // Compliance profile for individual customers
@@ -818,7 +869,7 @@ type CustomerV1Data struct {
 	UpdatedAt time.Time         `json:"updated_at,required" format:"date-time"`
 	Address   CustomerAddressV1 `json:"address,nullable"`
 	// Compliance profile for individual customers
-	ComplianceProfile CustomerV1DataComplianceProfile `json:"compliance_profile"`
+	ComplianceProfile CustomerV1DataComplianceProfile `json:"compliance_profile,nullable"`
 	Device            CustomerV1DataDevice            `json:"device"`
 	// Unique identifier for the customer in your database, used for cross-referencing
 	// between Straddle and your systems.
@@ -891,7 +942,7 @@ func (r CustomerV1DataType) IsKnown() bool {
 
 // Compliance profile for individual customers
 type CustomerV1DataComplianceProfile struct {
-	// This field can have the runtime type of [time.Time], [string].
+	// This field can have the runtime type of [string], [time.Time].
 	Dob interface{} `json:"dob"`
 	// Full 9-digit Employer Identification Number for businesses. This data is
 	// required to trigger Patriot Act compliant Know Your Business (KYB) verification.
@@ -900,8 +951,10 @@ type CustomerV1DataComplianceProfile struct {
 	// The official name of the business. This name should be correlated with the ein
 	// value. Only valid where customer type is 'business'.
 	LegalBusinessName string `json:"legal_business_name,nullable"`
-	// Social Security Number in the format XXX-XX-XXXX.
-	Ssn string `json:"ssn,nullable"`
+	// Full 9-digit Social Security Number or government identifier for individuals.
+	// This data is required to trigger Patriot Act compliant KYC verification.
+	// Required if DOB is provided. Only valid where customer type is 'individual'.
+	Ssn string `json:"ssn,nullable" format:"***-**-****"`
 	// URL of the company's official website. Only valid where customer type is
 	// 'business'.
 	Website string                              `json:"website,nullable"`
@@ -937,7 +990,7 @@ func (r *CustomerV1DataComplianceProfile) UnmarshalJSON(data []byte) (err error)
 // AsUnion returns a [CustomerV1DataComplianceProfileUnion] interface which you can
 // cast to the specific types for more type safety.
 //
-// Possible runtime types of the union are
+// Possible runtime types of the union are [CustomerV1DataComplianceProfileObject],
 // [CustomerV1DataComplianceProfileIndividualComplianceProfile],
 // [CustomerV1DataComplianceProfileBusinessComplianceProfile].
 func (r CustomerV1DataComplianceProfile) AsUnion() CustomerV1DataComplianceProfileUnion {
@@ -946,8 +999,9 @@ func (r CustomerV1DataComplianceProfile) AsUnion() CustomerV1DataComplianceProfi
 
 // Compliance profile for individual customers
 //
-// Union satisfied by [CustomerV1DataComplianceProfileIndividualComplianceProfile]
-// or [CustomerV1DataComplianceProfileBusinessComplianceProfile].
+// Union satisfied by [CustomerV1DataComplianceProfileObject],
+// [CustomerV1DataComplianceProfileIndividualComplianceProfile] or
+// [CustomerV1DataComplianceProfileBusinessComplianceProfile].
 type CustomerV1DataComplianceProfileUnion interface {
 	implementsCustomerV1DataComplianceProfile()
 }
@@ -958,6 +1012,10 @@ func init() {
 		"",
 		apijson.UnionVariant{
 			TypeFilter: gjson.JSON,
+			Type:       reflect.TypeOf(CustomerV1DataComplianceProfileObject{}),
+		},
+		apijson.UnionVariant{
+			TypeFilter: gjson.JSON,
 			Type:       reflect.TypeOf(CustomerV1DataComplianceProfileIndividualComplianceProfile{}),
 		},
 		apijson.UnionVariant{
@@ -966,6 +1024,51 @@ func init() {
 		},
 	)
 }
+
+type CustomerV1DataComplianceProfileObject struct {
+	// Date of birth for individual customers in ISO 8601 format (YYYY-MM-DD). This
+	// data is required to trigger Patriot Act compliant Know Your Customer (KYC)
+	// verification. Required if SSN is provided. Only valid where customer type is
+	// 'individual'.
+	Dob string `json:"dob,nullable" format:"****-**-**"`
+	// Full 9-digit Employer Identification Number for businesses. This data is
+	// required to trigger Patriot Act compliant Know Your Business (KYB) verification.
+	// Only valid where customer type is 'business'.
+	Ein string `json:"ein,nullable" format:"**-*******"`
+	// The official name of the business. This name should be correlated with the ein
+	// value. Only valid where customer type is 'business'.
+	LegalBusinessName string `json:"legal_business_name,nullable"`
+	// Full 9-digit Social Security Number or government identifier for individuals.
+	// This data is required to trigger Patriot Act compliant KYC verification.
+	// Required if DOB is provided. Only valid where customer type is 'individual'.
+	Ssn string `json:"ssn,nullable" format:"***-**-****"`
+	// URL of the company's official website. Only valid where customer type is
+	// 'business'.
+	Website string                                    `json:"website,nullable"`
+	JSON    customerV1DataComplianceProfileObjectJSON `json:"-"`
+}
+
+// customerV1DataComplianceProfileObjectJSON contains the JSON metadata for the
+// struct [CustomerV1DataComplianceProfileObject]
+type customerV1DataComplianceProfileObjectJSON struct {
+	Dob               apijson.Field
+	Ein               apijson.Field
+	LegalBusinessName apijson.Field
+	Ssn               apijson.Field
+	Website           apijson.Field
+	raw               string
+	ExtraFields       map[string]apijson.Field
+}
+
+func (r *CustomerV1DataComplianceProfileObject) UnmarshalJSON(data []byte) (err error) {
+	return apijson.UnmarshalRoot(data, r)
+}
+
+func (r customerV1DataComplianceProfileObjectJSON) RawJSON() string {
+	return r.raw
+}
+
+func (r CustomerV1DataComplianceProfileObject) implementsCustomerV1DataComplianceProfile() {}
 
 // Compliance profile for individual customers
 type CustomerV1DataComplianceProfileIndividualComplianceProfile struct {
@@ -1191,8 +1294,10 @@ type CustomerNewParamsComplianceProfile struct {
 	// The official name of the business. This name should be correlated with the ein
 	// value. Only valid where customer type is 'business'.
 	LegalBusinessName param.Field[string] `json:"legal_business_name"`
-	// Social Security Number in the format XXX-XX-XXXX.
-	Ssn param.Field[string] `json:"ssn"`
+	// Full 9-digit Social Security Number or government identifier for individuals.
+	// This data is required to trigger Patriot Act compliant KYC verification.
+	// Required if DOB is provided. Only valid where customer type is 'individual'.
+	Ssn param.Field[string] `json:"ssn" format:"***-**-****"`
 	// URL of the company's official website.
 	Website param.Field[string] `json:"website"`
 }
@@ -1206,11 +1311,39 @@ func (r CustomerNewParamsComplianceProfile) implementsCustomerNewParamsComplianc
 // An object containing the customer's compliance profile. This is optional, but if
 // provided, all required fields must be present for the appropriate customer type.
 //
-// Satisfied by [CustomerNewParamsComplianceProfileIndividualComplianceProfile],
+// Satisfied by [CustomerNewParamsComplianceProfileObject],
+// [CustomerNewParamsComplianceProfileIndividualComplianceProfile],
 // [CustomerNewParamsComplianceProfileBusinessComplianceProfile],
 // [CustomerNewParamsComplianceProfile].
 type CustomerNewParamsComplianceProfileUnion interface {
 	implementsCustomerNewParamsComplianceProfileUnion()
+}
+
+type CustomerNewParamsComplianceProfileObject struct {
+	// Date of birth for individual customers in ISO 8601 format (YYYY-MM-DD). This
+	// data is required to trigger Patriot Act compliant KYC verification. Required if
+	// SSN is provided. Only valid where customer type is 'individual'.
+	Dob param.Field[string] `json:"dob" format:"****-**-**"`
+	// Full 9-digit Employer Identification Number for businesses. This data is
+	// required to trigger Patriot Act compliant KYB verification. Only valid where
+	// customer type is 'business'.
+	Ein param.Field[string] `json:"ein" format:"**-*******"`
+	// The official name of the business. This name should be correlated with the ein
+	// value. Only valid where customer type is 'business'.
+	LegalBusinessName param.Field[string] `json:"legal_business_name"`
+	// Full 9-digit Social Security Number or government identifier for individuals.
+	// This data is required to trigger Patriot Act compliant KYC verification.
+	// Required if DOB is provided. Only valid where customer type is 'individual'.
+	Ssn param.Field[string] `json:"ssn" format:"***-**-****"`
+	// URL of the company's official website.
+	Website param.Field[string] `json:"website"`
+}
+
+func (r CustomerNewParamsComplianceProfileObject) MarshalJSON() (data []byte, err error) {
+	return apijson.MarshalRoot(r)
+}
+
+func (r CustomerNewParamsComplianceProfileObject) implementsCustomerNewParamsComplianceProfileUnion() {
 }
 
 // Compliance profile for individual customers
@@ -1320,8 +1453,10 @@ type CustomerUpdateParamsComplianceProfile struct {
 	// The official name of the business. This name should be correlated with the ein
 	// value. Only valid where customer type is 'business'.
 	LegalBusinessName param.Field[string] `json:"legal_business_name"`
-	// Social Security Number in the format XXX-XX-XXXX.
-	Ssn param.Field[string] `json:"ssn"`
+	// Full 9-digit Social Security Number or government identifier for individuals.
+	// This data is required to trigger Patriot Act compliant KYC verification.
+	// Required if DOB is provided. Only valid where customer type is 'individual'.
+	Ssn param.Field[string] `json:"ssn" format:"***-**-****"`
 	// URL of the company's official website.
 	Website param.Field[string] `json:"website"`
 }
@@ -1335,11 +1470,39 @@ func (r CustomerUpdateParamsComplianceProfile) implementsCustomerUpdateParamsCom
 
 // Compliance profile for individual customers
 //
-// Satisfied by [CustomerUpdateParamsComplianceProfileIndividualComplianceProfile],
+// Satisfied by [CustomerUpdateParamsComplianceProfileObject],
+// [CustomerUpdateParamsComplianceProfileIndividualComplianceProfile],
 // [CustomerUpdateParamsComplianceProfileBusinessComplianceProfile],
 // [CustomerUpdateParamsComplianceProfile].
 type CustomerUpdateParamsComplianceProfileUnion interface {
 	implementsCustomerUpdateParamsComplianceProfileUnion()
+}
+
+type CustomerUpdateParamsComplianceProfileObject struct {
+	// Date of birth for individual customers in ISO 8601 format (YYYY-MM-DD). This
+	// data is required to trigger Patriot Act compliant KYC verification. Required if
+	// SSN is provided. Only valid where customer type is 'individual'.
+	Dob param.Field[string] `json:"dob" format:"****-**-**"`
+	// Full 9-digit Employer Identification Number for businesses. This data is
+	// required to trigger Patriot Act compliant KYB verification. Only valid where
+	// customer type is 'business'.
+	Ein param.Field[string] `json:"ein" format:"**-*******"`
+	// The official name of the business. This name should be correlated with the ein
+	// value. Only valid where customer type is 'business'.
+	LegalBusinessName param.Field[string] `json:"legal_business_name"`
+	// Full 9-digit Social Security Number or government identifier for individuals.
+	// This data is required to trigger Patriot Act compliant KYC verification.
+	// Required if DOB is provided. Only valid where customer type is 'individual'.
+	Ssn param.Field[string] `json:"ssn" format:"***-**-****"`
+	// URL of the company's official website.
+	Website param.Field[string] `json:"website"`
+}
+
+func (r CustomerUpdateParamsComplianceProfileObject) MarshalJSON() (data []byte, err error) {
+	return apijson.MarshalRoot(r)
+}
+
+func (r CustomerUpdateParamsComplianceProfileObject) implementsCustomerUpdateParamsComplianceProfileUnion() {
 }
 
 // Compliance profile for individual customers
