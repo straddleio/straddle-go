@@ -24,6 +24,7 @@ type Client struct {
 	FundingEvents *FundingEventService
 	Payments      *PaymentService
 	Payouts       *PayoutService
+	Reports       *ReportService
 }
 
 // DefaultClientOptions read from the environment (STRADDLE_API_KEY). This should
@@ -53,6 +54,7 @@ func NewClient(opts ...option.RequestOption) (r *Client) {
 	r.FundingEvents = NewFundingEventService(opts...)
 	r.Payments = NewPaymentService(opts...)
 	r.Payouts = NewPayoutService(opts...)
+	r.Reports = NewReportService(opts...)
 
 	return
 }

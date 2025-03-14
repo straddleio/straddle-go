@@ -167,6 +167,29 @@ func (r *CustomerService) Get(ctx context.Context, id string, query CustomerGetP
 	return
 }
 
+// Updates the decision of a customer's identity validation. This endpoint allows
+// you to modify the outcome of a customer decision and is useful for correcting or
+// updating the status of a customer's verification.
+func (r *CustomerService) RefreshReview(ctx context.Context, id string, body CustomerRefreshReviewParams, opts ...option.RequestOption) (res *CustomerV1, err error) {
+	if body.CorrelationID.Present {
+		opts = append(opts, option.WithHeader("Correlation-Id", fmt.Sprintf("%s", body.CorrelationID)))
+	}
+	if body.RequestID.Present {
+		opts = append(opts, option.WithHeader("Request-Id", fmt.Sprintf("%s", body.RequestID)))
+	}
+	if body.StraddleAccountID.Present {
+		opts = append(opts, option.WithHeader("Straddle-Account-Id", fmt.Sprintf("%s", body.StraddleAccountID)))
+	}
+	opts = append(r.Options[:], opts...)
+	if id == "" {
+		err = errors.New("missing required id parameter")
+		return
+	}
+	path := fmt.Sprintf("v1/customers/%s/refresh_review", id)
+	err = requestconfig.ExecuteNewRequest(ctx, http.MethodPut, path, nil, &res, opts...)
+	return
+}
+
 // Retrieves the unmasked details, including PII, of an existing customer. Supply
 // the unique customer ID that was returned from your 'create customer' request,
 // and Straddle will return the corresponding customer information. This endpoint
@@ -1475,6 +1498,12 @@ type CustomerDeleteParams struct {
 }
 
 type CustomerGetParams struct {
+	CorrelationID     param.Field[string] `header:"Correlation-Id"`
+	RequestID         param.Field[string] `header:"Request-Id"`
+	StraddleAccountID param.Field[string] `header:"Straddle-Account-Id" format:"uuid"`
+}
+
+type CustomerRefreshReviewParams struct {
 	CorrelationID     param.Field[string] `header:"Correlation-Id"`
 	RequestID         param.Field[string] `header:"Request-Id"`
 	StraddleAccountID param.Field[string] `header:"Straddle-Account-Id" format:"uuid"`
