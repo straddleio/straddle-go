@@ -647,8 +647,10 @@ type CustomerReviewV1DataIdentityDetailsWatchList struct {
 	Codes    []string                                             `json:"codes,nullable"`
 	Decision CustomerReviewV1DataIdentityDetailsWatchListDecision `json:"decision"`
 	// Information about any matches found during screening.
-	Matched []string                                         `json:"matched,nullable"`
-	JSON    customerReviewV1DataIdentityDetailsWatchListJSON `json:"-"`
+	Matched []string `json:"matched,nullable"`
+	// Information about any matches found during screening.
+	Matches []CustomerReviewV1DataIdentityDetailsWatchListMatch `json:"matches,nullable"`
+	JSON    customerReviewV1DataIdentityDetailsWatchListJSON    `json:"-"`
 }
 
 // customerReviewV1DataIdentityDetailsWatchListJSON contains the JSON metadata for
@@ -657,6 +659,7 @@ type customerReviewV1DataIdentityDetailsWatchListJSON struct {
 	Codes       apijson.Field
 	Decision    apijson.Field
 	Matched     apijson.Field
+	Matches     apijson.Field
 	raw         string
 	ExtraFields map[string]apijson.Field
 }
@@ -680,6 +683,53 @@ const (
 func (r CustomerReviewV1DataIdentityDetailsWatchListDecision) IsKnown() bool {
 	switch r {
 	case CustomerReviewV1DataIdentityDetailsWatchListDecisionAccept, CustomerReviewV1DataIdentityDetailsWatchListDecisionReject, CustomerReviewV1DataIdentityDetailsWatchListDecisionReview:
+		return true
+	}
+	return false
+}
+
+type CustomerReviewV1DataIdentityDetailsWatchListMatch struct {
+	Correlation CustomerReviewV1DataIdentityDetailsWatchListMatchesCorrelation `json:"correlation,required"`
+	// The name of the list the match was found.
+	ListName string `json:"list_name,required"`
+	// Data fields that matched.
+	MatchFields []string `json:"match_fields,required"`
+	// Relevent Urls to review.
+	URLs []string                                              `json:"urls,required"`
+	JSON customerReviewV1DataIdentityDetailsWatchListMatchJSON `json:"-"`
+}
+
+// customerReviewV1DataIdentityDetailsWatchListMatchJSON contains the JSON metadata
+// for the struct [CustomerReviewV1DataIdentityDetailsWatchListMatch]
+type customerReviewV1DataIdentityDetailsWatchListMatchJSON struct {
+	Correlation apijson.Field
+	ListName    apijson.Field
+	MatchFields apijson.Field
+	URLs        apijson.Field
+	raw         string
+	ExtraFields map[string]apijson.Field
+}
+
+func (r *CustomerReviewV1DataIdentityDetailsWatchListMatch) UnmarshalJSON(data []byte) (err error) {
+	return apijson.UnmarshalRoot(data, r)
+}
+
+func (r customerReviewV1DataIdentityDetailsWatchListMatchJSON) RawJSON() string {
+	return r.raw
+}
+
+type CustomerReviewV1DataIdentityDetailsWatchListMatchesCorrelation string
+
+const (
+	CustomerReviewV1DataIdentityDetailsWatchListMatchesCorrelationLowConfidence  CustomerReviewV1DataIdentityDetailsWatchListMatchesCorrelation = "low_confidence"
+	CustomerReviewV1DataIdentityDetailsWatchListMatchesCorrelationPotentialMatch CustomerReviewV1DataIdentityDetailsWatchListMatchesCorrelation = "potential_match"
+	CustomerReviewV1DataIdentityDetailsWatchListMatchesCorrelationLikelyMatch    CustomerReviewV1DataIdentityDetailsWatchListMatchesCorrelation = "likely_match"
+	CustomerReviewV1DataIdentityDetailsWatchListMatchesCorrelationHighConfidence CustomerReviewV1DataIdentityDetailsWatchListMatchesCorrelation = "high_confidence"
+)
+
+func (r CustomerReviewV1DataIdentityDetailsWatchListMatchesCorrelation) IsKnown() bool {
+	switch r {
+	case CustomerReviewV1DataIdentityDetailsWatchListMatchesCorrelationLowConfidence, CustomerReviewV1DataIdentityDetailsWatchListMatchesCorrelationPotentialMatch, CustomerReviewV1DataIdentityDetailsWatchListMatchesCorrelationLikelyMatch, CustomerReviewV1DataIdentityDetailsWatchListMatchesCorrelationHighConfidence:
 		return true
 	}
 	return false
