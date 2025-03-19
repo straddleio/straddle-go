@@ -11,15 +11,15 @@ import (
 
 // Information about the customer associated with the charge or payout.
 type CustomerDetailsV1 struct {
-	// Unique identifier for the customer.
+	// Unique identifier for the customer
 	ID string `json:"id,required" format:"uuid"`
-	// The type of customer.
+	// The type of customer
 	CustomerType CustomerDetailsV1CustomerType `json:"customer_type,required"`
-	// Email.
+	// The customer's email address
 	Email string `json:"email,required"`
-	// The name of the customer.
+	// The name of the customer
 	Name string `json:"name,required"`
-	// Phone.
+	// The customer's phone number in E.164 format
 	Phone string                `json:"phone,required"`
 	JSON  customerDetailsV1JSON `json:"-"`
 }
@@ -44,7 +44,7 @@ func (r customerDetailsV1JSON) RawJSON() string {
 	return r.raw
 }
 
-// The type of customer.
+// The type of customer
 type CustomerDetailsV1CustomerType string
 
 const (
@@ -161,7 +161,8 @@ type PaykeyDetailsV1 struct {
 	ID string `json:"id,required" format:"uuid"`
 	// Unique identifier for the customer associated with the paykey.
 	CustomerID string `json:"customer_id,required" format:"uuid"`
-	// Human-readable label used to represent this paykey in a UI.
+	// Human-readable label that combines the bank name and masked account number to
+	// help easility represent this paykey in a UI
 	Label string `json:"label,required"`
 	// The most recent balance of the bank account associated with the paykey in
 	// dollars.

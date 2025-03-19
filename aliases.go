@@ -14,7 +14,7 @@ type Error = apierror.Error
 // This is an alias to an internal type.
 type CustomerDetailsV1 = shared.CustomerDetailsV1
 
-// The type of customer.
+// The type of customer
 //
 // This is an alias to an internal type.
 type CustomerDetailsV1CustomerType = shared.CustomerDetailsV1CustomerType
