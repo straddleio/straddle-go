@@ -1107,12 +1107,11 @@ type CustomerNewParams struct {
 	// The customer's phone number in E.164 format. Mobile number is preferred.
 	Phone param.Field[string]                `json:"phone,required"`
 	Type  param.Field[CustomerNewParamsType] `json:"type,required"`
-	// An object containing the customer's address. This is optional, but if provided,
-	// all required fields must be present.
+	// An object containing the customer's address. **This is optional.** If used, all
+	// required fields must be present.
 	Address param.Field[CustomerAddressV1Param] `json:"address"`
-	// An object containing the customer's compliance profile. **This is optional**,
-	// but if provided, all required fields must be present for the appropriate
-	// customer type.
+	// An object containing the customer's compliance profile. **This is optional.** If
+	// used, all required fields must be present for the appropriate customer type.
 	ComplianceProfile param.Field[CustomerNewParamsComplianceProfileUnion] `json:"compliance_profile"`
 	// Unique identifier for the customer in your database, used for cross-referencing
 	// between Straddle and your systems.
@@ -1144,9 +1143,8 @@ func (r CustomerNewParamsType) IsKnown() bool {
 	return false
 }
 
-// An object containing the customer's compliance profile. **This is optional**,
-// but if provided, all required fields must be present for the appropriate
-// customer type.
+// An object containing the customer's compliance profile. **This is optional.** If
+// used, all required fields must be present for the appropriate customer type.
 type CustomerNewParamsComplianceProfile struct {
 	// Date of birth (YYYY-MM-DD). Required for Patriot Act-compliant KYC verification.
 	Dob param.Field[time.Time] `json:"dob" format:"date"`
@@ -1169,9 +1167,8 @@ func (r CustomerNewParamsComplianceProfile) MarshalJSON() (data []byte, err erro
 
 func (r CustomerNewParamsComplianceProfile) implementsCustomerNewParamsComplianceProfileUnion() {}
 
-// An object containing the customer's compliance profile. **This is optional**,
-// but if provided, all required fields must be present for the appropriate
-// customer type.
+// An object containing the customer's compliance profile. **This is optional.** If
+// used, all required fields must be present for the appropriate customer type.
 //
 // Satisfied by [CustomerNewParamsComplianceProfileIndividualComplianceProfile],
 // [CustomerNewParamsComplianceProfileBusinessComplianceProfile],
