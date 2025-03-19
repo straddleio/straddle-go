@@ -180,7 +180,8 @@ type PaykeySummaryPagedV1Data struct {
 	ID string `json:"id,required" format:"uuid"`
 	// Timestamp of when the paykey was created.
 	CreatedAt time.Time `json:"created_at,required" format:"date-time"`
-	// Human-readable label used to represent this paykey in a UI.
+	// Human-readable label that combines the bank name and masked account number to
+	// help easility represent this paykey in a UI
 	Label string `json:"label,required"`
 	// The tokenized paykey value. This value is used to create payments and should be
 	// stored securely.
@@ -892,9 +893,10 @@ type PaykeyRevealResponseData struct {
 	ID string `json:"id,required" format:"uuid"`
 	// Timestamp of when the paykey was created.
 	CreatedAt time.Time `json:"created_at,required" format:"date-time"`
-	// Human-readable label used to represent this paykey in a UI.
+	// Human-readable label that combines the bank name and masked account number to
+	// help easility represent this paykey in a UI
 	Label string `json:"label,required"`
-	// The tokenized paykey value. This value is used to create payments and should be
+	// The tokenized paykey value. This token is used to create payments and should be
 	// stored securely.
 	Paykey string                         `json:"paykey,required"`
 	Source PaykeyRevealResponseDataSource `json:"source,required"`
