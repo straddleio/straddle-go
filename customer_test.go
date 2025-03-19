@@ -41,7 +41,7 @@ func TestCustomerNewWithOptionalParams(t *testing.T) {
 			Zip:      straddle.F("94105"),
 			Address2: straddle.F("address2"),
 		}),
-		ComplianceProfile: straddle.F[straddle.CustomerNewParamsComplianceProfileUnion](straddle.CustomerNewParamsComplianceProfileIndividualCustomerComplianceProfile{
+		ComplianceProfile: straddle.F[straddle.CustomerNewParamsComplianceProfileUnion](straddle.CustomerNewParamsComplianceProfileIndividualComplianceProfile{
 			Dob: straddle.F(time.Now()),
 			Ssn: straddle.F("123-45-6789"),
 		}),
@@ -84,13 +84,13 @@ func TestCustomerUpdateWithOptionalParams(t *testing.T) {
 			Phone:  straddle.F("+46991022"),
 			Status: straddle.F(straddle.CustomerUpdateParamsStatusPending),
 			Address: straddle.F(straddle.CustomerAddressV1Param{
-				Address1: straddle.F("123 Main St"),
-				City:     straddle.F("Anytown"),
-				State:    straddle.F("CA"),
-				Zip:      straddle.F("94105"),
-				Address2: straddle.Null[string](),
+				Address1: straddle.F("address1"),
+				City:     straddle.F("city"),
+				State:    straddle.F("SE"),
+				Zip:      straddle.F("21029-1360"),
+				Address2: straddle.F("address2"),
 			}),
-			ComplianceProfile: straddle.F[straddle.CustomerUpdateParamsComplianceProfileUnion](straddle.CustomerUpdateParamsComplianceProfileIndividualCustomerComplianceProfile{
+			ComplianceProfile: straddle.F[straddle.CustomerUpdateParamsComplianceProfileUnion](straddle.CustomerUpdateParamsComplianceProfileIndividualComplianceProfile{
 				Dob: straddle.F(time.Now()),
 				Ssn: straddle.F("123-45-6789"),
 			}),
