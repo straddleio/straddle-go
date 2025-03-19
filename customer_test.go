@@ -39,19 +39,14 @@ func TestCustomerNewWithOptionalParams(t *testing.T) {
 			City:     straddle.F("Anytown"),
 			State:    straddle.F("CA"),
 			Zip:      straddle.F("94105"),
-			Address2: straddle.Null[string](),
+			Address2: straddle.F("address2"),
 		}),
-		ComplianceProfile: straddle.F[straddle.CustomerNewParamsComplianceProfileUnion](straddle.CustomerNewParamsComplianceProfileObject{
-			Dob:               straddle.F("dob"),
-			Ein:               straddle.F("ein"),
-			LegalBusinessName: straddle.F("legal_business_name"),
-			Ssn:               straddle.F("ssn"),
-			Website:           straddle.F("website"),
+		ComplianceProfile: straddle.F[straddle.CustomerNewParamsComplianceProfileUnion](straddle.CustomerNewParamsComplianceProfileIndividualCustomerComplianceProfile{
+			Dob: straddle.F(time.Now()),
+			Ssn: straddle.F("123-45-6789"),
 		}),
-		ExternalID: straddle.F("customer_123"),
-		Metadata: straddle.F(map[string]string{
-			"foo": "string",
-		}),
+		ExternalID:        straddle.F("customer_123"),
+		Metadata:          straddle.F(map[string]string{}),
 		CorrelationID:     straddle.F("Correlation-Id"),
 		RequestID:         straddle.F("Request-Id"),
 		StraddleAccountID: straddle.F("182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e"),
@@ -95,12 +90,9 @@ func TestCustomerUpdateWithOptionalParams(t *testing.T) {
 				Zip:      straddle.F("94105"),
 				Address2: straddle.Null[string](),
 			}),
-			ComplianceProfile: straddle.F[straddle.CustomerUpdateParamsComplianceProfileUnion](straddle.CustomerUpdateParamsComplianceProfileObject{
-				Dob:               straddle.F("dob"),
-				Ein:               straddle.F("ein"),
-				LegalBusinessName: straddle.F("legal_business_name"),
-				Ssn:               straddle.F("ssn"),
-				Website:           straddle.F("website"),
+			ComplianceProfile: straddle.F[straddle.CustomerUpdateParamsComplianceProfileUnion](straddle.CustomerUpdateParamsComplianceProfileIndividualCustomerComplianceProfile{
+				Dob: straddle.F(time.Now()),
+				Ssn: straddle.F("123-45-6789"),
 			}),
 			ExternalID: straddle.F("external_id"),
 			Metadata: straddle.F(map[string]string{

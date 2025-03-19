@@ -150,7 +150,7 @@ func (r *EmbedAccountService) Onboard(ctx context.Context, accountID string, par
 	return
 }
 
-// Simulte the status transitions for sandbox accounts. This endpoint can only be
+// Simulate the status transitions for sandbox accounts. This endpoint can only be
 // used for sandbox accounts.
 func (r *EmbedAccountService) Simulate(ctx context.Context, accountID string, params EmbedAccountSimulateParams, opts ...option.RequestOption) (res *AccountV1, err error) {
 	if params.CorrelationID.Present {
