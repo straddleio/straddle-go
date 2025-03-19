@@ -1111,7 +1111,7 @@ type CustomerNewParams struct {
 	// required fields must be present.
 	Address param.Field[CustomerAddressV1Param] `json:"address"`
 	// An object containing the customer's compliance profile. **This is optional.** If
-	// used, all required fields must be present for the appropriate customer type.
+	// all required fields must be present for the appropriate customer type.
 	ComplianceProfile param.Field[CustomerNewParamsComplianceProfileUnion] `json:"compliance_profile"`
 	// Unique identifier for the customer in your database, used for cross-referencing
 	// between Straddle and your systems.
@@ -1144,7 +1144,7 @@ func (r CustomerNewParamsType) IsKnown() bool {
 }
 
 // An object containing the customer's compliance profile. **This is optional.** If
-// used, all required fields must be present for the appropriate customer type.
+// all required fields must be present for the appropriate customer type.
 type CustomerNewParamsComplianceProfile struct {
 	// Date of birth (YYYY-MM-DD). Required for Patriot Act-compliant KYC verification.
 	Dob param.Field[time.Time] `json:"dob" format:"date"`
@@ -1168,7 +1168,7 @@ func (r CustomerNewParamsComplianceProfile) MarshalJSON() (data []byte, err erro
 func (r CustomerNewParamsComplianceProfile) implementsCustomerNewParamsComplianceProfileUnion() {}
 
 // An object containing the customer's compliance profile. **This is optional.** If
-// used, all required fields must be present for the appropriate customer type.
+// all required fields must be present for the appropriate customer type.
 //
 // Satisfied by [CustomerNewParamsComplianceProfileIndividualComplianceProfile],
 // [CustomerNewParamsComplianceProfileBusinessComplianceProfile],
