@@ -541,8 +541,7 @@ func (r PaykeyUnmaskedV1DataStatus) IsKnown() bool {
 }
 
 type PaykeyUnmaskedV1DataBankData struct {
-	// The bank account number. This value is masked by default for security reasons.
-	// Use the /unmask endpoint to access the unmasked value.
+	// The bank account number
 	AccountNumber string                                  `json:"account_number,required"`
 	AccountType   PaykeyUnmaskedV1DataBankDataAccountType `json:"account_type,required"`
 	// The routing number of the bank account.
