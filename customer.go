@@ -635,8 +635,8 @@ func (r *CustomerUnmaskedV1DataComplianceProfile) UnmarshalJSON(data []byte) (er
 // you can cast to the specific types for more type safety.
 //
 // Possible runtime types of the union are
-// [CustomerUnmaskedV1DataComplianceProfileIndividualCustomerComplianceProfile],
-// [CustomerUnmaskedV1DataComplianceProfileBusinessCustomerComplianceProfile].
+// [CustomerUnmaskedV1DataComplianceProfileIndividualComplianceProfile],
+// [CustomerUnmaskedV1DataComplianceProfileBusinessComplianceProfile].
 func (r CustomerUnmaskedV1DataComplianceProfile) AsUnion() CustomerUnmaskedV1DataComplianceProfileUnion {
 	return r.union
 }
@@ -644,8 +644,8 @@ func (r CustomerUnmaskedV1DataComplianceProfile) AsUnion() CustomerUnmaskedV1Dat
 // Individual PII data required to trigger Patriot Act compliant KYC verification.
 //
 // Union satisfied by
-// [CustomerUnmaskedV1DataComplianceProfileIndividualCustomerComplianceProfile] or
-// [CustomerUnmaskedV1DataComplianceProfileBusinessCustomerComplianceProfile].
+// [CustomerUnmaskedV1DataComplianceProfileIndividualComplianceProfile] or
+// [CustomerUnmaskedV1DataComplianceProfileBusinessComplianceProfile].
 type CustomerUnmaskedV1DataComplianceProfileUnion interface {
 	implementsCustomerUnmaskedV1DataComplianceProfile()
 }
@@ -656,49 +656,49 @@ func init() {
 		"",
 		apijson.UnionVariant{
 			TypeFilter: gjson.JSON,
-			Type:       reflect.TypeOf(CustomerUnmaskedV1DataComplianceProfileIndividualCustomerComplianceProfile{}),
+			Type:       reflect.TypeOf(CustomerUnmaskedV1DataComplianceProfileIndividualComplianceProfile{}),
 		},
 		apijson.UnionVariant{
 			TypeFilter: gjson.JSON,
-			Type:       reflect.TypeOf(CustomerUnmaskedV1DataComplianceProfileBusinessCustomerComplianceProfile{}),
+			Type:       reflect.TypeOf(CustomerUnmaskedV1DataComplianceProfileBusinessComplianceProfile{}),
 		},
 	)
 }
 
 // Individual PII data required to trigger Patriot Act compliant KYC verification.
-type CustomerUnmaskedV1DataComplianceProfileIndividualCustomerComplianceProfile struct {
+type CustomerUnmaskedV1DataComplianceProfileIndividualComplianceProfile struct {
 	// Date of birth (YYYY-MM-DD). Required for Patriot Act-compliant KYC verification.
 	Dob time.Time `json:"dob,required,nullable" format:"date"`
 	// Social Security Number (format XXX-XX-XXXX). Required for Patriot Act-compliant
 	// KYC verification.
-	Ssn  string                                                                         `json:"ssn,required,nullable"`
-	JSON customerUnmaskedV1DataComplianceProfileIndividualCustomerComplianceProfileJSON `json:"-"`
+	Ssn  string                                                                 `json:"ssn,required,nullable"`
+	JSON customerUnmaskedV1DataComplianceProfileIndividualComplianceProfileJSON `json:"-"`
 }
 
-// customerUnmaskedV1DataComplianceProfileIndividualCustomerComplianceProfileJSON
-// contains the JSON metadata for the struct
-// [CustomerUnmaskedV1DataComplianceProfileIndividualCustomerComplianceProfile]
-type customerUnmaskedV1DataComplianceProfileIndividualCustomerComplianceProfileJSON struct {
+// customerUnmaskedV1DataComplianceProfileIndividualComplianceProfileJSON contains
+// the JSON metadata for the struct
+// [CustomerUnmaskedV1DataComplianceProfileIndividualComplianceProfile]
+type customerUnmaskedV1DataComplianceProfileIndividualComplianceProfileJSON struct {
 	Dob         apijson.Field
 	Ssn         apijson.Field
 	raw         string
 	ExtraFields map[string]apijson.Field
 }
 
-func (r *CustomerUnmaskedV1DataComplianceProfileIndividualCustomerComplianceProfile) UnmarshalJSON(data []byte) (err error) {
+func (r *CustomerUnmaskedV1DataComplianceProfileIndividualComplianceProfile) UnmarshalJSON(data []byte) (err error) {
 	return apijson.UnmarshalRoot(data, r)
 }
 
-func (r customerUnmaskedV1DataComplianceProfileIndividualCustomerComplianceProfileJSON) RawJSON() string {
+func (r customerUnmaskedV1DataComplianceProfileIndividualComplianceProfileJSON) RawJSON() string {
 	return r.raw
 }
 
-func (r CustomerUnmaskedV1DataComplianceProfileIndividualCustomerComplianceProfile) implementsCustomerUnmaskedV1DataComplianceProfile() {
+func (r CustomerUnmaskedV1DataComplianceProfileIndividualComplianceProfile) implementsCustomerUnmaskedV1DataComplianceProfile() {
 }
 
 // Business registration data required to trigger Patriot Act compliant KYB
 // verification.
-type CustomerUnmaskedV1DataComplianceProfileBusinessCustomerComplianceProfile struct {
+type CustomerUnmaskedV1DataComplianceProfileBusinessComplianceProfile struct {
 	// Employer Identification Number (format XX-XXXXXXX). Required for Patriot
 	// Act-compliant KYB verification.
 	Ein string `json:"ein,required,nullable"`
@@ -706,14 +706,14 @@ type CustomerUnmaskedV1DataComplianceProfileBusinessCustomerComplianceProfile st
 	// matched against the 'legal_business name'.
 	LegalBusinessName string `json:"legal_business_name,required,nullable"`
 	// Official business website URL. Optional but recommended for enhanced KYB.
-	Website string                                                                       `json:"website,nullable" format:"uri"`
-	JSON    customerUnmaskedV1DataComplianceProfileBusinessCustomerComplianceProfileJSON `json:"-"`
+	Website string                                                               `json:"website,nullable" format:"uri"`
+	JSON    customerUnmaskedV1DataComplianceProfileBusinessComplianceProfileJSON `json:"-"`
 }
 
-// customerUnmaskedV1DataComplianceProfileBusinessCustomerComplianceProfileJSON
-// contains the JSON metadata for the struct
-// [CustomerUnmaskedV1DataComplianceProfileBusinessCustomerComplianceProfile]
-type customerUnmaskedV1DataComplianceProfileBusinessCustomerComplianceProfileJSON struct {
+// customerUnmaskedV1DataComplianceProfileBusinessComplianceProfileJSON contains
+// the JSON metadata for the struct
+// [CustomerUnmaskedV1DataComplianceProfileBusinessComplianceProfile]
+type customerUnmaskedV1DataComplianceProfileBusinessComplianceProfileJSON struct {
 	Ein               apijson.Field
 	LegalBusinessName apijson.Field
 	Website           apijson.Field
@@ -721,15 +721,15 @@ type customerUnmaskedV1DataComplianceProfileBusinessCustomerComplianceProfileJSO
 	ExtraFields       map[string]apijson.Field
 }
 
-func (r *CustomerUnmaskedV1DataComplianceProfileBusinessCustomerComplianceProfile) UnmarshalJSON(data []byte) (err error) {
+func (r *CustomerUnmaskedV1DataComplianceProfileBusinessComplianceProfile) UnmarshalJSON(data []byte) (err error) {
 	return apijson.UnmarshalRoot(data, r)
 }
 
-func (r customerUnmaskedV1DataComplianceProfileBusinessCustomerComplianceProfileJSON) RawJSON() string {
+func (r customerUnmaskedV1DataComplianceProfileBusinessComplianceProfileJSON) RawJSON() string {
 	return r.raw
 }
 
-func (r CustomerUnmaskedV1DataComplianceProfileBusinessCustomerComplianceProfile) implementsCustomerUnmaskedV1DataComplianceProfile() {
+func (r CustomerUnmaskedV1DataComplianceProfileBusinessComplianceProfile) implementsCustomerUnmaskedV1DataComplianceProfile() {
 }
 
 // Indicates the structure of the returned content.
@@ -1174,16 +1174,15 @@ func (r CustomerNewParamsComplianceProfile) implementsCustomerNewParamsComplianc
 // but if provided, all required fields must be present for the appropriate
 // customer type.
 //
-// Satisfied by
-// [CustomerNewParamsComplianceProfileIndividualCustomerComplianceProfile],
-// [CustomerNewParamsComplianceProfileBusinessCustomerComplianceProfile],
+// Satisfied by [CustomerNewParamsComplianceProfileIndividualComplianceProfile],
+// [CustomerNewParamsComplianceProfileBusinessComplianceProfile],
 // [CustomerNewParamsComplianceProfile].
 type CustomerNewParamsComplianceProfileUnion interface {
 	implementsCustomerNewParamsComplianceProfileUnion()
 }
 
 // Individual PII data required to trigger Patriot Act compliant KYC verification.
-type CustomerNewParamsComplianceProfileIndividualCustomerComplianceProfile struct {
+type CustomerNewParamsComplianceProfileIndividualComplianceProfile struct {
 	// Date of birth (YYYY-MM-DD). Required for Patriot Act-compliant KYC verification.
 	Dob param.Field[time.Time] `json:"dob,required" format:"date"`
 	// Social Security Number (format XXX-XX-XXXX). Required for Patriot Act-compliant
@@ -1191,16 +1190,16 @@ type CustomerNewParamsComplianceProfileIndividualCustomerComplianceProfile struc
 	Ssn param.Field[string] `json:"ssn,required"`
 }
 
-func (r CustomerNewParamsComplianceProfileIndividualCustomerComplianceProfile) MarshalJSON() (data []byte, err error) {
+func (r CustomerNewParamsComplianceProfileIndividualComplianceProfile) MarshalJSON() (data []byte, err error) {
 	return apijson.MarshalRoot(r)
 }
 
-func (r CustomerNewParamsComplianceProfileIndividualCustomerComplianceProfile) implementsCustomerNewParamsComplianceProfileUnion() {
+func (r CustomerNewParamsComplianceProfileIndividualComplianceProfile) implementsCustomerNewParamsComplianceProfileUnion() {
 }
 
 // Business registration data required to trigger Patriot Act compliant KYB
 // verification.
-type CustomerNewParamsComplianceProfileBusinessCustomerComplianceProfile struct {
+type CustomerNewParamsComplianceProfileBusinessComplianceProfile struct {
 	// Employer Identification Number (format XX-XXXXXXX). Required for Patriot
 	// Act-compliant KYB verification.
 	Ein param.Field[string] `json:"ein,required"`
@@ -1211,11 +1210,11 @@ type CustomerNewParamsComplianceProfileBusinessCustomerComplianceProfile struct 
 	Website param.Field[string] `json:"website" format:"uri"`
 }
 
-func (r CustomerNewParamsComplianceProfileBusinessCustomerComplianceProfile) MarshalJSON() (data []byte, err error) {
+func (r CustomerNewParamsComplianceProfileBusinessComplianceProfile) MarshalJSON() (data []byte, err error) {
 	return apijson.MarshalRoot(r)
 }
 
-func (r CustomerNewParamsComplianceProfileBusinessCustomerComplianceProfile) implementsCustomerNewParamsComplianceProfileUnion() {
+func (r CustomerNewParamsComplianceProfileBusinessComplianceProfile) implementsCustomerNewParamsComplianceProfileUnion() {
 }
 
 type CustomerUpdateParams struct {
@@ -1291,16 +1290,15 @@ func (r CustomerUpdateParamsComplianceProfile) implementsCustomerUpdateParamsCom
 
 // Individual PII data required to trigger Patriot Act compliant KYC verification.
 //
-// Satisfied by
-// [CustomerUpdateParamsComplianceProfileIndividualCustomerComplianceProfile],
-// [CustomerUpdateParamsComplianceProfileBusinessCustomerComplianceProfile],
+// Satisfied by [CustomerUpdateParamsComplianceProfileIndividualComplianceProfile],
+// [CustomerUpdateParamsComplianceProfileBusinessComplianceProfile],
 // [CustomerUpdateParamsComplianceProfile].
 type CustomerUpdateParamsComplianceProfileUnion interface {
 	implementsCustomerUpdateParamsComplianceProfileUnion()
 }
 
 // Individual PII data required to trigger Patriot Act compliant KYC verification.
-type CustomerUpdateParamsComplianceProfileIndividualCustomerComplianceProfile struct {
+type CustomerUpdateParamsComplianceProfileIndividualComplianceProfile struct {
 	// Date of birth (YYYY-MM-DD). Required for Patriot Act-compliant KYC verification.
 	Dob param.Field[time.Time] `json:"dob,required" format:"date"`
 	// Social Security Number (format XXX-XX-XXXX). Required for Patriot Act-compliant
@@ -1308,16 +1306,16 @@ type CustomerUpdateParamsComplianceProfileIndividualCustomerComplianceProfile st
 	Ssn param.Field[string] `json:"ssn,required"`
 }
 
-func (r CustomerUpdateParamsComplianceProfileIndividualCustomerComplianceProfile) MarshalJSON() (data []byte, err error) {
+func (r CustomerUpdateParamsComplianceProfileIndividualComplianceProfile) MarshalJSON() (data []byte, err error) {
 	return apijson.MarshalRoot(r)
 }
 
-func (r CustomerUpdateParamsComplianceProfileIndividualCustomerComplianceProfile) implementsCustomerUpdateParamsComplianceProfileUnion() {
+func (r CustomerUpdateParamsComplianceProfileIndividualComplianceProfile) implementsCustomerUpdateParamsComplianceProfileUnion() {
 }
 
 // Business registration data required to trigger Patriot Act compliant KYB
 // verification.
-type CustomerUpdateParamsComplianceProfileBusinessCustomerComplianceProfile struct {
+type CustomerUpdateParamsComplianceProfileBusinessComplianceProfile struct {
 	// Employer Identification Number (format XX-XXXXXXX). Required for Patriot
 	// Act-compliant KYB verification.
 	Ein param.Field[string] `json:"ein,required"`
@@ -1328,11 +1326,11 @@ type CustomerUpdateParamsComplianceProfileBusinessCustomerComplianceProfile stru
 	Website param.Field[string] `json:"website" format:"uri"`
 }
 
-func (r CustomerUpdateParamsComplianceProfileBusinessCustomerComplianceProfile) MarshalJSON() (data []byte, err error) {
+func (r CustomerUpdateParamsComplianceProfileBusinessComplianceProfile) MarshalJSON() (data []byte, err error) {
 	return apijson.MarshalRoot(r)
 }
 
-func (r CustomerUpdateParamsComplianceProfileBusinessCustomerComplianceProfile) implementsCustomerUpdateParamsComplianceProfileUnion() {
+func (r CustomerUpdateParamsComplianceProfileBusinessComplianceProfile) implementsCustomerUpdateParamsComplianceProfileUnion() {
 }
 
 type CustomerListParams struct {
