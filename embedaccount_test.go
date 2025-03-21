@@ -211,9 +211,9 @@ func TestEmbedAccountOnboardWithOptionalParams(t *testing.T) {
 			TermsOfService: straddle.F(straddle.TermsOfServiceV1Param{
 				AcceptedDate:      straddle.F(time.Now()),
 				AgreementType:     straddle.F(straddle.TermsOfServiceV1AgreementTypeEmbedded),
+				AgreementURL:      straddle.F("agreement_url"),
 				AcceptedIP:        straddle.F("accepted_ip"),
 				AcceptedUserAgent: straddle.F("accepted_user_agent"),
-				AgreementURL:      straddle.F("agreement_url"),
 			}),
 			CorrelationID: straddle.F("correlation-id"),
 			RequestID:     straddle.F("request-id"),
