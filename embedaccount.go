@@ -1376,13 +1376,13 @@ type TermsOfServiceV1 struct {
 	// The type or version of the agreement accepted. Use `embedded` unless your
 	// platform was specifically enabled for `direct` agreements.
 	AgreementType TermsOfServiceV1AgreementType `json:"agreement_type,required"`
+	// The URL where the full text of the accepted agreement can be found.
+	AgreementURL string `json:"agreement_url,required,nullable"`
 	// The IP address from which the terms of service were accepted.
 	AcceptedIP string `json:"accepted_ip,nullable"`
 	// The user agent string of the browser or application used to accept the terms.
-	AcceptedUserAgent string `json:"accepted_user_agent,nullable"`
-	// The URL where the full text of the accepted agreement can be found.
-	AgreementURL string               `json:"agreement_url,nullable"`
-	JSON         termsOfServiceV1JSON `json:"-"`
+	AcceptedUserAgent string               `json:"accepted_user_agent,nullable"`
+	JSON              termsOfServiceV1JSON `json:"-"`
 }
 
 // termsOfServiceV1JSON contains the JSON metadata for the struct
@@ -1390,9 +1390,9 @@ type TermsOfServiceV1 struct {
 type termsOfServiceV1JSON struct {
 	AcceptedDate      apijson.Field
 	AgreementType     apijson.Field
+	AgreementURL      apijson.Field
 	AcceptedIP        apijson.Field
 	AcceptedUserAgent apijson.Field
-	AgreementURL      apijson.Field
 	raw               string
 	ExtraFields       map[string]apijson.Field
 }
@@ -1428,12 +1428,12 @@ type TermsOfServiceV1Param struct {
 	// The type or version of the agreement accepted. Use `embedded` unless your
 	// platform was specifically enabled for `direct` agreements.
 	AgreementType param.Field[TermsOfServiceV1AgreementType] `json:"agreement_type,required"`
+	// The URL where the full text of the accepted agreement can be found.
+	AgreementURL param.Field[string] `json:"agreement_url,required"`
 	// The IP address from which the terms of service were accepted.
 	AcceptedIP param.Field[string] `json:"accepted_ip"`
 	// The user agent string of the browser or application used to accept the terms.
 	AcceptedUserAgent param.Field[string] `json:"accepted_user_agent"`
-	// The URL where the full text of the accepted agreement can be found.
-	AgreementURL param.Field[string] `json:"agreement_url"`
 }
 
 func (r TermsOfServiceV1Param) MarshalJSON() (data []byte, err error) {
