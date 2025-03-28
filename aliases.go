@@ -25,9 +25,6 @@ const CustomerDetailsV1CustomerTypeIndividual = shared.CustomerDetailsV1Customer
 // This is an alias to an internal value.
 const CustomerDetailsV1CustomerTypeBusiness = shared.CustomerDetailsV1CustomerTypeBusiness
 
-// This is an alias to an internal value.
-const CustomerDetailsV1CustomerTypeUnknown = shared.CustomerDetailsV1CustomerTypeUnknown
-
 // This is an alias to an internal type.
 type DeviceInfoV1 = shared.DeviceInfoV1
 

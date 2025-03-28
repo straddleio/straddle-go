@@ -117,8 +117,6 @@ type PaymentSummaryPagedV1Data struct {
 	// Unique identifier for the `charge` or `payout` in your database. This value must
 	// be unique across all charges or payouts.
 	ExternalID string `json:"external_id,required"`
-	// Funding ids.
-	FundingIDs []string `json:"funding_ids,required" format:"uuid"`
 	// Value of the `paykey` used for the `charge` or `payout`.
 	Paykey string `json:"paykey,required"`
 	// The desired date on which the payment should be occur. For charges, this means
@@ -156,7 +154,6 @@ type paymentSummaryPagedV1DataJSON struct {
 	Currency        apijson.Field
 	Description     apijson.Field
 	ExternalID      apijson.Field
-	FundingIDs      apijson.Field
 	Paykey          apijson.Field
 	PaymentDate     apijson.Field
 	PaymentType     apijson.Field

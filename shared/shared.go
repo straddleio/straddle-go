@@ -50,12 +50,11 @@ type CustomerDetailsV1CustomerType string
 const (
 	CustomerDetailsV1CustomerTypeIndividual CustomerDetailsV1CustomerType = "individual"
 	CustomerDetailsV1CustomerTypeBusiness   CustomerDetailsV1CustomerType = "business"
-	CustomerDetailsV1CustomerTypeUnknown    CustomerDetailsV1CustomerType = "unknown"
 )
 
 func (r CustomerDetailsV1CustomerType) IsKnown() bool {
 	switch r {
-	case CustomerDetailsV1CustomerTypeIndividual, CustomerDetailsV1CustomerTypeBusiness, CustomerDetailsV1CustomerTypeUnknown:
+	case CustomerDetailsV1CustomerTypeIndividual, CustomerDetailsV1CustomerTypeBusiness:
 		return true
 	}
 	return false

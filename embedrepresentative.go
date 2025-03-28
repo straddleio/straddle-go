@@ -764,9 +764,8 @@ func (r EmbedRepresentativeUpdateParamsRelationship) MarshalJSON() (data []byte,
 
 type EmbedRepresentativeListParams struct {
 	// The unique identifier of the account to list representatives for.
-	AccountID      param.Field[string]                             `query:"account_id" format:"uuid"`
-	Level          param.Field[EmbedRepresentativeListParamsLevel] `query:"level"`
-	OrganizationID param.Field[string]                             `query:"organization_id" format:"uuid"`
+	AccountID      param.Field[string] `query:"account_id" format:"uuid"`
+	OrganizationID param.Field[string] `query:"organization_id" format:"uuid"`
 	// Results page number. Starts at page 1.
 	PageNumber param.Field[int64] `query:"page_number"`
 	// Page size. Max value: 1000
@@ -787,21 +786,6 @@ func (r EmbedRepresentativeListParams) URLQuery() (v url.Values) {
 		ArrayFormat:  apiquery.ArrayQueryFormatComma,
 		NestedFormat: apiquery.NestedQueryFormatBrackets,
 	})
-}
-
-type EmbedRepresentativeListParamsLevel string
-
-const (
-	EmbedRepresentativeListParamsLevelAccount  EmbedRepresentativeListParamsLevel = "account"
-	EmbedRepresentativeListParamsLevelPlatform EmbedRepresentativeListParamsLevel = "platform"
-)
-
-func (r EmbedRepresentativeListParamsLevel) IsKnown() bool {
-	switch r {
-	case EmbedRepresentativeListParamsLevelAccount, EmbedRepresentativeListParamsLevelPlatform:
-		return true
-	}
-	return false
 }
 
 // Sort Order.

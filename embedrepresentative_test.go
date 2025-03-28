@@ -111,7 +111,6 @@ func TestEmbedRepresentativeListWithOptionalParams(t *testing.T) {
 	)
 	_, err := client.Embed.Representatives.List(context.TODO(), straddle.EmbedRepresentativeListParams{
 		AccountID:      straddle.F("182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e"),
-		Level:          straddle.F(straddle.EmbedRepresentativeListParamsLevelAccount),
 		OrganizationID: straddle.F("182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e"),
 		PageNumber:     straddle.F(int64(0)),
 		PageSize:       straddle.F(int64(0)),
