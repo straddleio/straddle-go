@@ -98,6 +98,7 @@ func TestEmbedLinkedBankAccountListWithOptionalParams(t *testing.T) {
 	)
 	_, err := client.Embed.LinkedBankAccounts.List(context.TODO(), straddle.EmbedLinkedBankAccountListParams{
 		AccountID:     straddle.F("182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e"),
+		Level:         straddle.F(straddle.EmbedLinkedBankAccountListParamsLevelAccount),
 		PageNumber:    straddle.F(int64(0)),
 		PageSize:      straddle.F(int64(0)),
 		SortBy:        straddle.F("sort_by"),

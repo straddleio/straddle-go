@@ -42,8 +42,16 @@ func TestCustomerNewWithOptionalParams(t *testing.T) {
 			Address2: straddle.F("Apt 1"),
 		}),
 		ComplianceProfile: straddle.F[straddle.CustomerNewParamsComplianceProfileUnion](straddle.CustomerNewParamsComplianceProfileIndividualComplianceProfile{
-			Dob: straddle.F(time.Now()),
-			Ssn: straddle.F("123-45-6789"),
+			Dob:               straddle.F(time.Now()),
+			Ssn:               straddle.F("123-45-6789"),
+			Ein:               straddle.F("ein"),
+			LegalBusinessName: straddle.F("legal_business_name"),
+			Representatives: straddle.F([]straddle.CustomerNewParamsComplianceProfileIndividualComplianceProfileRepresentative{{
+				Name:  straddle.F("name"),
+				Email: straddle.F("email"),
+				Phone: straddle.F("phone"),
+			}}),
+			Website: straddle.F("website"),
 		}),
 		ExternalID:        straddle.F("customer_123"),
 		Metadata:          straddle.F(map[string]string{}),
@@ -91,8 +99,16 @@ func TestCustomerUpdateWithOptionalParams(t *testing.T) {
 				Address2: straddle.F("Apt 1"),
 			}),
 			ComplianceProfile: straddle.F[straddle.CustomerUpdateParamsComplianceProfileUnion](straddle.CustomerUpdateParamsComplianceProfileIndividualComplianceProfile{
-				Dob: straddle.F(time.Now()),
-				Ssn: straddle.F("123-45-6789"),
+				Dob:               straddle.F(time.Now()),
+				Ssn:               straddle.F("123-45-6789"),
+				Ein:               straddle.F("ein"),
+				LegalBusinessName: straddle.F("legal_business_name"),
+				Representatives: straddle.F([]straddle.CustomerUpdateParamsComplianceProfileIndividualComplianceProfileRepresentative{{
+					Name:  straddle.F("name"),
+					Email: straddle.F("email"),
+					Phone: straddle.F("phone"),
+				}}),
+				Website: straddle.F("website"),
 			}),
 			ExternalID: straddle.F("external_id"),
 			Metadata: straddle.F(map[string]string{
