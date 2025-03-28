@@ -192,7 +192,7 @@ type LinkedBankAccountPagedV1Data struct {
 	// Unique identifier for the linked bank account.
 	ID string `json:"id,required" format:"uuid"`
 	// The unique identifier of the Straddle account related to this bank account.
-	AccountID   string                                  `json:"account_id,required,nullable" format:"uuid"`
+	AccountID   string                                  `json:"account_id,required" format:"uuid"`
 	BankAccount LinkedBankAccountPagedV1DataBankAccount `json:"bank_account,required"`
 	// Timestamp of when the bank account object was created.
 	CreatedAt time.Time `json:"created_at,required" format:"date-time"`
@@ -203,10 +203,8 @@ type LinkedBankAccountPagedV1Data struct {
 	UpdatedAt time.Time `json:"updated_at,required" format:"date-time"`
 	// Up to 20 additional user-defined key-value pairs. Useful for storing additional
 	// information about the linked bank account in a structured format.
-	Metadata map[string]string `json:"metadata,nullable"`
-	// The unique identifier of the Straddle Platform relatd to this bank account.
-	PlatformID string                           `json:"platform_id,nullable" format:"uuid"`
-	JSON       linkedBankAccountPagedV1DataJSON `json:"-"`
+	Metadata map[string]string                `json:"metadata,nullable"`
+	JSON     linkedBankAccountPagedV1DataJSON `json:"-"`
 }
 
 // linkedBankAccountPagedV1DataJSON contains the JSON metadata for the struct
@@ -220,7 +218,6 @@ type linkedBankAccountPagedV1DataJSON struct {
 	StatusDetail apijson.Field
 	UpdatedAt    apijson.Field
 	Metadata     apijson.Field
-	PlatformID   apijson.Field
 	raw          string
 	ExtraFields  map[string]apijson.Field
 }
@@ -633,7 +630,7 @@ type LinkedBankAccountV1Data struct {
 	// Unique identifier for the linked bank account.
 	ID string `json:"id,required" format:"uuid"`
 	// The unique identifier of the Straddle account related to this bank account.
-	AccountID   string                             `json:"account_id,required,nullable" format:"uuid"`
+	AccountID   string                             `json:"account_id,required" format:"uuid"`
 	BankAccount LinkedBankAccountV1DataBankAccount `json:"bank_account,required"`
 	// Timestamp of when the bank account object was created.
 	CreatedAt time.Time `json:"created_at,required" format:"date-time"`
@@ -644,10 +641,8 @@ type LinkedBankAccountV1Data struct {
 	UpdatedAt time.Time `json:"updated_at,required" format:"date-time"`
 	// Up to 20 additional user-defined key-value pairs. Useful for storing additional
 	// information about the linked bank account in a structured format.
-	Metadata map[string]string `json:"metadata,nullable"`
-	// The unique identifier of the Straddle Platform relatd to this bank account.
-	PlatformID string                      `json:"platform_id,nullable" format:"uuid"`
-	JSON       linkedBankAccountV1DataJSON `json:"-"`
+	Metadata map[string]string           `json:"metadata,nullable"`
+	JSON     linkedBankAccountV1DataJSON `json:"-"`
 }
 
 // linkedBankAccountV1DataJSON contains the JSON metadata for the struct
@@ -661,7 +656,6 @@ type linkedBankAccountV1DataJSON struct {
 	StatusDetail apijson.Field
 	UpdatedAt    apijson.Field
 	Metadata     apijson.Field
-	PlatformID   apijson.Field
 	raw          string
 	ExtraFields  map[string]apijson.Field
 }
@@ -876,8 +870,7 @@ func (r EmbedLinkedBankAccountUpdateParamsBankAccount) MarshalJSON() (data []byt
 
 type EmbedLinkedBankAccountListParams struct {
 	// The unique identifier of the related account.
-	AccountID param.Field[string]                                `query:"account_id" format:"uuid"`
-	Level     param.Field[EmbedLinkedBankAccountListParamsLevel] `query:"level"`
+	AccountID param.Field[string] `query:"account_id" format:"uuid"`
 	// Results page number. Starts at page 1.
 	PageNumber param.Field[int64] `query:"page_number"`
 	// Page size. Max value: 1000
@@ -897,21 +890,6 @@ func (r EmbedLinkedBankAccountListParams) URLQuery() (v url.Values) {
 		ArrayFormat:  apiquery.ArrayQueryFormatComma,
 		NestedFormat: apiquery.NestedQueryFormatBrackets,
 	})
-}
-
-type EmbedLinkedBankAccountListParamsLevel string
-
-const (
-	EmbedLinkedBankAccountListParamsLevelAccount  EmbedLinkedBankAccountListParamsLevel = "account"
-	EmbedLinkedBankAccountListParamsLevelPlatform EmbedLinkedBankAccountListParamsLevel = "platform"
-)
-
-func (r EmbedLinkedBankAccountListParamsLevel) IsKnown() bool {
-	switch r {
-	case EmbedLinkedBankAccountListParamsLevelAccount, EmbedLinkedBankAccountListParamsLevelPlatform:
-		return true
-	}
-	return false
 }
 
 // Sort Order.
