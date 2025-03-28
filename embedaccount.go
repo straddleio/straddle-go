@@ -287,11 +287,12 @@ const (
 	AccountPagedV1DataStatusActive     AccountPagedV1DataStatus = "active"
 	AccountPagedV1DataStatusRejected   AccountPagedV1DataStatus = "rejected"
 	AccountPagedV1DataStatusInactive   AccountPagedV1DataStatus = "inactive"
+	AccountPagedV1DataStatusUnknown    AccountPagedV1DataStatus = "unknown"
 )
 
 func (r AccountPagedV1DataStatus) IsKnown() bool {
 	switch r {
-	case AccountPagedV1DataStatusCreated, AccountPagedV1DataStatusOnboarding, AccountPagedV1DataStatusActive, AccountPagedV1DataStatusRejected, AccountPagedV1DataStatusInactive:
+	case AccountPagedV1DataStatusCreated, AccountPagedV1DataStatusOnboarding, AccountPagedV1DataStatusActive, AccountPagedV1DataStatusRejected, AccountPagedV1DataStatusInactive, AccountPagedV1DataStatusUnknown:
 		return true
 	}
 	return false
@@ -345,11 +346,12 @@ const (
 	AccountPagedV1DataStatusDetailReasonDisabled           AccountPagedV1DataStatusDetailReason = "disabled"
 	AccountPagedV1DataStatusDetailReasonTerminated         AccountPagedV1DataStatusDetailReason = "terminated"
 	AccountPagedV1DataStatusDetailReasonNew                AccountPagedV1DataStatusDetailReason = "new"
+	AccountPagedV1DataStatusDetailReasonUnknown            AccountPagedV1DataStatusDetailReason = "unknown"
 )
 
 func (r AccountPagedV1DataStatusDetailReason) IsKnown() bool {
 	switch r {
-	case AccountPagedV1DataStatusDetailReasonUnverified, AccountPagedV1DataStatusDetailReasonInReview, AccountPagedV1DataStatusDetailReasonPending, AccountPagedV1DataStatusDetailReasonStuck, AccountPagedV1DataStatusDetailReasonVerified, AccountPagedV1DataStatusDetailReasonFailedVerification, AccountPagedV1DataStatusDetailReasonDisabled, AccountPagedV1DataStatusDetailReasonTerminated, AccountPagedV1DataStatusDetailReasonNew:
+	case AccountPagedV1DataStatusDetailReasonUnverified, AccountPagedV1DataStatusDetailReasonInReview, AccountPagedV1DataStatusDetailReasonPending, AccountPagedV1DataStatusDetailReasonStuck, AccountPagedV1DataStatusDetailReasonVerified, AccountPagedV1DataStatusDetailReasonFailedVerification, AccountPagedV1DataStatusDetailReasonDisabled, AccountPagedV1DataStatusDetailReasonTerminated, AccountPagedV1DataStatusDetailReasonNew, AccountPagedV1DataStatusDetailReasonUnknown:
 		return true
 	}
 	return false
@@ -376,11 +378,12 @@ type AccountPagedV1DataType string
 
 const (
 	AccountPagedV1DataTypeBusiness AccountPagedV1DataType = "business"
+	AccountPagedV1DataTypeUnknown  AccountPagedV1DataType = "unknown"
 )
 
 func (r AccountPagedV1DataType) IsKnown() bool {
 	switch r {
-	case AccountPagedV1DataTypeBusiness:
+	case AccountPagedV1DataTypeBusiness, AccountPagedV1DataTypeUnknown:
 		return true
 	}
 	return false
@@ -556,11 +559,12 @@ const (
 	AccountPagedV1DataSettingsChargesFundingTimeOneDay    AccountPagedV1DataSettingsChargesFundingTime = "one_day"
 	AccountPagedV1DataSettingsChargesFundingTimeTwoDay    AccountPagedV1DataSettingsChargesFundingTime = "two_day"
 	AccountPagedV1DataSettingsChargesFundingTimeThreeDay  AccountPagedV1DataSettingsChargesFundingTime = "three_day"
+	AccountPagedV1DataSettingsChargesFundingTimeUnknown   AccountPagedV1DataSettingsChargesFundingTime = "unknown"
 )
 
 func (r AccountPagedV1DataSettingsChargesFundingTime) IsKnown() bool {
 	switch r {
-	case AccountPagedV1DataSettingsChargesFundingTimeImmediate, AccountPagedV1DataSettingsChargesFundingTimeNextDay, AccountPagedV1DataSettingsChargesFundingTimeOneDay, AccountPagedV1DataSettingsChargesFundingTimeTwoDay, AccountPagedV1DataSettingsChargesFundingTimeThreeDay:
+	case AccountPagedV1DataSettingsChargesFundingTimeImmediate, AccountPagedV1DataSettingsChargesFundingTimeNextDay, AccountPagedV1DataSettingsChargesFundingTimeOneDay, AccountPagedV1DataSettingsChargesFundingTimeTwoDay, AccountPagedV1DataSettingsChargesFundingTimeThreeDay, AccountPagedV1DataSettingsChargesFundingTimeUnknown:
 		return true
 	}
 	return false
@@ -614,11 +618,12 @@ const (
 	AccountPagedV1DataSettingsPayoutsFundingTimeOneDay    AccountPagedV1DataSettingsPayoutsFundingTime = "one_day"
 	AccountPagedV1DataSettingsPayoutsFundingTimeTwoDay    AccountPagedV1DataSettingsPayoutsFundingTime = "two_day"
 	AccountPagedV1DataSettingsPayoutsFundingTimeThreeDay  AccountPagedV1DataSettingsPayoutsFundingTime = "three_day"
+	AccountPagedV1DataSettingsPayoutsFundingTimeUnknown   AccountPagedV1DataSettingsPayoutsFundingTime = "unknown"
 )
 
 func (r AccountPagedV1DataSettingsPayoutsFundingTime) IsKnown() bool {
 	switch r {
-	case AccountPagedV1DataSettingsPayoutsFundingTimeImmediate, AccountPagedV1DataSettingsPayoutsFundingTimeNextDay, AccountPagedV1DataSettingsPayoutsFundingTimeOneDay, AccountPagedV1DataSettingsPayoutsFundingTimeTwoDay, AccountPagedV1DataSettingsPayoutsFundingTimeThreeDay:
+	case AccountPagedV1DataSettingsPayoutsFundingTimeImmediate, AccountPagedV1DataSettingsPayoutsFundingTimeNextDay, AccountPagedV1DataSettingsPayoutsFundingTimeOneDay, AccountPagedV1DataSettingsPayoutsFundingTimeTwoDay, AccountPagedV1DataSettingsPayoutsFundingTimeThreeDay, AccountPagedV1DataSettingsPayoutsFundingTimeUnknown:
 		return true
 	}
 	return false
@@ -764,11 +769,12 @@ const (
 	AccountV1DataStatusActive     AccountV1DataStatus = "active"
 	AccountV1DataStatusRejected   AccountV1DataStatus = "rejected"
 	AccountV1DataStatusInactive   AccountV1DataStatus = "inactive"
+	AccountV1DataStatusUnknown    AccountV1DataStatus = "unknown"
 )
 
 func (r AccountV1DataStatus) IsKnown() bool {
 	switch r {
-	case AccountV1DataStatusCreated, AccountV1DataStatusOnboarding, AccountV1DataStatusActive, AccountV1DataStatusRejected, AccountV1DataStatusInactive:
+	case AccountV1DataStatusCreated, AccountV1DataStatusOnboarding, AccountV1DataStatusActive, AccountV1DataStatusRejected, AccountV1DataStatusInactive, AccountV1DataStatusUnknown:
 		return true
 	}
 	return false
@@ -822,11 +828,12 @@ const (
 	AccountV1DataStatusDetailReasonDisabled           AccountV1DataStatusDetailReason = "disabled"
 	AccountV1DataStatusDetailReasonTerminated         AccountV1DataStatusDetailReason = "terminated"
 	AccountV1DataStatusDetailReasonNew                AccountV1DataStatusDetailReason = "new"
+	AccountV1DataStatusDetailReasonUnknown            AccountV1DataStatusDetailReason = "unknown"
 )
 
 func (r AccountV1DataStatusDetailReason) IsKnown() bool {
 	switch r {
-	case AccountV1DataStatusDetailReasonUnverified, AccountV1DataStatusDetailReasonInReview, AccountV1DataStatusDetailReasonPending, AccountV1DataStatusDetailReasonStuck, AccountV1DataStatusDetailReasonVerified, AccountV1DataStatusDetailReasonFailedVerification, AccountV1DataStatusDetailReasonDisabled, AccountV1DataStatusDetailReasonTerminated, AccountV1DataStatusDetailReasonNew:
+	case AccountV1DataStatusDetailReasonUnverified, AccountV1DataStatusDetailReasonInReview, AccountV1DataStatusDetailReasonPending, AccountV1DataStatusDetailReasonStuck, AccountV1DataStatusDetailReasonVerified, AccountV1DataStatusDetailReasonFailedVerification, AccountV1DataStatusDetailReasonDisabled, AccountV1DataStatusDetailReasonTerminated, AccountV1DataStatusDetailReasonNew, AccountV1DataStatusDetailReasonUnknown:
 		return true
 	}
 	return false
@@ -853,11 +860,12 @@ type AccountV1DataType string
 
 const (
 	AccountV1DataTypeBusiness AccountV1DataType = "business"
+	AccountV1DataTypeUnknown  AccountV1DataType = "unknown"
 )
 
 func (r AccountV1DataType) IsKnown() bool {
 	switch r {
-	case AccountV1DataTypeBusiness:
+	case AccountV1DataTypeBusiness, AccountV1DataTypeUnknown:
 		return true
 	}
 	return false
@@ -1033,11 +1041,12 @@ const (
 	AccountV1DataSettingsChargesFundingTimeOneDay    AccountV1DataSettingsChargesFundingTime = "one_day"
 	AccountV1DataSettingsChargesFundingTimeTwoDay    AccountV1DataSettingsChargesFundingTime = "two_day"
 	AccountV1DataSettingsChargesFundingTimeThreeDay  AccountV1DataSettingsChargesFundingTime = "three_day"
+	AccountV1DataSettingsChargesFundingTimeUnknown   AccountV1DataSettingsChargesFundingTime = "unknown"
 )
 
 func (r AccountV1DataSettingsChargesFundingTime) IsKnown() bool {
 	switch r {
-	case AccountV1DataSettingsChargesFundingTimeImmediate, AccountV1DataSettingsChargesFundingTimeNextDay, AccountV1DataSettingsChargesFundingTimeOneDay, AccountV1DataSettingsChargesFundingTimeTwoDay, AccountV1DataSettingsChargesFundingTimeThreeDay:
+	case AccountV1DataSettingsChargesFundingTimeImmediate, AccountV1DataSettingsChargesFundingTimeNextDay, AccountV1DataSettingsChargesFundingTimeOneDay, AccountV1DataSettingsChargesFundingTimeTwoDay, AccountV1DataSettingsChargesFundingTimeThreeDay, AccountV1DataSettingsChargesFundingTimeUnknown:
 		return true
 	}
 	return false
@@ -1091,11 +1100,12 @@ const (
 	AccountV1DataSettingsPayoutsFundingTimeOneDay    AccountV1DataSettingsPayoutsFundingTime = "one_day"
 	AccountV1DataSettingsPayoutsFundingTimeTwoDay    AccountV1DataSettingsPayoutsFundingTime = "two_day"
 	AccountV1DataSettingsPayoutsFundingTimeThreeDay  AccountV1DataSettingsPayoutsFundingTime = "three_day"
+	AccountV1DataSettingsPayoutsFundingTimeUnknown   AccountV1DataSettingsPayoutsFundingTime = "unknown"
 )
 
 func (r AccountV1DataSettingsPayoutsFundingTime) IsKnown() bool {
 	switch r {
-	case AccountV1DataSettingsPayoutsFundingTimeImmediate, AccountV1DataSettingsPayoutsFundingTimeNextDay, AccountV1DataSettingsPayoutsFundingTimeOneDay, AccountV1DataSettingsPayoutsFundingTimeTwoDay, AccountV1DataSettingsPayoutsFundingTimeThreeDay:
+	case AccountV1DataSettingsPayoutsFundingTimeImmediate, AccountV1DataSettingsPayoutsFundingTimeNextDay, AccountV1DataSettingsPayoutsFundingTimeOneDay, AccountV1DataSettingsPayoutsFundingTimeTwoDay, AccountV1DataSettingsPayoutsFundingTimeThreeDay, AccountV1DataSettingsPayoutsFundingTimeUnknown:
 		return true
 	}
 	return false
@@ -1485,11 +1495,12 @@ type EmbedAccountNewParamsAccountType string
 
 const (
 	EmbedAccountNewParamsAccountTypeBusiness EmbedAccountNewParamsAccountType = "business"
+	EmbedAccountNewParamsAccountTypeUnknown  EmbedAccountNewParamsAccountType = "unknown"
 )
 
 func (r EmbedAccountNewParamsAccountType) IsKnown() bool {
 	switch r {
-	case EmbedAccountNewParamsAccountTypeBusiness:
+	case EmbedAccountNewParamsAccountTypeBusiness, EmbedAccountNewParamsAccountTypeUnknown:
 		return true
 	}
 	return false
