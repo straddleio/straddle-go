@@ -1,4 +1,4 @@
-module github.com/stainless-sdks/straddle-go
+module github.com/straddleio/straddle-go
 
 go 1.22
 

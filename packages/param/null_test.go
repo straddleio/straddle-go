@@ -2,7 +2,7 @@ package param_test
 
 import (
 	"encoding/json"
-	"github.com/stainless-sdks/straddle-go/packages/param"
+	"github.com/straddleio/straddle-go/packages/param"
 	"testing"
 )
 

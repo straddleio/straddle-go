@@ -1,7 +1,7 @@
 package apiform
 
 import (
-	"github.com/stainless-sdks/straddle-go/packages/param"
+	"github.com/straddleio/straddle-go/packages/param"
 	"mime/multipart"
 	"reflect"
 )

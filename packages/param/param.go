@@ -2,7 +2,7 @@ package param
 
 import (
 	"encoding/json"
-	"github.com/stainless-sdks/straddle-go/internal/encoding/json/sentinel"
+	"github.com/straddleio/straddle-go/internal/encoding/json/sentinel"
 	"reflect"
 )
 

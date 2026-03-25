@@ -2,8 +2,8 @@ package apijson_test
 
 import (
 	"encoding/json"
-	"github.com/stainless-sdks/straddle-go/internal/apijson"
-	"github.com/stainless-sdks/straddle-go/packages/respjson"
+	"github.com/straddleio/straddle-go/internal/apijson"
+	"github.com/straddleio/straddle-go/packages/respjson"
 	"testing"
 )
 

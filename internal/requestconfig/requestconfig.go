@@ -18,10 +18,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/stainless-sdks/straddle-go/internal"
-	"github.com/stainless-sdks/straddle-go/internal/apierror"
-	"github.com/stainless-sdks/straddle-go/internal/apiform"
-	"github.com/stainless-sdks/straddle-go/internal/apiquery"
+	"github.com/straddleio/straddle-go/internal"
+	"github.com/straddleio/straddle-go/internal/apierror"
+	"github.com/straddleio/straddle-go/internal/apiform"
+	"github.com/straddleio/straddle-go/internal/apiquery"
 )
 
 func getDefaultHeaders() map[string]string {

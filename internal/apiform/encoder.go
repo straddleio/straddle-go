@@ -13,7 +13,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/stainless-sdks/straddle-go/packages/param"
+	"github.com/straddleio/straddle-go/packages/param"
 )
 
 var encoders sync.Map // map[encoderEntry]encoderFunc

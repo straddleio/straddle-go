@@ -1,8 +1,8 @@
 package paramutil
 
 import (
-	"github.com/stainless-sdks/straddle-go/packages/param"
-	"github.com/stainless-sdks/straddle-go/packages/respjson"
+	"github.com/straddleio/straddle-go/packages/param"
+	"github.com/straddleio/straddle-go/packages/respjson"
 )
 
 func AddrIfPresent[T comparable](v param.Opt[T]) *T {

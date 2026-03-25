@@ -1,8 +1,8 @@
 package sentinel_test
 
 import (
-	"github.com/stainless-sdks/straddle-go/internal/encoding/json/sentinel"
-	"github.com/stainless-sdks/straddle-go/packages/param"
+	"github.com/straddleio/straddle-go/internal/encoding/json/sentinel"
+	"github.com/straddleio/straddle-go/packages/param"
 	"reflect"
 	"slices"
 	"testing"

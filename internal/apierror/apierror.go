@@ -7,8 +7,8 @@ import (
 	"net/http"
 	"net/http/httputil"
 
-	"github.com/stainless-sdks/straddle-go/internal/apijson"
-	"github.com/stainless-sdks/straddle-go/packages/respjson"
+	"github.com/straddleio/straddle-go/internal/apijson"
+	"github.com/straddleio/straddle-go/packages/respjson"
 )
 
 // Error represents an error that originates from the API, i.e. when a request is

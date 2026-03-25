@@ -8,8 +8,8 @@ import (
 	"os"
 	"slices"
 
-	"github.com/stainless-sdks/straddle-go/internal/requestconfig"
-	"github.com/stainless-sdks/straddle-go/option"
+	"github.com/straddleio/straddle-go/internal/requestconfig"
+	"github.com/straddleio/straddle-go/option"
 )
 
 // Client creates a struct with services and top level methods that help with

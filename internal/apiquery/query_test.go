@@ -1,7 +1,7 @@
 package apiquery
 
 import (
-	"github.com/stainless-sdks/straddle-go/packages/param"
+	"github.com/straddleio/straddle-go/packages/param"
 	"net/url"
 	"testing"
 	"time"

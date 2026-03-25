@@ -1,7 +1,7 @@
 package straddle
 
 import (
-	"github.com/stainless-sdks/straddle-go/packages/param"
+	"github.com/straddleio/straddle-go/packages/param"
 	"io"
 	"time"
 )
