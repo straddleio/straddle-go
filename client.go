@@ -6,6 +6,7 @@ import (
 	"context"
 	"net/http"
 	"os"
+	"slices"
 
 	"github.com/stainless-sdks/straddle-go/internal/requestconfig"
 	"github.com/stainless-sdks/straddle-go/option"
@@ -15,21 +16,59 @@ import (
 // interacting with the straddle API. You should not instantiate this client
 // directly, and instead use the [NewClient] method instead.
 type Client struct {
-	Options       []option.RequestOption
-	Embed         *EmbedService
-	Bridge        *BridgeService
-	Customers     *CustomerService
-	Paykeys       *PaykeyService
-	Charges       *ChargeService
-	FundingEvents *FundingEventService
-	Payments      *PaymentService
-	Payouts       *PayoutService
+	options []option.RequestOption
+	Embed   EmbedService
+	// Bridge provides a comprehensive suite of tools for connecting customer bank
+	// accounts. Use it to generate secure widget sessions for instant account
+	// verification, accept tokens from major providers like Plaid and Finicity, or
+	// verify accounts directly via our API. Bridge handles all sensitive banking
+	// credentials and ensures secure, compliant connections with support for 90% of US
+	// bank accounts.
+	Bridge BridgeService
+	// Customers represent the end users who send or receive payments through your
+	// integration. Each customer undergoes automatic identity verification and fraud
+	// screening upon creation. Use customers to track payment history, manage bank
+	// account connections, and maintain a secure record of all transactions associated
+	// with a user. Customers can be either individuals or businesses with appropriate
+	// compliance checks for each type.
+	Customers CustomerService
+	// Paykeys are secure tokens that link verified customer identities to their bank
+	// accounts. Each Paykey includes built-in balance checking, fraud detection
+	// through LSTM machine learning models, and can be reused for subscriptions and
+	// recurring payments without storing sensitive data. Paykeys eliminate fraud by
+	// ensuring the person initiating payment owns the funding account.
+	Paykeys PaykeyService
+	// Charges represent attempts to debit money from a customer's bank account using a
+	// Paykey. Each charge includes automatic balance verification, real-time fraud
+	// screening, and multi-rail optimization and detailed status tracking throughout
+	// the payment lifecycle. Use charges to accept bank payments with confidence
+	// knowing every transaction is protected.
+	Charges ChargeService
+	// Funding events represent all money movement between Straddle and an Account's
+	// external bank accounts. They are automatically generated when charges settle or
+	// payouts are initiated. Each event provides detailed tracking of settlement
+	// status, fee breakdowns, and reconciliation data across both incoming and
+	// outgoing transfers. Use funding events to monitor your platform's entire money
+	// movement lifecycle.
+	FundingEvents FundingEventService
+	// Payments provide endpoints to filter both Charges and Payouts with multiple
+	// different parameters.
+	Payments PaymentService
+	// Payouts represent transfers from Straddle to customer bank accounts. Create
+	// payouts to handle disbursements, process refunds, or manage marketplace
+	// settlements. Use payouts to send money quickly and securely with the most
+	// cost-effective rail automatically selected.
+	Payouts PayoutService
+	Reports ReportService
 }
 
-// DefaultClientOptions read from the environment (STRADDLE_API_KEY). This should
-// be used to initialize new clients.
+// DefaultClientOptions read from the environment (STRADDLE_API_KEY,
+// STRADDLE_BASE_URL). This should be used to initialize new clients.
 func DefaultClientOptions() []option.RequestOption {
-	defaults := []option.RequestOption{option.WithEnvironmentProduction()}
+	defaults := []option.RequestOption{option.WithEnvironmentSandbox()}
+	if o, ok := os.LookupEnv("STRADDLE_BASE_URL"); ok {
+		defaults = append(defaults, option.WithBaseURL(o))
+	}
 	if o, ok := os.LookupEnv("STRADDLE_API_KEY"); ok {
 		defaults = append(defaults, option.WithAPIKey(o))
 	}
@@ -37,13 +76,13 @@ func DefaultClientOptions() []option.RequestOption {
 }
 
 // NewClient generates a new client with the default option read from the
-// environment (STRADDLE_API_KEY). The option passed in as arguments are applied
-// after these default arguments, and all option will be passed down to the
-// services and requests that this client makes.
-func NewClient(opts ...option.RequestOption) (r *Client) {
+// environment (STRADDLE_API_KEY, STRADDLE_BASE_URL). The option passed in as
+// arguments are applied after these default arguments, and all option will be
+// passed down to the services and requests that this client makes.
+func NewClient(opts ...option.RequestOption) (r Client) {
 	opts = append(DefaultClientOptions(), opts...)
 
-	r = &Client{Options: opts}
+	r = Client{options: opts}
 
 	r.Embed = NewEmbedService(opts...)
 	r.Bridge = NewBridgeService(opts...)
@@ -53,6 +92,7 @@ func NewClient(opts ...option.RequestOption) (r *Client) {
 	r.FundingEvents = NewFundingEventService(opts...)
 	r.Payments = NewPaymentService(opts...)
 	r.Payouts = NewPayoutService(opts...)
+	r.Reports = NewReportService(opts...)
 
 	return
 }
@@ -88,40 +128,40 @@ func NewClient(opts ...option.RequestOption) (r *Client) {
 //
 // For even greater flexibility, see [option.WithResponseInto] and
 // [option.WithResponseBodyInto].
-func (r *Client) Execute(ctx context.Context, method string, path string, params interface{}, res interface{}, opts ...option.RequestOption) error {
-	opts = append(r.Options, opts...)
+func (r *Client) Execute(ctx context.Context, method string, path string, params any, res any, opts ...option.RequestOption) error {
+	opts = slices.Concat(r.options, opts)
 	return requestconfig.ExecuteNewRequest(ctx, method, path, params, res, opts...)
 }
 
 // Get makes a GET request with the given URL, params, and optionally deserializes
 // to a response. See [Execute] documentation on the params and response.
-func (r *Client) Get(ctx context.Context, path string, params interface{}, res interface{}, opts ...option.RequestOption) error {
+func (r *Client) Get(ctx context.Context, path string, params any, res any, opts ...option.RequestOption) error {
 	return r.Execute(ctx, http.MethodGet, path, params, res, opts...)
 }
 
 // Post makes a POST request with the given URL, params, and optionally
 // deserializes to a response. See [Execute] documentation on the params and
 // response.
-func (r *Client) Post(ctx context.Context, path string, params interface{}, res interface{}, opts ...option.RequestOption) error {
+func (r *Client) Post(ctx context.Context, path string, params any, res any, opts ...option.RequestOption) error {
 	return r.Execute(ctx, http.MethodPost, path, params, res, opts...)
 }
 
 // Put makes a PUT request with the given URL, params, and optionally deserializes
 // to a response. See [Execute] documentation on the params and response.
-func (r *Client) Put(ctx context.Context, path string, params interface{}, res interface{}, opts ...option.RequestOption) error {
+func (r *Client) Put(ctx context.Context, path string, params any, res any, opts ...option.RequestOption) error {
 	return r.Execute(ctx, http.MethodPut, path, params, res, opts...)
 }
 
 // Patch makes a PATCH request with the given URL, params, and optionally
 // deserializes to a response. See [Execute] documentation on the params and
 // response.
-func (r *Client) Patch(ctx context.Context, path string, params interface{}, res interface{}, opts ...option.RequestOption) error {
+func (r *Client) Patch(ctx context.Context, path string, params any, res any, opts ...option.RequestOption) error {
 	return r.Execute(ctx, http.MethodPatch, path, params, res, opts...)
 }
 
 // Delete makes a DELETE request with the given URL, params, and optionally
 // deserializes to a response. See [Execute] documentation on the params and
 // response.
-func (r *Client) Delete(ctx context.Context, path string, params interface{}, res interface{}, opts ...option.RequestOption) error {
+func (r *Client) Delete(ctx context.Context, path string, params any, res any, opts ...option.RequestOption) error {
 	return r.Execute(ctx, http.MethodDelete, path, params, res, opts...)
 }

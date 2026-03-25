@@ -27,23 +27,27 @@ func TestEmbedRepresentativeNewWithOptionalParams(t *testing.T) {
 		option.WithAPIKey("My API Key"),
 	)
 	_, err := client.Embed.Representatives.New(context.TODO(), straddle.EmbedRepresentativeNewParams{
-		AccountID:    straddle.F("182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e"),
-		Dob:          straddle.F(time.Now()),
-		Email:        straddle.F("ron.swanson@pawnee.com"),
-		FirstName:    straddle.F("first_name"),
-		LastName:     straddle.F("last_name"),
-		MobileNumber: straddle.F("+12128675309"),
-		Relationship: straddle.F(straddle.EmbedRepresentativeNewParamsRelationship{
-			Control:          straddle.F(true),
-			Owner:            straddle.F(true),
-			Primary:          straddle.F(true),
-			PercentOwnership: straddle.F(0.000000),
-			Title:            straddle.F("title"),
-		}),
-		SsnLast4:      straddle.F("1234"),
-		ExternalID:    straddle.F("external_id"),
-		CorrelationID: straddle.F("correlation-id"),
-		RequestID:     straddle.F("request-id"),
+		AccountID:    "182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e",
+		Dob:          time.Now(),
+		Email:        "ron.swanson@pawnee.com",
+		FirstName:    "first_name",
+		LastName:     "last_name",
+		MobileNumber: "+12128675309",
+		Relationship: straddle.EmbedRepresentativeNewParamsRelationship{
+			Control:          true,
+			Owner:            true,
+			Primary:          true,
+			PercentOwnership: straddle.Float(0),
+			Title:            straddle.String("title"),
+		},
+		SsnLast4:   "1234",
+		ExternalID: straddle.String("external_id"),
+		Metadata: map[string]string{
+			"foo": "string",
+		},
+		CorrelationID:  straddle.String("correlation-id"),
+		IdempotencyKey: straddle.String("xxxxxxxxxx"),
+		RequestID:      straddle.String("request-id"),
 	})
 	if err != nil {
 		var apierr *straddle.Error
@@ -70,22 +74,26 @@ func TestEmbedRepresentativeUpdateWithOptionalParams(t *testing.T) {
 		context.TODO(),
 		"182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e",
 		straddle.EmbedRepresentativeUpdateParams{
-			Dob:          straddle.F(time.Now()),
-			Email:        straddle.F("ron.swanson@pawnee.com"),
-			FirstName:    straddle.F("Ron"),
-			LastName:     straddle.F("Swanson"),
-			MobileNumber: straddle.F("+12128675309"),
-			Relationship: straddle.F(straddle.EmbedRepresentativeUpdateParamsRelationship{
-				Control:          straddle.F(true),
-				Owner:            straddle.F(true),
-				Primary:          straddle.F(true),
-				PercentOwnership: straddle.F(0.000000),
-				Title:            straddle.F("title"),
-			}),
-			SsnLast4:      straddle.F("1234"),
-			ExternalID:    straddle.F("external_id"),
-			CorrelationID: straddle.F("correlation-id"),
-			RequestID:     straddle.F("request-id"),
+			Dob:          time.Now(),
+			Email:        "ron.swanson@pawnee.com",
+			FirstName:    "Ron",
+			LastName:     "Swanson",
+			MobileNumber: "+12128675309",
+			Relationship: straddle.EmbedRepresentativeUpdateParamsRelationship{
+				Control:          true,
+				Owner:            true,
+				Primary:          true,
+				PercentOwnership: straddle.Float(0),
+				Title:            straddle.String("title"),
+			},
+			SsnLast4:   "1234",
+			ExternalID: straddle.String("external_id"),
+			Metadata: map[string]string{
+				"foo": "string",
+			},
+			CorrelationID:  straddle.String("correlation-id"),
+			IdempotencyKey: straddle.String("xxxxxxxxxx"),
+			RequestID:      straddle.String("request-id"),
 		},
 	)
 	if err != nil {
@@ -110,15 +118,16 @@ func TestEmbedRepresentativeListWithOptionalParams(t *testing.T) {
 		option.WithAPIKey("My API Key"),
 	)
 	_, err := client.Embed.Representatives.List(context.TODO(), straddle.EmbedRepresentativeListParams{
-		AccountID:      straddle.F("182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e"),
-		OrganizationID: straddle.F("182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e"),
-		PageNumber:     straddle.F(int64(0)),
-		PageSize:       straddle.F(int64(0)),
-		PlatformID:     straddle.F("182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e"),
-		SortBy:         straddle.F("sort_by"),
-		SortOrder:      straddle.F(straddle.EmbedRepresentativeListParamsSortOrderAsc),
-		CorrelationID:  straddle.F("correlation-id"),
-		RequestID:      straddle.F("request-id"),
+		AccountID:      straddle.String("182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e"),
+		Level:          straddle.EmbedRepresentativeListParamsLevelAccount,
+		OrganizationID: straddle.String("182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e"),
+		PageNumber:     straddle.Int(0),
+		PageSize:       straddle.Int(0),
+		PlatformID:     straddle.String("182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e"),
+		SortBy:         straddle.String("sort_by"),
+		SortOrder:      straddle.EmbedRepresentativeListParamsSortOrderAsc,
+		CorrelationID:  straddle.String("correlation-id"),
+		RequestID:      straddle.String("request-id"),
 	})
 	if err != nil {
 		var apierr *straddle.Error
@@ -145,8 +154,8 @@ func TestEmbedRepresentativeGetWithOptionalParams(t *testing.T) {
 		context.TODO(),
 		"182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e",
 		straddle.EmbedRepresentativeGetParams{
-			CorrelationID: straddle.F("correlation-id"),
-			RequestID:     straddle.F("request-id"),
+			CorrelationID: straddle.String("correlation-id"),
+			RequestID:     straddle.String("request-id"),
 		},
 	)
 	if err != nil {
@@ -174,8 +183,8 @@ func TestEmbedRepresentativeUnmaskWithOptionalParams(t *testing.T) {
 		context.TODO(),
 		"182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e",
 		straddle.EmbedRepresentativeUnmaskParams{
-			CorrelationID: straddle.F("correlation-id"),
-			RequestID:     straddle.F("request-id"),
+			CorrelationID: straddle.String("correlation-id"),
+			RequestID:     straddle.String("request-id"),
 		},
 	)
 	if err != nil {

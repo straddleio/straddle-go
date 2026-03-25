@@ -27,18 +27,23 @@ func TestFundingEventListWithOptionalParams(t *testing.T) {
 		option.WithAPIKey("My API Key"),
 	)
 	_, err := client.FundingEvents.List(context.TODO(), straddle.FundingEventListParams{
-		CreatedFrom:       straddle.F(time.Now()),
-		CreatedTo:         straddle.F(time.Now()),
-		Direction:         straddle.F(straddle.FundingEventListParamsDirectionDeposit),
-		EventType:         straddle.F(straddle.FundingEventListParamsEventTypeChargeDeposit),
-		PageNumber:        straddle.F(int64(0)),
-		PageSize:          straddle.F(int64(0)),
-		SortBy:            straddle.F(straddle.FundingEventListParamsSortByTransferDate),
-		SortOrder:         straddle.F(straddle.FundingEventListParamsSortOrderAsc),
-		TraceNumber:       straddle.F("trace_number"),
-		CorrelationID:     straddle.F("Correlation-Id"),
-		RequestID:         straddle.F("Request-Id"),
-		StraddleAccountID: straddle.F("182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e"),
+		CreatedFrom:       straddle.Time(time.Now()),
+		CreatedTo:         straddle.Time(time.Now()),
+		Direction:         straddle.FundingEventListParamsDirectionDeposit,
+		EventType:         straddle.FundingEventListParamsEventTypeChargeDeposit,
+		PageNumber:        straddle.Int(0),
+		PageSize:          straddle.Int(0),
+		SearchText:        straddle.String("search_text"),
+		SortBy:            straddle.FundingEventListParamsSortByTransferDate,
+		SortOrder:         straddle.FundingEventListParamsSortOrderAsc,
+		Status:            []string{"created"},
+		StatusReason:      []string{"insufficient_funds"},
+		StatusSource:      []string{"watchtower"},
+		TraceID:           straddle.String("trace_id"),
+		TraceNumber:       straddle.String("trace_number"),
+		CorrelationID:     straddle.String("Correlation-Id"),
+		RequestID:         straddle.String("Request-Id"),
+		StraddleAccountID: straddle.String("182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e"),
 	})
 	if err != nil {
 		var apierr *straddle.Error
@@ -65,9 +70,9 @@ func TestFundingEventGetWithOptionalParams(t *testing.T) {
 		context.TODO(),
 		"182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e",
 		straddle.FundingEventGetParams{
-			CorrelationID:     straddle.F("Correlation-Id"),
-			RequestID:         straddle.F("Request-Id"),
-			StraddleAccountID: straddle.F("182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e"),
+			CorrelationID:     straddle.String("Correlation-Id"),
+			RequestID:         straddle.String("Request-Id"),
+			StraddleAccountID: straddle.String("182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e"),
 		},
 	)
 	if err != nil {

@@ -26,13 +26,14 @@ func TestEmbedOrganizationNewWithOptionalParams(t *testing.T) {
 		option.WithAPIKey("My API Key"),
 	)
 	_, err := client.Embed.Organizations.New(context.TODO(), straddle.EmbedOrganizationNewParams{
-		Name:       straddle.F("name"),
-		ExternalID: straddle.F("external_id"),
-		Metadata: straddle.F(map[string]string{
+		Name:       "name",
+		ExternalID: straddle.String("external_id"),
+		Metadata: map[string]string{
 			"foo": "string",
-		}),
-		CorrelationID: straddle.F("correlation-id"),
-		RequestID:     straddle.F("request-id"),
+		},
+		CorrelationID:  straddle.String("correlation-id"),
+		IdempotencyKey: straddle.String("xxxxxxxxxx"),
+		RequestID:      straddle.String("request-id"),
 	})
 	if err != nil {
 		var apierr *straddle.Error
@@ -56,14 +57,14 @@ func TestEmbedOrganizationListWithOptionalParams(t *testing.T) {
 		option.WithAPIKey("My API Key"),
 	)
 	_, err := client.Embed.Organizations.List(context.TODO(), straddle.EmbedOrganizationListParams{
-		ExternalID:    straddle.F("external_id"),
-		Name:          straddle.F("name"),
-		PageNumber:    straddle.F(int64(0)),
-		PageSize:      straddle.F(int64(0)),
-		SortBy:        straddle.F("sort_by"),
-		SortOrder:     straddle.F(straddle.EmbedOrganizationListParamsSortOrderAsc),
-		CorrelationID: straddle.F("correlation-id"),
-		RequestID:     straddle.F("request-id"),
+		ExternalID:    straddle.String("external_id"),
+		Name:          straddle.String("name"),
+		PageNumber:    straddle.Int(0),
+		PageSize:      straddle.Int(0),
+		SortBy:        straddle.String("sort_by"),
+		SortOrder:     straddle.EmbedOrganizationListParamsSortOrderAsc,
+		CorrelationID: straddle.String("correlation-id"),
+		RequestID:     straddle.String("request-id"),
 	})
 	if err != nil {
 		var apierr *straddle.Error
@@ -90,8 +91,8 @@ func TestEmbedOrganizationGetWithOptionalParams(t *testing.T) {
 		context.TODO(),
 		"182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e",
 		straddle.EmbedOrganizationGetParams{
-			CorrelationID: straddle.F("correlation-id"),
-			RequestID:     straddle.F("request-id"),
+			CorrelationID: straddle.String("correlation-id"),
+			RequestID:     straddle.String("request-id"),
 		},
 	)
 	if err != nil {
