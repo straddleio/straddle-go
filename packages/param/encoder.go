@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	shimjson "github.com/stainless-sdks/straddle-go/internal/encoding/json"
+	shimjson "github.com/straddleio/straddle-go/internal/encoding/json"
 
 	"github.com/tidwall/sjson"
 )

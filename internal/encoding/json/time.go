@@ -2,7 +2,7 @@
 package json
 
 import (
-	"github.com/stainless-sdks/straddle-go/internal/encoding/json/shims"
+	"github.com/straddleio/straddle-go/internal/encoding/json/shims"
 	"reflect"
 	"time"
 )

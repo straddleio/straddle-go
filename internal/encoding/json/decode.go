@@ -14,7 +14,7 @@ import (
 	"encoding"
 	"encoding/base64"
 	"fmt"
-	"github.com/stainless-sdks/straddle-go/internal/encoding/json/shims"
+	"github.com/straddleio/straddle-go/internal/encoding/json/shims"
 	"reflect"
 	"strconv"
 	"strings"

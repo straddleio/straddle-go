@@ -3,9 +3,9 @@
 package straddle
 
 import (
-	"github.com/stainless-sdks/straddle-go/internal/apierror"
-	"github.com/stainless-sdks/straddle-go/packages/param"
-	"github.com/stainless-sdks/straddle-go/shared"
+	"github.com/straddleio/straddle-go/internal/apierror"
+	"github.com/straddleio/straddle-go/packages/param"
+	"github.com/straddleio/straddle-go/shared"
 )
 
 // aliased to make [param.APIUnion] private when embedding

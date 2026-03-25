@@ -9,10 +9,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stainless-sdks/straddle-go"
-	"github.com/stainless-sdks/straddle-go/internal/testutil"
-	"github.com/stainless-sdks/straddle-go/option"
-	"github.com/stainless-sdks/straddle-go/shared"
+	"github.com/straddleio/straddle-go"
+	"github.com/straddleio/straddle-go/internal/testutil"
+	"github.com/straddleio/straddle-go/option"
+	"github.com/straddleio/straddle-go/shared"
 )
 
 func TestPayoutNewWithOptionalParams(t *testing.T) {

@@ -41,7 +41,7 @@ To use a local version of this library from source in another project, edit the 
 directive. This can be done through the CLI with the following:
 
 ```sh
-$ go mod edit -replace github.com/stainless-sdks/straddle-go=/path/to/straddle-go
+$ go mod edit -replace github.com/straddleio/straddle-go=/path/to/straddle-go
 ```
 
 ## Running tests

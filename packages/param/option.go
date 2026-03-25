@@ -3,7 +3,7 @@ package param
 import (
 	"encoding/json"
 	"fmt"
-	shimjson "github.com/stainless-sdks/straddle-go/internal/encoding/json"
+	shimjson "github.com/straddleio/straddle-go/internal/encoding/json"
 	"time"
 )
 
