@@ -1,7 +1,7 @@
 package apijson
 
 import (
-	"github.com/stainless-sdks/straddle-go/packages/respjson"
+	"github.com/straddleio/straddle-go/packages/respjson"
 	"reflect"
 )
 

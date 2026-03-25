@@ -8,10 +8,10 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/stainless-sdks/straddle-go/internal/apijson"
-	"github.com/stainless-sdks/straddle-go/internal/requestconfig"
-	"github.com/stainless-sdks/straddle-go/packages/param"
-	"github.com/stainless-sdks/straddle-go/packages/respjson"
+	"github.com/straddleio/straddle-go/internal/apijson"
+	"github.com/straddleio/straddle-go/internal/requestconfig"
+	"github.com/straddleio/straddle-go/packages/param"
+	"github.com/straddleio/straddle-go/packages/respjson"
 )
 
 // aliased to make [param.APIUnion] private when embedding

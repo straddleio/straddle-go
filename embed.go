@@ -3,7 +3,7 @@
 package straddle
 
 import (
-	"github.com/stainless-sdks/straddle-go/option"
+	"github.com/straddleio/straddle-go/option"
 )
 
 // EmbedService contains methods and other services that help with interacting with

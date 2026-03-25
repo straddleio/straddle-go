@@ -3,8 +3,8 @@ package respjson_test
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/stainless-sdks/straddle-go/internal/apijson"
-	rj "github.com/stainless-sdks/straddle-go/packages/respjson"
+	"github.com/straddleio/straddle-go/internal/apijson"
+	rj "github.com/straddleio/straddle-go/packages/respjson"
 	"reflect"
 	"testing"
 )

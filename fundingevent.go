@@ -11,14 +11,14 @@ import (
 	"slices"
 	"time"
 
-	"github.com/stainless-sdks/straddle-go/internal/apijson"
-	"github.com/stainless-sdks/straddle-go/internal/apiquery"
-	"github.com/stainless-sdks/straddle-go/internal/requestconfig"
-	"github.com/stainless-sdks/straddle-go/option"
-	"github.com/stainless-sdks/straddle-go/packages/pagination"
-	"github.com/stainless-sdks/straddle-go/packages/param"
-	"github.com/stainless-sdks/straddle-go/packages/respjson"
-	"github.com/stainless-sdks/straddle-go/shared"
+	"github.com/straddleio/straddle-go/internal/apijson"
+	"github.com/straddleio/straddle-go/internal/apiquery"
+	"github.com/straddleio/straddle-go/internal/requestconfig"
+	"github.com/straddleio/straddle-go/option"
+	"github.com/straddleio/straddle-go/packages/pagination"
+	"github.com/straddleio/straddle-go/packages/param"
+	"github.com/straddleio/straddle-go/packages/respjson"
+	"github.com/straddleio/straddle-go/shared"
 )
 
 // Funding events represent all money movement between Straddle and an Account's
