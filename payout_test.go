@@ -28,22 +28,27 @@ func TestPayoutNewWithOptionalParams(t *testing.T) {
 		option.WithAPIKey("My API Key"),
 	)
 	_, err := client.Payouts.New(context.TODO(), straddle.PayoutNewParams{
-		Amount:      straddle.F(int64(0)),
-		Currency:    straddle.F("currency"),
-		Description: straddle.F("Vendor invoice payment"),
-		Device: straddle.F(shared.DeviceInfoV1Param{
-			IPAddress: straddle.F("192.168.1.1"),
-		}),
-		ExternalID:  straddle.F("external_id"),
-		Paykey:      straddle.F("paykey"),
-		PaymentDate: straddle.F(time.Now()),
-		Config:      straddle.F[any](map[string]interface{}{}),
-		Metadata: straddle.F(map[string]string{
+		Amount:      10000,
+		Currency:    "currency",
+		Description: straddle.String("Vendor invoice payment"),
+		Device: shared.DeviceInfoV1Param{
+			IPAddress: "192.168.1.1",
+		},
+		ExternalID:  "external_id",
+		Paykey:      "paykey",
+		PaymentDate: time.Now(),
+		Config: straddle.PayoutNewParamsConfig{
+			AutoHold:        straddle.Bool(true),
+			AutoHoldMessage: straddle.String("auto_hold_message"),
+			SandboxOutcome:  "standard",
+		},
+		Metadata: map[string]string{
 			"foo": "string",
-		}),
-		CorrelationID:     straddle.F("Correlation-Id"),
-		RequestID:         straddle.F("Request-Id"),
-		StraddleAccountID: straddle.F("182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e"),
+		},
+		CorrelationID:     straddle.String("Correlation-Id"),
+		IdempotencyKey:    straddle.String("xxxxxxxxxx"),
+		RequestID:         straddle.String("Request-Id"),
+		StraddleAccountID: straddle.String("182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e"),
 	})
 	if err != nil {
 		var apierr *straddle.Error
@@ -70,15 +75,16 @@ func TestPayoutUpdateWithOptionalParams(t *testing.T) {
 		context.TODO(),
 		"182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e",
 		straddle.PayoutUpdateParams{
-			Amount:      straddle.F(int64(0)),
-			Description: straddle.F("description"),
-			PaymentDate: straddle.F(time.Now()),
-			Metadata: straddle.F(map[string]string{
+			Amount:      10000,
+			Description: straddle.String("description"),
+			PaymentDate: time.Now(),
+			Metadata: map[string]string{
 				"foo": "string",
-			}),
-			CorrelationID:     straddle.F("Correlation-Id"),
-			RequestID:         straddle.F("Request-Id"),
-			StraddleAccountID: straddle.F("182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e"),
+			},
+			CorrelationID:     straddle.String("Correlation-Id"),
+			IdempotencyKey:    straddle.String("xxxxxxxxxx"),
+			RequestID:         straddle.String("Request-Id"),
+			StraddleAccountID: straddle.String("182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e"),
 		},
 	)
 	if err != nil {
@@ -106,10 +112,11 @@ func TestPayoutCancelWithOptionalParams(t *testing.T) {
 		context.TODO(),
 		"182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e",
 		straddle.PayoutCancelParams{
-			Reason:            straddle.F("reason"),
-			CorrelationID:     straddle.F("Correlation-Id"),
-			RequestID:         straddle.F("Request-Id"),
-			StraddleAccountID: straddle.F("182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e"),
+			Reason:            "reason",
+			CorrelationID:     straddle.String("Correlation-Id"),
+			IdempotencyKey:    straddle.String("xxxxxxxxxx"),
+			RequestID:         straddle.String("Request-Id"),
+			StraddleAccountID: straddle.String("182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e"),
 		},
 	)
 	if err != nil {
@@ -137,9 +144,9 @@ func TestPayoutGetWithOptionalParams(t *testing.T) {
 		context.TODO(),
 		"182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e",
 		straddle.PayoutGetParams{
-			CorrelationID:     straddle.F("Correlation-Id"),
-			RequestID:         straddle.F("Request-Id"),
-			StraddleAccountID: straddle.F("182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e"),
+			CorrelationID:     straddle.String("Correlation-Id"),
+			RequestID:         straddle.String("Request-Id"),
+			StraddleAccountID: straddle.String("182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e"),
 		},
 	)
 	if err != nil {
@@ -167,10 +174,11 @@ func TestPayoutHoldWithOptionalParams(t *testing.T) {
 		context.TODO(),
 		"182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e",
 		straddle.PayoutHoldParams{
-			Reason:            straddle.F("reason"),
-			CorrelationID:     straddle.F("Correlation-Id"),
-			RequestID:         straddle.F("Request-Id"),
-			StraddleAccountID: straddle.F("182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e"),
+			Reason:            "reason",
+			CorrelationID:     straddle.String("Correlation-Id"),
+			IdempotencyKey:    straddle.String("xxxxxxxxxx"),
+			RequestID:         straddle.String("Request-Id"),
+			StraddleAccountID: straddle.String("182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e"),
 		},
 	)
 	if err != nil {
@@ -198,10 +206,41 @@ func TestPayoutReleaseWithOptionalParams(t *testing.T) {
 		context.TODO(),
 		"182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e",
 		straddle.PayoutReleaseParams{
-			Reason:            straddle.F("reason"),
-			CorrelationID:     straddle.F("Correlation-Id"),
-			RequestID:         straddle.F("Request-Id"),
-			StraddleAccountID: straddle.F("182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e"),
+			Reason:            "reason",
+			CorrelationID:     straddle.String("Correlation-Id"),
+			IdempotencyKey:    straddle.String("xxxxxxxxxx"),
+			RequestID:         straddle.String("Request-Id"),
+			StraddleAccountID: straddle.String("182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e"),
+		},
+	)
+	if err != nil {
+		var apierr *straddle.Error
+		if errors.As(err, &apierr) {
+			t.Log(string(apierr.DumpRequest(true)))
+		}
+		t.Fatalf("err should be nil: %s", err.Error())
+	}
+}
+
+func TestPayoutUnmaskWithOptionalParams(t *testing.T) {
+	baseURL := "http://localhost:4010"
+	if envURL, ok := os.LookupEnv("TEST_API_BASE_URL"); ok {
+		baseURL = envURL
+	}
+	if !testutil.CheckTestServer(t, baseURL) {
+		return
+	}
+	client := straddle.NewClient(
+		option.WithBaseURL(baseURL),
+		option.WithAPIKey("My API Key"),
+	)
+	_, err := client.Payouts.Unmask(
+		context.TODO(),
+		"182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e",
+		straddle.PayoutUnmaskParams{
+			CorrelationID:     straddle.String("Correlation-Id"),
+			RequestID:         straddle.String("Request-Id"),
+			StraddleAccountID: straddle.String("182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e"),
 		},
 	)
 	if err != nil {

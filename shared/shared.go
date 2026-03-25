@@ -3,45 +3,50 @@
 package shared
 
 import (
+	"encoding/json"
 	"time"
 
 	"github.com/stainless-sdks/straddle-go/internal/apijson"
-	"github.com/stainless-sdks/straddle-go/internal/param"
+	"github.com/stainless-sdks/straddle-go/packages/param"
+	"github.com/stainless-sdks/straddle-go/packages/respjson"
 )
+
+// aliased to make [param.APIUnion] private when embedding
+type paramUnion = param.APIUnion
+
+// aliased to make [param.APIObject] private when embedding
+type paramObj = param.APIObject
 
 // Information about the customer associated with the charge or payout.
 type CustomerDetailsV1 struct {
 	// Unique identifier for the customer
-	ID string `json:"id,required" format:"uuid"`
+	ID string `json:"id" api:"required" format:"uuid"`
 	// The type of customer
-	CustomerType CustomerDetailsV1CustomerType `json:"customer_type,required"`
+	//
+	// Any of "individual", "business".
+	CustomerType CustomerDetailsV1CustomerType `json:"customer_type" api:"required"`
 	// The customer's email address
-	Email string `json:"email,required"`
+	Email string `json:"email" api:"required"`
 	// The name of the customer
-	Name string `json:"name,required"`
+	Name string `json:"name" api:"required"`
 	// The customer's phone number in E.164 format
-	Phone string                `json:"phone,required"`
-	JSON  customerDetailsV1JSON `json:"-"`
+	Phone string `json:"phone" api:"required"`
+	// JSON contains metadata for fields, check presence with [respjson.Field.Valid].
+	JSON struct {
+		ID           respjson.Field
+		CustomerType respjson.Field
+		Email        respjson.Field
+		Name         respjson.Field
+		Phone        respjson.Field
+		ExtraFields  map[string]respjson.Field
+		raw          string
+	} `json:"-"`
 }
 
-// customerDetailsV1JSON contains the JSON metadata for the struct
-// [CustomerDetailsV1]
-type customerDetailsV1JSON struct {
-	ID           apijson.Field
-	CustomerType apijson.Field
-	Email        apijson.Field
-	Name         apijson.Field
-	Phone        apijson.Field
-	raw          string
-	ExtraFields  map[string]apijson.Field
-}
-
-func (r *CustomerDetailsV1) UnmarshalJSON(data []byte) (err error) {
+// Returns the unmodified JSON received from the API
+func (r CustomerDetailsV1) RawJSON() string { return r.JSON.raw }
+func (r *CustomerDetailsV1) UnmarshalJSON(data []byte) error {
 	return apijson.UnmarshalRoot(data, r)
-}
-
-func (r customerDetailsV1JSON) RawJSON() string {
-	return r.raw
 }
 
 // The type of customer
@@ -52,95 +57,92 @@ const (
 	CustomerDetailsV1CustomerTypeBusiness   CustomerDetailsV1CustomerType = "business"
 )
 
-func (r CustomerDetailsV1CustomerType) IsKnown() bool {
-	switch r {
-	case CustomerDetailsV1CustomerTypeIndividual, CustomerDetailsV1CustomerTypeBusiness:
-		return true
-	}
-	return false
-}
-
 type DeviceInfoV1 struct {
 	// The IP address of the device used when the customer authorized the charge or
 	// payout. Use `0.0.0.0` to represent an offline consent interaction.
-	IPAddress string           `json:"ip_address,required" format:"ipv4"`
-	JSON      deviceInfoV1JSON `json:"-"`
+	IPAddress string `json:"ip_address" api:"required" format:"ipv4"`
+	// JSON contains metadata for fields, check presence with [respjson.Field.Valid].
+	JSON struct {
+		IPAddress   respjson.Field
+		ExtraFields map[string]respjson.Field
+		raw         string
+	} `json:"-"`
 }
 
-// deviceInfoV1JSON contains the JSON metadata for the struct [DeviceInfoV1]
-type deviceInfoV1JSON struct {
-	IPAddress   apijson.Field
-	raw         string
-	ExtraFields map[string]apijson.Field
-}
-
-func (r *DeviceInfoV1) UnmarshalJSON(data []byte) (err error) {
+// Returns the unmodified JSON received from the API
+func (r DeviceInfoV1) RawJSON() string { return r.JSON.raw }
+func (r *DeviceInfoV1) UnmarshalJSON(data []byte) error {
 	return apijson.UnmarshalRoot(data, r)
 }
 
-func (r deviceInfoV1JSON) RawJSON() string {
-	return r.raw
+// ToParam converts this DeviceInfoV1 to a DeviceInfoV1Param.
+//
+// Warning: the fields of the param type will not be present. ToParam should only
+// be used at the last possible moment before sending a request. Test for this with
+// DeviceInfoV1Param.Overrides()
+func (r DeviceInfoV1) ToParam() DeviceInfoV1Param {
+	return param.Override[DeviceInfoV1Param](json.RawMessage(r.RawJSON()))
 }
 
+// The property IPAddress is required.
 type DeviceInfoV1Param struct {
 	// The IP address of the device used when the customer authorized the charge or
 	// payout. Use `0.0.0.0` to represent an offline consent interaction.
-	IPAddress param.Field[string] `json:"ip_address,required" format:"ipv4"`
+	IPAddress string `json:"ip_address" api:"required" format:"ipv4"`
+	paramObj
 }
 
 func (r DeviceInfoV1Param) MarshalJSON() (data []byte, err error) {
-	return apijson.MarshalRoot(r)
+	type shadow DeviceInfoV1Param
+	return param.MarshalObject(r, (*shadow)(&r))
+}
+func (r *DeviceInfoV1Param) UnmarshalJSON(data []byte) error {
+	return apijson.UnmarshalRoot(data, r)
 }
 
 // Metadata about the API request, including an identifier, timestamp, and
 // pagination details.
 type PagedResponseMetadata struct {
 	// Unique identifier for this API request, useful for troubleshooting.
-	APIRequestID string `json:"api_request_id,required" format:"uuid"`
+	APIRequestID string `json:"api_request_id" api:"required" format:"uuid"`
 	// Timestamp for this API request, useful for troubleshooting.
-	APIRequestTimestamp time.Time `json:"api_request_timestamp,required" format:"date-time"`
+	APIRequestTimestamp time.Time `json:"api_request_timestamp" api:"required" format:"date-time"`
 	// Maximum allowed page size for this endpoint.
-	MaxPageSize int64 `json:"max_page_size,required"`
+	MaxPageSize int64 `json:"max_page_size" api:"required"`
 	// Page number for paginated results.
-	PageNumber int64 `json:"page_number,required"`
+	PageNumber int64 `json:"page_number" api:"required"`
 	// Number of items per page in this response.
-	PageSize int64 `json:"page_size,required"`
+	PageSize int64 `json:"page_size" api:"required"`
 	// The field that the results were sorted by.
-	SortBy string `json:"sort_by,required"`
-	// The order that the results were sorted by.
-	SortOrder PagedResponseMetadataSortOrder `json:"sort_order,required"`
+	SortBy string `json:"sort_by" api:"required"`
+	// Any of "asc", "desc".
+	SortOrder PagedResponseMetadataSortOrder `json:"sort_order" api:"required"`
 	// Total number of items returned in this response.
-	TotalItems int64 `json:"total_items,required"`
+	TotalItems int64 `json:"total_items" api:"required"`
 	// The number of pages available.
-	TotalPages int64                     `json:"total_pages,required"`
-	JSON       pagedResponseMetadataJSON `json:"-"`
+	TotalPages int64 `json:"total_pages" api:"required"`
+	// JSON contains metadata for fields, check presence with [respjson.Field.Valid].
+	JSON struct {
+		APIRequestID        respjson.Field
+		APIRequestTimestamp respjson.Field
+		MaxPageSize         respjson.Field
+		PageNumber          respjson.Field
+		PageSize            respjson.Field
+		SortBy              respjson.Field
+		SortOrder           respjson.Field
+		TotalItems          respjson.Field
+		TotalPages          respjson.Field
+		ExtraFields         map[string]respjson.Field
+		raw                 string
+	} `json:"-"`
 }
 
-// pagedResponseMetadataJSON contains the JSON metadata for the struct
-// [PagedResponseMetadata]
-type pagedResponseMetadataJSON struct {
-	APIRequestID        apijson.Field
-	APIRequestTimestamp apijson.Field
-	MaxPageSize         apijson.Field
-	PageNumber          apijson.Field
-	PageSize            apijson.Field
-	SortBy              apijson.Field
-	SortOrder           apijson.Field
-	TotalItems          apijson.Field
-	TotalPages          apijson.Field
-	raw                 string
-	ExtraFields         map[string]apijson.Field
-}
-
-func (r *PagedResponseMetadata) UnmarshalJSON(data []byte) (err error) {
+// Returns the unmodified JSON received from the API
+func (r PagedResponseMetadata) RawJSON() string { return r.JSON.raw }
+func (r *PagedResponseMetadata) UnmarshalJSON(data []byte) error {
 	return apijson.UnmarshalRoot(data, r)
 }
 
-func (r pagedResponseMetadataJSON) RawJSON() string {
-	return r.raw
-}
-
-// The order that the results were sorted by.
 type PagedResponseMetadataSortOrder string
 
 const (
@@ -148,105 +150,95 @@ const (
 	PagedResponseMetadataSortOrderDesc PagedResponseMetadataSortOrder = "desc"
 )
 
-func (r PagedResponseMetadataSortOrder) IsKnown() bool {
-	switch r {
-	case PagedResponseMetadataSortOrderAsc, PagedResponseMetadataSortOrderDesc:
-		return true
-	}
-	return false
-}
-
 type PaykeyDetailsV1 struct {
 	// Unique identifier for the paykey.
-	ID string `json:"id,required" format:"uuid"`
+	ID string `json:"id" api:"required" format:"uuid"`
 	// Unique identifier for the customer associated with the paykey.
-	CustomerID string `json:"customer_id,required" format:"uuid"`
+	CustomerID string `json:"customer_id" api:"required" format:"uuid"`
 	// Human-readable label that combines the bank name and masked account number to
 	// help easility represent this paykey in a UI
-	Label string `json:"label,required"`
+	Label string `json:"label" api:"required"`
 	// The most recent balance of the bank account associated with the paykey in
 	// dollars.
-	Balance int64               `json:"balance,nullable"`
-	JSON    paykeyDetailsV1JSON `json:"-"`
+	Balance int64 `json:"balance" api:"nullable"`
+	// JSON contains metadata for fields, check presence with [respjson.Field.Valid].
+	JSON struct {
+		ID          respjson.Field
+		CustomerID  respjson.Field
+		Label       respjson.Field
+		Balance     respjson.Field
+		ExtraFields map[string]respjson.Field
+		raw         string
+	} `json:"-"`
 }
 
-// paykeyDetailsV1JSON contains the JSON metadata for the struct [PaykeyDetailsV1]
-type paykeyDetailsV1JSON struct {
-	ID          apijson.Field
-	CustomerID  apijson.Field
-	Label       apijson.Field
-	Balance     apijson.Field
-	raw         string
-	ExtraFields map[string]apijson.Field
-}
-
-func (r *PaykeyDetailsV1) UnmarshalJSON(data []byte) (err error) {
+// Returns the unmodified JSON received from the API
+func (r PaykeyDetailsV1) RawJSON() string { return r.JSON.raw }
+func (r *PaykeyDetailsV1) UnmarshalJSON(data []byte) error {
 	return apijson.UnmarshalRoot(data, r)
-}
-
-func (r paykeyDetailsV1JSON) RawJSON() string {
-	return r.raw
 }
 
 // Metadata about the API request, including an identifier and timestamp.
 type ResponseMetadata struct {
 	// Unique identifier for this API request, useful for troubleshooting.
-	APIRequestID string `json:"api_request_id,required" format:"uuid"`
+	APIRequestID string `json:"api_request_id" api:"required" format:"uuid"`
 	// Timestamp for this API request, useful for troubleshooting.
-	APIRequestTimestamp time.Time            `json:"api_request_timestamp,required" format:"date-time"`
-	JSON                responseMetadataJSON `json:"-"`
+	APIRequestTimestamp time.Time `json:"api_request_timestamp" api:"required" format:"date-time"`
+	// JSON contains metadata for fields, check presence with [respjson.Field.Valid].
+	JSON struct {
+		APIRequestID        respjson.Field
+		APIRequestTimestamp respjson.Field
+		ExtraFields         map[string]respjson.Field
+		raw                 string
+	} `json:"-"`
 }
 
-// responseMetadataJSON contains the JSON metadata for the struct
-// [ResponseMetadata]
-type responseMetadataJSON struct {
-	APIRequestID        apijson.Field
-	APIRequestTimestamp apijson.Field
-	raw                 string
-	ExtraFields         map[string]apijson.Field
-}
-
-func (r *ResponseMetadata) UnmarshalJSON(data []byte) (err error) {
+// Returns the unmodified JSON received from the API
+func (r ResponseMetadata) RawJSON() string { return r.JSON.raw }
+func (r *ResponseMetadata) UnmarshalJSON(data []byte) error {
 	return apijson.UnmarshalRoot(data, r)
-}
-
-func (r responseMetadataJSON) RawJSON() string {
-	return r.raw
 }
 
 type StatusDetailsV1 struct {
 	// The time the status change occurred.
-	ChangedAt time.Time `json:"changed_at,required" format:"date-time"`
+	ChangedAt time.Time `json:"changed_at" api:"required" format:"date-time"`
 	// A human-readable description of the current status.
-	Message string `json:"message,required"`
+	Message string `json:"message" api:"required"`
 	// A machine-readable identifier for the specific status, useful for programmatic
 	// handling.
-	Reason StatusDetailsV1Reason `json:"reason,required"`
+	//
+	// Any of "insufficient_funds", "closed_bank_account", "invalid_bank_account",
+	// "invalid_routing", "disputed", "payment_stopped", "owner_deceased",
+	// "frozen_bank_account", "risk_review", "fraudulent", "duplicate_entry",
+	// "invalid_paykey", "payment_blocked", "amount_too_large", "too_many_attempts",
+	// "internal_system_error", "user_request", "ok", "other_network_return",
+	// "payout_refused", "cancel_request", "failed_verification", "require_review",
+	// "blocked_by_system", "watchtower_review", "validating", "auto_hold".
+	Reason StatusDetailsV1Reason `json:"reason" api:"required"`
 	// Identifies the origin of the status change (e.g., `bank_decline`, `watchtower`).
 	// This helps in tracking the cause of status updates.
-	Source StatusDetailsV1Source `json:"source,required"`
+	//
+	// Any of "watchtower", "bank_decline", "customer_dispute", "user_action",
+	// "system".
+	Source StatusDetailsV1Source `json:"source" api:"required"`
 	// The status code if applicable.
-	Code string              `json:"code,nullable"`
-	JSON statusDetailsV1JSON `json:"-"`
+	Code string `json:"code" api:"nullable"`
+	// JSON contains metadata for fields, check presence with [respjson.Field.Valid].
+	JSON struct {
+		ChangedAt   respjson.Field
+		Message     respjson.Field
+		Reason      respjson.Field
+		Source      respjson.Field
+		Code        respjson.Field
+		ExtraFields map[string]respjson.Field
+		raw         string
+	} `json:"-"`
 }
 
-// statusDetailsV1JSON contains the JSON metadata for the struct [StatusDetailsV1]
-type statusDetailsV1JSON struct {
-	ChangedAt   apijson.Field
-	Message     apijson.Field
-	Reason      apijson.Field
-	Source      apijson.Field
-	Code        apijson.Field
-	raw         string
-	ExtraFields map[string]apijson.Field
-}
-
-func (r *StatusDetailsV1) UnmarshalJSON(data []byte) (err error) {
+// Returns the unmodified JSON received from the API
+func (r StatusDetailsV1) RawJSON() string { return r.JSON.raw }
+func (r *StatusDetailsV1) UnmarshalJSON(data []byte) error {
 	return apijson.UnmarshalRoot(data, r)
-}
-
-func (r statusDetailsV1JSON) RawJSON() string {
-	return r.raw
 }
 
 // A machine-readable identifier for the specific status, useful for programmatic
@@ -274,15 +266,14 @@ const (
 	StatusDetailsV1ReasonOk                  StatusDetailsV1Reason = "ok"
 	StatusDetailsV1ReasonOtherNetworkReturn  StatusDetailsV1Reason = "other_network_return"
 	StatusDetailsV1ReasonPayoutRefused       StatusDetailsV1Reason = "payout_refused"
+	StatusDetailsV1ReasonCancelRequest       StatusDetailsV1Reason = "cancel_request"
+	StatusDetailsV1ReasonFailedVerification  StatusDetailsV1Reason = "failed_verification"
+	StatusDetailsV1ReasonRequireReview       StatusDetailsV1Reason = "require_review"
+	StatusDetailsV1ReasonBlockedBySystem     StatusDetailsV1Reason = "blocked_by_system"
+	StatusDetailsV1ReasonWatchtowerReview    StatusDetailsV1Reason = "watchtower_review"
+	StatusDetailsV1ReasonValidating          StatusDetailsV1Reason = "validating"
+	StatusDetailsV1ReasonAutoHold            StatusDetailsV1Reason = "auto_hold"
 )
-
-func (r StatusDetailsV1Reason) IsKnown() bool {
-	switch r {
-	case StatusDetailsV1ReasonInsufficientFunds, StatusDetailsV1ReasonClosedBankAccount, StatusDetailsV1ReasonInvalidBankAccount, StatusDetailsV1ReasonInvalidRouting, StatusDetailsV1ReasonDisputed, StatusDetailsV1ReasonPaymentStopped, StatusDetailsV1ReasonOwnerDeceased, StatusDetailsV1ReasonFrozenBankAccount, StatusDetailsV1ReasonRiskReview, StatusDetailsV1ReasonFraudulent, StatusDetailsV1ReasonDuplicateEntry, StatusDetailsV1ReasonInvalidPaykey, StatusDetailsV1ReasonPaymentBlocked, StatusDetailsV1ReasonAmountTooLarge, StatusDetailsV1ReasonTooManyAttempts, StatusDetailsV1ReasonInternalSystemError, StatusDetailsV1ReasonUserRequest, StatusDetailsV1ReasonOk, StatusDetailsV1ReasonOtherNetworkReturn, StatusDetailsV1ReasonPayoutRefused:
-		return true
-	}
-	return false
-}
 
 // Identifies the origin of the status change (e.g., `bank_decline`, `watchtower`).
 // This helps in tracking the cause of status updates.
@@ -295,11 +286,3 @@ const (
 	StatusDetailsV1SourceUserAction      StatusDetailsV1Source = "user_action"
 	StatusDetailsV1SourceSystem          StatusDetailsV1Source = "system"
 )
-
-func (r StatusDetailsV1Source) IsKnown() bool {
-	switch r {
-	case StatusDetailsV1SourceWatchtower, StatusDetailsV1SourceBankDecline, StatusDetailsV1SourceCustomerDispute, StatusDetailsV1SourceUserAction, StatusDetailsV1SourceSystem:
-		return true
-	}
-	return false
-}

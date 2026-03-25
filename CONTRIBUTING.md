@@ -4,12 +4,12 @@ To set up the repository, run:
 
 ```sh
 $ ./scripts/bootstrap
-$ ./scripts/build
+$ ./scripts/lint
 ```
 
 This will install all the required dependencies and build the SDK.
 
-You can also [install go 1.18+ manually](https://go.dev/doc/install).
+You can also [install go 1.22+ manually](https://go.dev/doc/install).
 
 ## Modifying/Adding code
 
@@ -46,11 +46,10 @@ $ go mod edit -replace github.com/stainless-sdks/straddle-go=/path/to/straddle-g
 
 ## Running tests
 
-Most tests require you to [set up a mock server](https://github.com/stoplightio/prism) against the OpenAPI spec to run the tests.
+Most tests require you to [set up a mock server](https://github.com/dgellow/steady) against the OpenAPI spec to run the tests.
 
 ```sh
-# you will need npm installed
-$ npx prism mock path/to/your/openapi.yml
+$ ./scripts/mock
 ```
 
 ```sh

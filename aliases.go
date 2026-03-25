@@ -4,8 +4,15 @@ package straddle
 
 import (
 	"github.com/stainless-sdks/straddle-go/internal/apierror"
+	"github.com/stainless-sdks/straddle-go/packages/param"
 	"github.com/stainless-sdks/straddle-go/shared"
 )
+
+// aliased to make [param.APIUnion] private when embedding
+type paramUnion = param.APIUnion
+
+// aliased to make [param.APIObject] private when embedding
+type paramObj = param.APIObject
 
 type Error = apierror.Error
 
@@ -19,10 +26,10 @@ type CustomerDetailsV1 = shared.CustomerDetailsV1
 // This is an alias to an internal type.
 type CustomerDetailsV1CustomerType = shared.CustomerDetailsV1CustomerType
 
-// This is an alias to an internal value.
+// Equals "individual"
 const CustomerDetailsV1CustomerTypeIndividual = shared.CustomerDetailsV1CustomerTypeIndividual
 
-// This is an alias to an internal value.
+// Equals "business"
 const CustomerDetailsV1CustomerTypeBusiness = shared.CustomerDetailsV1CustomerTypeBusiness
 
 // This is an alias to an internal type.
@@ -37,15 +44,13 @@ type DeviceInfoV1Param = shared.DeviceInfoV1Param
 // This is an alias to an internal type.
 type PagedResponseMetadata = shared.PagedResponseMetadata
 
-// The order that the results were sorted by.
-//
 // This is an alias to an internal type.
 type PagedResponseMetadataSortOrder = shared.PagedResponseMetadataSortOrder
 
-// This is an alias to an internal value.
+// Equals "asc"
 const PagedResponseMetadataSortOrderAsc = shared.PagedResponseMetadataSortOrderAsc
 
-// This is an alias to an internal value.
+// Equals "desc"
 const PagedResponseMetadataSortOrderDesc = shared.PagedResponseMetadataSortOrderDesc
 
 // This is an alias to an internal type.
@@ -65,65 +70,86 @@ type StatusDetailsV1 = shared.StatusDetailsV1
 // This is an alias to an internal type.
 type StatusDetailsV1Reason = shared.StatusDetailsV1Reason
 
-// This is an alias to an internal value.
+// Equals "insufficient_funds"
 const StatusDetailsV1ReasonInsufficientFunds = shared.StatusDetailsV1ReasonInsufficientFunds
 
-// This is an alias to an internal value.
+// Equals "closed_bank_account"
 const StatusDetailsV1ReasonClosedBankAccount = shared.StatusDetailsV1ReasonClosedBankAccount
 
-// This is an alias to an internal value.
+// Equals "invalid_bank_account"
 const StatusDetailsV1ReasonInvalidBankAccount = shared.StatusDetailsV1ReasonInvalidBankAccount
 
-// This is an alias to an internal value.
+// Equals "invalid_routing"
 const StatusDetailsV1ReasonInvalidRouting = shared.StatusDetailsV1ReasonInvalidRouting
 
-// This is an alias to an internal value.
+// Equals "disputed"
 const StatusDetailsV1ReasonDisputed = shared.StatusDetailsV1ReasonDisputed
 
-// This is an alias to an internal value.
+// Equals "payment_stopped"
 const StatusDetailsV1ReasonPaymentStopped = shared.StatusDetailsV1ReasonPaymentStopped
 
-// This is an alias to an internal value.
+// Equals "owner_deceased"
 const StatusDetailsV1ReasonOwnerDeceased = shared.StatusDetailsV1ReasonOwnerDeceased
 
-// This is an alias to an internal value.
+// Equals "frozen_bank_account"
 const StatusDetailsV1ReasonFrozenBankAccount = shared.StatusDetailsV1ReasonFrozenBankAccount
 
-// This is an alias to an internal value.
+// Equals "risk_review"
 const StatusDetailsV1ReasonRiskReview = shared.StatusDetailsV1ReasonRiskReview
 
-// This is an alias to an internal value.
+// Equals "fraudulent"
 const StatusDetailsV1ReasonFraudulent = shared.StatusDetailsV1ReasonFraudulent
 
-// This is an alias to an internal value.
+// Equals "duplicate_entry"
 const StatusDetailsV1ReasonDuplicateEntry = shared.StatusDetailsV1ReasonDuplicateEntry
 
-// This is an alias to an internal value.
+// Equals "invalid_paykey"
 const StatusDetailsV1ReasonInvalidPaykey = shared.StatusDetailsV1ReasonInvalidPaykey
 
-// This is an alias to an internal value.
+// Equals "payment_blocked"
 const StatusDetailsV1ReasonPaymentBlocked = shared.StatusDetailsV1ReasonPaymentBlocked
 
-// This is an alias to an internal value.
+// Equals "amount_too_large"
 const StatusDetailsV1ReasonAmountTooLarge = shared.StatusDetailsV1ReasonAmountTooLarge
 
-// This is an alias to an internal value.
+// Equals "too_many_attempts"
 const StatusDetailsV1ReasonTooManyAttempts = shared.StatusDetailsV1ReasonTooManyAttempts
 
-// This is an alias to an internal value.
+// Equals "internal_system_error"
 const StatusDetailsV1ReasonInternalSystemError = shared.StatusDetailsV1ReasonInternalSystemError
 
-// This is an alias to an internal value.
+// Equals "user_request"
 const StatusDetailsV1ReasonUserRequest = shared.StatusDetailsV1ReasonUserRequest
 
-// This is an alias to an internal value.
+// Equals "ok"
 const StatusDetailsV1ReasonOk = shared.StatusDetailsV1ReasonOk
 
-// This is an alias to an internal value.
+// Equals "other_network_return"
 const StatusDetailsV1ReasonOtherNetworkReturn = shared.StatusDetailsV1ReasonOtherNetworkReturn
 
-// This is an alias to an internal value.
+// Equals "payout_refused"
 const StatusDetailsV1ReasonPayoutRefused = shared.StatusDetailsV1ReasonPayoutRefused
+
+// Equals "cancel_request"
+const StatusDetailsV1ReasonCancelRequest = shared.StatusDetailsV1ReasonCancelRequest
+
+// Equals "failed_verification"
+const StatusDetailsV1ReasonFailedVerification = shared.StatusDetailsV1ReasonFailedVerification
+
+// Equals "require_review"
+const StatusDetailsV1ReasonRequireReview = shared.StatusDetailsV1ReasonRequireReview
+
+// Equals "blocked_by_system"
+const StatusDetailsV1ReasonBlockedBySystem = shared.StatusDetailsV1ReasonBlockedBySystem
+
+// Equals "watchtower_review"
+const StatusDetailsV1ReasonWatchtowerReview = shared.StatusDetailsV1ReasonWatchtowerReview
+
+// Equals "validating"
+const StatusDetailsV1ReasonValidating = shared.StatusDetailsV1ReasonValidating
+
+// Equals "auto_hold"
+const StatusDetailsV1ReasonAutoHold = shared.StatusDetailsV1ReasonAutoHold
 
 // Identifies the origin of the status change (e.g., `bank_decline`, `watchtower`).
 // This helps in tracking the cause of status updates.
@@ -131,17 +157,17 @@ const StatusDetailsV1ReasonPayoutRefused = shared.StatusDetailsV1ReasonPayoutRef
 // This is an alias to an internal type.
 type StatusDetailsV1Source = shared.StatusDetailsV1Source
 
-// This is an alias to an internal value.
+// Equals "watchtower"
 const StatusDetailsV1SourceWatchtower = shared.StatusDetailsV1SourceWatchtower
 
-// This is an alias to an internal value.
+// Equals "bank_decline"
 const StatusDetailsV1SourceBankDecline = shared.StatusDetailsV1SourceBankDecline
 
-// This is an alias to an internal value.
+// Equals "customer_dispute"
 const StatusDetailsV1SourceCustomerDispute = shared.StatusDetailsV1SourceCustomerDispute
 
-// This is an alias to an internal value.
+// Equals "user_action"
 const StatusDetailsV1SourceUserAction = shared.StatusDetailsV1SourceUserAction
 
-// This is an alias to an internal value.
+// Equals "system"
 const StatusDetailsV1SourceSystem = shared.StatusDetailsV1SourceSystem

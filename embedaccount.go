@@ -4,21 +4,30 @@ package straddle
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
+	"slices"
 	"time"
 
 	"github.com/stainless-sdks/straddle-go/internal/apijson"
 	"github.com/stainless-sdks/straddle-go/internal/apiquery"
-	"github.com/stainless-sdks/straddle-go/internal/param"
 	"github.com/stainless-sdks/straddle-go/internal/requestconfig"
 	"github.com/stainless-sdks/straddle-go/option"
 	"github.com/stainless-sdks/straddle-go/packages/pagination"
+	"github.com/stainless-sdks/straddle-go/packages/param"
+	"github.com/stainless-sdks/straddle-go/packages/respjson"
 	"github.com/stainless-sdks/straddle-go/shared"
 )
 
+// Accounts represent businesses using Straddle through your platform. Each account
+// must complete automated verification before processing payments. Use accounts to
+// manage your users' payment capabilities, track verification status, and control
+// access to features. Accounts can be instantly created in sandbox and require
+// additional verification for production access.
+//
 // EmbedAccountService contains methods and other services that help with
 // interacting with the straddle API.
 //
@@ -26,16 +35,20 @@ import (
 // automatically. You should not instantiate this service directly, and instead use
 // the [NewEmbedAccountService] method instead.
 type EmbedAccountService struct {
-	Options            []option.RequestOption
-	CapabilityRequests *EmbedAccountCapabilityRequestService
+	options []option.RequestOption
+	// Capabilities enable specific features and services for an Account. Use
+	// capability requests to unlock higher processing limits, new payment types, or
+	// additional platform features as your users' businesses grow. Track approval
+	// status and manage documentation requirements through a single interface.
+	CapabilityRequests EmbedAccountCapabilityRequestService
 }
 
 // NewEmbedAccountService generates a new service that applies the given options to
 // each request. These options are applied after the parent client's options (if
 // there is one), and before any request-specific options.
-func NewEmbedAccountService(opts ...option.RequestOption) (r *EmbedAccountService) {
-	r = &EmbedAccountService{}
-	r.Options = opts
+func NewEmbedAccountService(opts ...option.RequestOption) (r EmbedAccountService) {
+	r = EmbedAccountService{}
+	r.options = opts
 	r.CapabilityRequests = NewEmbedAccountCapabilityRequestService(opts...)
 	return
 }
@@ -44,35 +57,41 @@ func NewEmbedAccountService(opts ...option.RequestOption) (r *EmbedAccountServic
 // endpoint allows you to set up an account with specified details, including
 // business information and access levels.
 func (r *EmbedAccountService) New(ctx context.Context, params EmbedAccountNewParams, opts ...option.RequestOption) (res *AccountV1, err error) {
-	if params.CorrelationID.Present {
-		opts = append(opts, option.WithHeader("correlation-id", fmt.Sprintf("%s", params.CorrelationID)))
+	if !param.IsOmitted(params.CorrelationID) {
+		opts = append(opts, option.WithHeader("correlation-id", fmt.Sprintf("%v", params.CorrelationID.Value)))
 	}
-	if params.RequestID.Present {
-		opts = append(opts, option.WithHeader("request-id", fmt.Sprintf("%s", params.RequestID)))
+	if !param.IsOmitted(params.IdempotencyKey) {
+		opts = append(opts, option.WithHeader("idempotency-key", fmt.Sprintf("%v", params.IdempotencyKey.Value)))
 	}
-	opts = append(r.Options[:], opts...)
+	if !param.IsOmitted(params.RequestID) {
+		opts = append(opts, option.WithHeader("request-id", fmt.Sprintf("%v", params.RequestID.Value)))
+	}
+	opts = slices.Concat(r.options, opts)
 	path := "v1/accounts"
 	err = requestconfig.ExecuteNewRequest(ctx, http.MethodPost, path, params, &res, opts...)
-	return
+	return res, err
 }
 
 // Updates an existing account's information. This endpoint allows you to update
 // various account details during onboarding or after the account has been created.
 func (r *EmbedAccountService) Update(ctx context.Context, accountID string, params EmbedAccountUpdateParams, opts ...option.RequestOption) (res *AccountV1, err error) {
-	if params.CorrelationID.Present {
-		opts = append(opts, option.WithHeader("correlation-id", fmt.Sprintf("%s", params.CorrelationID)))
+	if !param.IsOmitted(params.CorrelationID) {
+		opts = append(opts, option.WithHeader("correlation-id", fmt.Sprintf("%v", params.CorrelationID.Value)))
 	}
-	if params.RequestID.Present {
-		opts = append(opts, option.WithHeader("request-id", fmt.Sprintf("%s", params.RequestID)))
+	if !param.IsOmitted(params.IdempotencyKey) {
+		opts = append(opts, option.WithHeader("idempotency-key", fmt.Sprintf("%v", params.IdempotencyKey.Value)))
 	}
-	opts = append(r.Options[:], opts...)
+	if !param.IsOmitted(params.RequestID) {
+		opts = append(opts, option.WithHeader("request-id", fmt.Sprintf("%v", params.RequestID.Value)))
+	}
+	opts = slices.Concat(r.options, opts)
 	if accountID == "" {
 		err = errors.New("missing required account_id parameter")
-		return
+		return nil, err
 	}
 	path := fmt.Sprintf("v1/accounts/%s", accountID)
 	err = requestconfig.ExecuteNewRequest(ctx, http.MethodPut, path, params, &res, opts...)
-	return
+	return res, err
 }
 
 // Returns a list of accounts associated with your Straddle platform integration.
@@ -81,13 +100,13 @@ func (r *EmbedAccountService) Update(ctx context.Context, accountID string, para
 // filtering options.
 func (r *EmbedAccountService) List(ctx context.Context, params EmbedAccountListParams, opts ...option.RequestOption) (res *pagination.PageNumberSchema[AccountPagedV1Data], err error) {
 	var raw *http.Response
-	if params.CorrelationID.Present {
-		opts = append(opts, option.WithHeader("correlation-id", fmt.Sprintf("%s", params.CorrelationID)))
+	if !param.IsOmitted(params.CorrelationID) {
+		opts = append(opts, option.WithHeader("correlation-id", fmt.Sprintf("%v", params.CorrelationID.Value)))
 	}
-	if params.RequestID.Present {
-		opts = append(opts, option.WithHeader("request-id", fmt.Sprintf("%s", params.RequestID)))
+	if !param.IsOmitted(params.RequestID) {
+		opts = append(opts, option.WithHeader("request-id", fmt.Sprintf("%v", params.RequestID.Value)))
 	}
-	opts = append(r.Options[:], opts...)
+	opts = slices.Concat(r.options, opts)
 	opts = append([]option.RequestOption{option.WithResponseInto(&raw)}, opts...)
 	path := "v1/accounts"
 	cfg, err := requestconfig.NewRequestConfig(ctx, http.MethodGet, path, params, &res, opts...)
@@ -114,66 +133,72 @@ func (r *EmbedAccountService) ListAutoPaging(ctx context.Context, params EmbedAc
 // unique account ID that was returned from your previous request, and Straddle
 // will return the corresponding account information.
 func (r *EmbedAccountService) Get(ctx context.Context, accountID string, query EmbedAccountGetParams, opts ...option.RequestOption) (res *AccountV1, err error) {
-	if query.CorrelationID.Present {
-		opts = append(opts, option.WithHeader("correlation-id", fmt.Sprintf("%s", query.CorrelationID)))
+	if !param.IsOmitted(query.CorrelationID) {
+		opts = append(opts, option.WithHeader("correlation-id", fmt.Sprintf("%v", query.CorrelationID.Value)))
 	}
-	if query.RequestID.Present {
-		opts = append(opts, option.WithHeader("request-id", fmt.Sprintf("%s", query.RequestID)))
+	if !param.IsOmitted(query.RequestID) {
+		opts = append(opts, option.WithHeader("request-id", fmt.Sprintf("%v", query.RequestID.Value)))
 	}
-	opts = append(r.Options[:], opts...)
+	opts = slices.Concat(r.options, opts)
 	if accountID == "" {
 		err = errors.New("missing required account_id parameter")
-		return
+		return nil, err
 	}
 	path := fmt.Sprintf("v1/accounts/%s", accountID)
 	err = requestconfig.ExecuteNewRequest(ctx, http.MethodGet, path, nil, &res, opts...)
-	return
+	return res, err
 }
 
 // Initiates the onboarding process for a new account. This endpoint can only be
 // used for accounts where at least one representative and one bank account have
 // already been created.
 func (r *EmbedAccountService) Onboard(ctx context.Context, accountID string, params EmbedAccountOnboardParams, opts ...option.RequestOption) (res *AccountV1, err error) {
-	if params.CorrelationID.Present {
-		opts = append(opts, option.WithHeader("correlation-id", fmt.Sprintf("%s", params.CorrelationID)))
+	if !param.IsOmitted(params.CorrelationID) {
+		opts = append(opts, option.WithHeader("correlation-id", fmt.Sprintf("%v", params.CorrelationID.Value)))
 	}
-	if params.RequestID.Present {
-		opts = append(opts, option.WithHeader("request-id", fmt.Sprintf("%s", params.RequestID)))
+	if !param.IsOmitted(params.IdempotencyKey) {
+		opts = append(opts, option.WithHeader("idempotency-key", fmt.Sprintf("%v", params.IdempotencyKey.Value)))
 	}
-	opts = append(r.Options[:], opts...)
+	if !param.IsOmitted(params.RequestID) {
+		opts = append(opts, option.WithHeader("request-id", fmt.Sprintf("%v", params.RequestID.Value)))
+	}
+	opts = slices.Concat(r.options, opts)
 	if accountID == "" {
 		err = errors.New("missing required account_id parameter")
-		return
+		return nil, err
 	}
 	path := fmt.Sprintf("v1/accounts/%s/onboard", accountID)
 	err = requestconfig.ExecuteNewRequest(ctx, http.MethodPost, path, params, &res, opts...)
-	return
+	return res, err
 }
 
 // Simulate the status transitions for sandbox accounts. This endpoint can only be
 // used for sandbox accounts.
 func (r *EmbedAccountService) Simulate(ctx context.Context, accountID string, params EmbedAccountSimulateParams, opts ...option.RequestOption) (res *AccountV1, err error) {
-	if params.CorrelationID.Present {
-		opts = append(opts, option.WithHeader("correlation-id", fmt.Sprintf("%s", params.CorrelationID)))
+	if !param.IsOmitted(params.CorrelationID) {
+		opts = append(opts, option.WithHeader("correlation-id", fmt.Sprintf("%v", params.CorrelationID.Value)))
 	}
-	if params.RequestID.Present {
-		opts = append(opts, option.WithHeader("request-id", fmt.Sprintf("%s", params.RequestID)))
+	if !param.IsOmitted(params.IdempotencyKey) {
+		opts = append(opts, option.WithHeader("idempotency-key", fmt.Sprintf("%v", params.IdempotencyKey.Value)))
 	}
-	opts = append(r.Options[:], opts...)
+	if !param.IsOmitted(params.RequestID) {
+		opts = append(opts, option.WithHeader("request-id", fmt.Sprintf("%v", params.RequestID.Value)))
+	}
+	opts = slices.Concat(r.options, opts)
 	if accountID == "" {
 		err = errors.New("missing required account_id parameter")
-		return
+		return nil, err
 	}
 	path := fmt.Sprintf("v1/accounts/%s/simulate", accountID)
 	err = requestconfig.ExecuteNewRequest(ctx, http.MethodPost, path, params, &res, opts...)
-	return
+	return res, err
 }
 
 type AccountPagedV1 struct {
-	Data []AccountPagedV1Data `json:"data,required"`
+	Data []AccountPagedV1Data `json:"data" api:"required"`
 	// Metadata about the API request, including an identifier, timestamp, and
 	// pagination details.
-	Meta shared.PagedResponseMetadata `json:"meta,required"`
+	Meta shared.PagedResponseMetadata `json:"meta" api:"required"`
 	// Indicates the structure of the returned content.
 	//
 	//   - "object" means the `data` field contains a single JSON object.
@@ -181,447 +206,286 @@ type AccountPagedV1 struct {
 	//   - "error" means the `data` field contains an error object with details of the
 	//     issue.
 	//   - "none" means no data is returned.
-	ResponseType AccountPagedV1ResponseType `json:"response_type,required"`
-	JSON         accountPagedV1JSON         `json:"-"`
+	//
+	// Any of "object", "array", "error", "none".
+	ResponseType AccountPagedV1ResponseType `json:"response_type" api:"required"`
+	// JSON contains metadata for fields, check presence with [respjson.Field.Valid].
+	JSON struct {
+		Data         respjson.Field
+		Meta         respjson.Field
+		ResponseType respjson.Field
+		ExtraFields  map[string]respjson.Field
+		raw          string
+	} `json:"-"`
 }
 
-// accountPagedV1JSON contains the JSON metadata for the struct [AccountPagedV1]
-type accountPagedV1JSON struct {
-	Data         apijson.Field
-	Meta         apijson.Field
-	ResponseType apijson.Field
-	raw          string
-	ExtraFields  map[string]apijson.Field
-}
-
-func (r *AccountPagedV1) UnmarshalJSON(data []byte) (err error) {
+// Returns the unmodified JSON received from the API
+func (r AccountPagedV1) RawJSON() string { return r.JSON.raw }
+func (r *AccountPagedV1) UnmarshalJSON(data []byte) error {
 	return apijson.UnmarshalRoot(data, r)
-}
-
-func (r accountPagedV1JSON) RawJSON() string {
-	return r.raw
 }
 
 type AccountPagedV1Data struct {
 	// Unique identifier for the account.
-	ID string `json:"id,required" format:"uuid"`
+	ID string `json:"id" api:"required" format:"uuid"`
 	// The access level granted to the account. This is determined by your platform
 	// configuration. Use `standard` unless instructed otherwise by Straddle.
-	AccessLevel AccountPagedV1DataAccessLevel `json:"access_level,required"`
+	//
+	// Any of "standard", "managed".
+	AccessLevel string `json:"access_level" api:"required"`
 	// The unique identifier of the organization this account belongs to.
-	OrganizationID string `json:"organization_id,required" format:"uuid"`
+	OrganizationID string `json:"organization_id" api:"required" format:"uuid"`
 	// The current status of the account (e.g., 'active', 'inactive', 'pending').
-	Status       AccountPagedV1DataStatus       `json:"status,required"`
-	StatusDetail AccountPagedV1DataStatusDetail `json:"status_detail,required"`
+	//
+	// Any of "created", "onboarding", "active", "rejected", "inactive".
+	Status       string                         `json:"status" api:"required"`
+	StatusDetail AccountPagedV1DataStatusDetail `json:"status_detail" api:"required"`
 	// The type of account (e.g., 'individual', 'business').
-	Type            AccountPagedV1DataType         `json:"type,required"`
+	//
+	// Any of "business".
+	Type            string                         `json:"type" api:"required"`
 	BusinessProfile BusinessProfileV1              `json:"business_profile"`
 	Capabilities    AccountPagedV1DataCapabilities `json:"capabilities"`
 	// Timestamp of when the account was created.
-	CreatedAt time.Time `json:"created_at,nullable" format:"date-time"`
+	CreatedAt time.Time `json:"created_at" api:"nullable" format:"date-time"`
 	// Unique identifier for the account in your database, used for cross-referencing
 	// between Straddle and your systems.
-	ExternalID string `json:"external_id,nullable"`
+	ExternalID string `json:"external_id" api:"nullable"`
 	// Up to 20 additional user-defined key-value pairs. Useful for storing additional
 	// information about the account in a structured format.
-	Metadata       map[string]string          `json:"metadata,nullable"`
+	Metadata       map[string]string          `json:"metadata" api:"nullable"`
 	Settings       AccountPagedV1DataSettings `json:"settings"`
 	TermsOfService TermsOfServiceV1           `json:"terms_of_service"`
 	// Timestamp of the most recent update to the account.
-	UpdatedAt time.Time              `json:"updated_at,nullable" format:"date-time"`
-	JSON      accountPagedV1DataJSON `json:"-"`
+	UpdatedAt time.Time `json:"updated_at" api:"nullable" format:"date-time"`
+	// JSON contains metadata for fields, check presence with [respjson.Field.Valid].
+	JSON struct {
+		ID              respjson.Field
+		AccessLevel     respjson.Field
+		OrganizationID  respjson.Field
+		Status          respjson.Field
+		StatusDetail    respjson.Field
+		Type            respjson.Field
+		BusinessProfile respjson.Field
+		Capabilities    respjson.Field
+		CreatedAt       respjson.Field
+		ExternalID      respjson.Field
+		Metadata        respjson.Field
+		Settings        respjson.Field
+		TermsOfService  respjson.Field
+		UpdatedAt       respjson.Field
+		ExtraFields     map[string]respjson.Field
+		raw             string
+	} `json:"-"`
 }
 
-// accountPagedV1DataJSON contains the JSON metadata for the struct
-// [AccountPagedV1Data]
-type accountPagedV1DataJSON struct {
-	ID              apijson.Field
-	AccessLevel     apijson.Field
-	OrganizationID  apijson.Field
-	Status          apijson.Field
-	StatusDetail    apijson.Field
-	Type            apijson.Field
-	BusinessProfile apijson.Field
-	Capabilities    apijson.Field
-	CreatedAt       apijson.Field
-	ExternalID      apijson.Field
-	Metadata        apijson.Field
-	Settings        apijson.Field
-	TermsOfService  apijson.Field
-	UpdatedAt       apijson.Field
-	raw             string
-	ExtraFields     map[string]apijson.Field
-}
-
-func (r *AccountPagedV1Data) UnmarshalJSON(data []byte) (err error) {
+// Returns the unmodified JSON received from the API
+func (r AccountPagedV1Data) RawJSON() string { return r.JSON.raw }
+func (r *AccountPagedV1Data) UnmarshalJSON(data []byte) error {
 	return apijson.UnmarshalRoot(data, r)
-}
-
-func (r accountPagedV1DataJSON) RawJSON() string {
-	return r.raw
-}
-
-// The access level granted to the account. This is determined by your platform
-// configuration. Use `standard` unless instructed otherwise by Straddle.
-type AccountPagedV1DataAccessLevel string
-
-const (
-	AccountPagedV1DataAccessLevelStandard AccountPagedV1DataAccessLevel = "standard"
-	AccountPagedV1DataAccessLevelManaged  AccountPagedV1DataAccessLevel = "managed"
-)
-
-func (r AccountPagedV1DataAccessLevel) IsKnown() bool {
-	switch r {
-	case AccountPagedV1DataAccessLevelStandard, AccountPagedV1DataAccessLevelManaged:
-		return true
-	}
-	return false
-}
-
-// The current status of the account (e.g., 'active', 'inactive', 'pending').
-type AccountPagedV1DataStatus string
-
-const (
-	AccountPagedV1DataStatusCreated    AccountPagedV1DataStatus = "created"
-	AccountPagedV1DataStatusOnboarding AccountPagedV1DataStatus = "onboarding"
-	AccountPagedV1DataStatusActive     AccountPagedV1DataStatus = "active"
-	AccountPagedV1DataStatusRejected   AccountPagedV1DataStatus = "rejected"
-	AccountPagedV1DataStatusInactive   AccountPagedV1DataStatus = "inactive"
-)
-
-func (r AccountPagedV1DataStatus) IsKnown() bool {
-	switch r {
-	case AccountPagedV1DataStatusCreated, AccountPagedV1DataStatusOnboarding, AccountPagedV1DataStatusActive, AccountPagedV1DataStatusRejected, AccountPagedV1DataStatusInactive:
-		return true
-	}
-	return false
 }
 
 type AccountPagedV1DataStatusDetail struct {
 	// A machine-readable code for the specific status, useful for programmatic
 	// handling.
-	Code string `json:"code,required"`
+	Code string `json:"code" api:"required"`
 	// A human-readable message describing the current status.
-	Message string `json:"message,required"`
+	Message string `json:"message" api:"required"`
 	// A machine-readable identifier for the specific status, useful for programmatic
 	// handling.
-	Reason AccountPagedV1DataStatusDetailReason `json:"reason,required"`
+	//
+	// Any of "unverified", "in_review", "pending", "stuck", "verified",
+	// "failed_verification", "disabled", "terminated", "new".
+	Reason string `json:"reason" api:"required"`
 	// Identifies the origin of the status change (e.g., `bank_decline`, `watchtower`).
 	// This helps in tracking the cause of status updates.
-	Source AccountPagedV1DataStatusDetailSource `json:"source,required"`
-	JSON   accountPagedV1DataStatusDetailJSON   `json:"-"`
+	//
+	// Any of "watchtower".
+	Source string `json:"source" api:"required"`
+	// JSON contains metadata for fields, check presence with [respjson.Field.Valid].
+	JSON struct {
+		Code        respjson.Field
+		Message     respjson.Field
+		Reason      respjson.Field
+		Source      respjson.Field
+		ExtraFields map[string]respjson.Field
+		raw         string
+	} `json:"-"`
 }
 
-// accountPagedV1DataStatusDetailJSON contains the JSON metadata for the struct
-// [AccountPagedV1DataStatusDetail]
-type accountPagedV1DataStatusDetailJSON struct {
-	Code        apijson.Field
-	Message     apijson.Field
-	Reason      apijson.Field
-	Source      apijson.Field
-	raw         string
-	ExtraFields map[string]apijson.Field
-}
-
-func (r *AccountPagedV1DataStatusDetail) UnmarshalJSON(data []byte) (err error) {
+// Returns the unmodified JSON received from the API
+func (r AccountPagedV1DataStatusDetail) RawJSON() string { return r.JSON.raw }
+func (r *AccountPagedV1DataStatusDetail) UnmarshalJSON(data []byte) error {
 	return apijson.UnmarshalRoot(data, r)
-}
-
-func (r accountPagedV1DataStatusDetailJSON) RawJSON() string {
-	return r.raw
-}
-
-// A machine-readable identifier for the specific status, useful for programmatic
-// handling.
-type AccountPagedV1DataStatusDetailReason string
-
-const (
-	AccountPagedV1DataStatusDetailReasonUnverified         AccountPagedV1DataStatusDetailReason = "unverified"
-	AccountPagedV1DataStatusDetailReasonInReview           AccountPagedV1DataStatusDetailReason = "in_review"
-	AccountPagedV1DataStatusDetailReasonPending            AccountPagedV1DataStatusDetailReason = "pending"
-	AccountPagedV1DataStatusDetailReasonStuck              AccountPagedV1DataStatusDetailReason = "stuck"
-	AccountPagedV1DataStatusDetailReasonVerified           AccountPagedV1DataStatusDetailReason = "verified"
-	AccountPagedV1DataStatusDetailReasonFailedVerification AccountPagedV1DataStatusDetailReason = "failed_verification"
-	AccountPagedV1DataStatusDetailReasonDisabled           AccountPagedV1DataStatusDetailReason = "disabled"
-	AccountPagedV1DataStatusDetailReasonTerminated         AccountPagedV1DataStatusDetailReason = "terminated"
-	AccountPagedV1DataStatusDetailReasonNew                AccountPagedV1DataStatusDetailReason = "new"
-)
-
-func (r AccountPagedV1DataStatusDetailReason) IsKnown() bool {
-	switch r {
-	case AccountPagedV1DataStatusDetailReasonUnverified, AccountPagedV1DataStatusDetailReasonInReview, AccountPagedV1DataStatusDetailReasonPending, AccountPagedV1DataStatusDetailReasonStuck, AccountPagedV1DataStatusDetailReasonVerified, AccountPagedV1DataStatusDetailReasonFailedVerification, AccountPagedV1DataStatusDetailReasonDisabled, AccountPagedV1DataStatusDetailReasonTerminated, AccountPagedV1DataStatusDetailReasonNew:
-		return true
-	}
-	return false
-}
-
-// Identifies the origin of the status change (e.g., `bank_decline`, `watchtower`).
-// This helps in tracking the cause of status updates.
-type AccountPagedV1DataStatusDetailSource string
-
-const (
-	AccountPagedV1DataStatusDetailSourceWatchtower AccountPagedV1DataStatusDetailSource = "watchtower"
-)
-
-func (r AccountPagedV1DataStatusDetailSource) IsKnown() bool {
-	switch r {
-	case AccountPagedV1DataStatusDetailSourceWatchtower:
-		return true
-	}
-	return false
-}
-
-// The type of account (e.g., 'individual', 'business').
-type AccountPagedV1DataType string
-
-const (
-	AccountPagedV1DataTypeBusiness AccountPagedV1DataType = "business"
-)
-
-func (r AccountPagedV1DataType) IsKnown() bool {
-	switch r {
-	case AccountPagedV1DataTypeBusiness:
-		return true
-	}
-	return false
 }
 
 type AccountPagedV1DataCapabilities struct {
-	ConsentTypes  AccountPagedV1DataCapabilitiesConsentTypes  `json:"consent_types,required"`
-	CustomerTypes AccountPagedV1DataCapabilitiesCustomerTypes `json:"customer_types,required"`
-	PaymentTypes  AccountPagedV1DataCapabilitiesPaymentTypes  `json:"payment_types,required"`
-	JSON          accountPagedV1DataCapabilitiesJSON          `json:"-"`
+	ConsentTypes  AccountPagedV1DataCapabilitiesConsentTypes  `json:"consent_types" api:"required"`
+	CustomerTypes AccountPagedV1DataCapabilitiesCustomerTypes `json:"customer_types" api:"required"`
+	PaymentTypes  AccountPagedV1DataCapabilitiesPaymentTypes  `json:"payment_types" api:"required"`
+	// JSON contains metadata for fields, check presence with [respjson.Field.Valid].
+	JSON struct {
+		ConsentTypes  respjson.Field
+		CustomerTypes respjson.Field
+		PaymentTypes  respjson.Field
+		ExtraFields   map[string]respjson.Field
+		raw           string
+	} `json:"-"`
 }
 
-// accountPagedV1DataCapabilitiesJSON contains the JSON metadata for the struct
-// [AccountPagedV1DataCapabilities]
-type accountPagedV1DataCapabilitiesJSON struct {
-	ConsentTypes  apijson.Field
-	CustomerTypes apijson.Field
-	PaymentTypes  apijson.Field
-	raw           string
-	ExtraFields   map[string]apijson.Field
-}
-
-func (r *AccountPagedV1DataCapabilities) UnmarshalJSON(data []byte) (err error) {
+// Returns the unmodified JSON received from the API
+func (r AccountPagedV1DataCapabilities) RawJSON() string { return r.JSON.raw }
+func (r *AccountPagedV1DataCapabilities) UnmarshalJSON(data []byte) error {
 	return apijson.UnmarshalRoot(data, r)
-}
-
-func (r accountPagedV1DataCapabilitiesJSON) RawJSON() string {
-	return r.raw
 }
 
 type AccountPagedV1DataCapabilitiesConsentTypes struct {
 	// Whether the internet payment authorization capability is enabled for the
 	// account.
-	Internet CapabilityV1 `json:"internet,required"`
+	Internet CapabilityV1 `json:"internet" api:"required"`
 	// Whether the signed agreement payment authorization capability is enabled for the
 	// account.
-	SignedAgreement CapabilityV1                                   `json:"signed_agreement,required"`
-	JSON            accountPagedV1DataCapabilitiesConsentTypesJSON `json:"-"`
+	SignedAgreement CapabilityV1 `json:"signed_agreement" api:"required"`
+	// JSON contains metadata for fields, check presence with [respjson.Field.Valid].
+	JSON struct {
+		Internet        respjson.Field
+		SignedAgreement respjson.Field
+		ExtraFields     map[string]respjson.Field
+		raw             string
+	} `json:"-"`
 }
 
-// accountPagedV1DataCapabilitiesConsentTypesJSON contains the JSON metadata for
-// the struct [AccountPagedV1DataCapabilitiesConsentTypes]
-type accountPagedV1DataCapabilitiesConsentTypesJSON struct {
-	Internet        apijson.Field
-	SignedAgreement apijson.Field
-	raw             string
-	ExtraFields     map[string]apijson.Field
-}
-
-func (r *AccountPagedV1DataCapabilitiesConsentTypes) UnmarshalJSON(data []byte) (err error) {
+// Returns the unmodified JSON received from the API
+func (r AccountPagedV1DataCapabilitiesConsentTypes) RawJSON() string { return r.JSON.raw }
+func (r *AccountPagedV1DataCapabilitiesConsentTypes) UnmarshalJSON(data []byte) error {
 	return apijson.UnmarshalRoot(data, r)
-}
-
-func (r accountPagedV1DataCapabilitiesConsentTypesJSON) RawJSON() string {
-	return r.raw
 }
 
 type AccountPagedV1DataCapabilitiesCustomerTypes struct {
-	Businesses  CapabilityV1                                    `json:"businesses,required"`
-	Individuals CapabilityV1                                    `json:"individuals,required"`
-	JSON        accountPagedV1DataCapabilitiesCustomerTypesJSON `json:"-"`
+	Businesses  CapabilityV1 `json:"businesses" api:"required"`
+	Individuals CapabilityV1 `json:"individuals" api:"required"`
+	// JSON contains metadata for fields, check presence with [respjson.Field.Valid].
+	JSON struct {
+		Businesses  respjson.Field
+		Individuals respjson.Field
+		ExtraFields map[string]respjson.Field
+		raw         string
+	} `json:"-"`
 }
 
-// accountPagedV1DataCapabilitiesCustomerTypesJSON contains the JSON metadata for
-// the struct [AccountPagedV1DataCapabilitiesCustomerTypes]
-type accountPagedV1DataCapabilitiesCustomerTypesJSON struct {
-	Businesses  apijson.Field
-	Individuals apijson.Field
-	raw         string
-	ExtraFields map[string]apijson.Field
-}
-
-func (r *AccountPagedV1DataCapabilitiesCustomerTypes) UnmarshalJSON(data []byte) (err error) {
+// Returns the unmodified JSON received from the API
+func (r AccountPagedV1DataCapabilitiesCustomerTypes) RawJSON() string { return r.JSON.raw }
+func (r *AccountPagedV1DataCapabilitiesCustomerTypes) UnmarshalJSON(data []byte) error {
 	return apijson.UnmarshalRoot(data, r)
-}
-
-func (r accountPagedV1DataCapabilitiesCustomerTypesJSON) RawJSON() string {
-	return r.raw
 }
 
 type AccountPagedV1DataCapabilitiesPaymentTypes struct {
-	Charges CapabilityV1                                   `json:"charges,required"`
-	Payouts CapabilityV1                                   `json:"payouts,required"`
-	JSON    accountPagedV1DataCapabilitiesPaymentTypesJSON `json:"-"`
+	Charges CapabilityV1 `json:"charges" api:"required"`
+	Payouts CapabilityV1 `json:"payouts" api:"required"`
+	// JSON contains metadata for fields, check presence with [respjson.Field.Valid].
+	JSON struct {
+		Charges     respjson.Field
+		Payouts     respjson.Field
+		ExtraFields map[string]respjson.Field
+		raw         string
+	} `json:"-"`
 }
 
-// accountPagedV1DataCapabilitiesPaymentTypesJSON contains the JSON metadata for
-// the struct [AccountPagedV1DataCapabilitiesPaymentTypes]
-type accountPagedV1DataCapabilitiesPaymentTypesJSON struct {
-	Charges     apijson.Field
-	Payouts     apijson.Field
-	raw         string
-	ExtraFields map[string]apijson.Field
-}
-
-func (r *AccountPagedV1DataCapabilitiesPaymentTypes) UnmarshalJSON(data []byte) (err error) {
+// Returns the unmodified JSON received from the API
+func (r AccountPagedV1DataCapabilitiesPaymentTypes) RawJSON() string { return r.JSON.raw }
+func (r *AccountPagedV1DataCapabilitiesPaymentTypes) UnmarshalJSON(data []byte) error {
 	return apijson.UnmarshalRoot(data, r)
-}
-
-func (r accountPagedV1DataCapabilitiesPaymentTypesJSON) RawJSON() string {
-	return r.raw
 }
 
 type AccountPagedV1DataSettings struct {
-	Charges AccountPagedV1DataSettingsCharges `json:"charges,required"`
-	Payouts AccountPagedV1DataSettingsPayouts `json:"payouts,required"`
-	JSON    accountPagedV1DataSettingsJSON    `json:"-"`
+	Charges AccountPagedV1DataSettingsCharges `json:"charges" api:"required"`
+	Payouts AccountPagedV1DataSettingsPayouts `json:"payouts" api:"required"`
+	// JSON contains metadata for fields, check presence with [respjson.Field.Valid].
+	JSON struct {
+		Charges     respjson.Field
+		Payouts     respjson.Field
+		ExtraFields map[string]respjson.Field
+		raw         string
+	} `json:"-"`
 }
 
-// accountPagedV1DataSettingsJSON contains the JSON metadata for the struct
-// [AccountPagedV1DataSettings]
-type accountPagedV1DataSettingsJSON struct {
-	Charges     apijson.Field
-	Payouts     apijson.Field
-	raw         string
-	ExtraFields map[string]apijson.Field
-}
-
-func (r *AccountPagedV1DataSettings) UnmarshalJSON(data []byte) (err error) {
+// Returns the unmodified JSON received from the API
+func (r AccountPagedV1DataSettings) RawJSON() string { return r.JSON.raw }
+func (r *AccountPagedV1DataSettings) UnmarshalJSON(data []byte) error {
 	return apijson.UnmarshalRoot(data, r)
-}
-
-func (r accountPagedV1DataSettingsJSON) RawJSON() string {
-	return r.raw
 }
 
 type AccountPagedV1DataSettingsCharges struct {
 	// The maximum dollar amount of charges in a calendar day.
-	DailyAmount int64 `json:"daily_amount,required"`
+	DailyAmount int64 `json:"daily_amount" api:"required"`
 	// The amount of time it takes for a charge to be funded. This value is defined by
 	// Straddle.
-	FundingTime AccountPagedV1DataSettingsChargesFundingTime `json:"funding_time,required"`
+	//
+	// Any of "immediate", "next_day", "one_day", "two_day", "three_day", "four_day",
+	// "five_day".
+	FundingTime string `json:"funding_time" api:"required"`
 	// The unique identifier of the linked bank account associated with charges. This
 	// value is defined by Straddle.
-	LinkedBankAccountID string `json:"linked_bank_account_id,required" format:"uuid"`
+	LinkedBankAccountID string `json:"linked_bank_account_id" api:"required" format:"uuid"`
 	// The maximum amount of a single charge.
-	MaxAmount int64 `json:"max_amount,required"`
+	MaxAmount int64 `json:"max_amount" api:"required"`
 	// The maximum dollar amount of charges in a calendar month.
-	MonthlyAmount int64 `json:"monthly_amount,required"`
+	MonthlyAmount int64 `json:"monthly_amount" api:"required"`
 	// The maximum number of charges in a calendar month.
-	MonthlyCount int64                                 `json:"monthly_count,required"`
-	JSON         accountPagedV1DataSettingsChargesJSON `json:"-"`
+	MonthlyCount int64 `json:"monthly_count" api:"required"`
+	// JSON contains metadata for fields, check presence with [respjson.Field.Valid].
+	JSON struct {
+		DailyAmount         respjson.Field
+		FundingTime         respjson.Field
+		LinkedBankAccountID respjson.Field
+		MaxAmount           respjson.Field
+		MonthlyAmount       respjson.Field
+		MonthlyCount        respjson.Field
+		ExtraFields         map[string]respjson.Field
+		raw                 string
+	} `json:"-"`
 }
 
-// accountPagedV1DataSettingsChargesJSON contains the JSON metadata for the struct
-// [AccountPagedV1DataSettingsCharges]
-type accountPagedV1DataSettingsChargesJSON struct {
-	DailyAmount         apijson.Field
-	FundingTime         apijson.Field
-	LinkedBankAccountID apijson.Field
-	MaxAmount           apijson.Field
-	MonthlyAmount       apijson.Field
-	MonthlyCount        apijson.Field
-	raw                 string
-	ExtraFields         map[string]apijson.Field
-}
-
-func (r *AccountPagedV1DataSettingsCharges) UnmarshalJSON(data []byte) (err error) {
+// Returns the unmodified JSON received from the API
+func (r AccountPagedV1DataSettingsCharges) RawJSON() string { return r.JSON.raw }
+func (r *AccountPagedV1DataSettingsCharges) UnmarshalJSON(data []byte) error {
 	return apijson.UnmarshalRoot(data, r)
-}
-
-func (r accountPagedV1DataSettingsChargesJSON) RawJSON() string {
-	return r.raw
-}
-
-// The amount of time it takes for a charge to be funded. This value is defined by
-// Straddle.
-type AccountPagedV1DataSettingsChargesFundingTime string
-
-const (
-	AccountPagedV1DataSettingsChargesFundingTimeImmediate AccountPagedV1DataSettingsChargesFundingTime = "immediate"
-	AccountPagedV1DataSettingsChargesFundingTimeNextDay   AccountPagedV1DataSettingsChargesFundingTime = "next_day"
-	AccountPagedV1DataSettingsChargesFundingTimeOneDay    AccountPagedV1DataSettingsChargesFundingTime = "one_day"
-	AccountPagedV1DataSettingsChargesFundingTimeTwoDay    AccountPagedV1DataSettingsChargesFundingTime = "two_day"
-	AccountPagedV1DataSettingsChargesFundingTimeThreeDay  AccountPagedV1DataSettingsChargesFundingTime = "three_day"
-)
-
-func (r AccountPagedV1DataSettingsChargesFundingTime) IsKnown() bool {
-	switch r {
-	case AccountPagedV1DataSettingsChargesFundingTimeImmediate, AccountPagedV1DataSettingsChargesFundingTimeNextDay, AccountPagedV1DataSettingsChargesFundingTimeOneDay, AccountPagedV1DataSettingsChargesFundingTimeTwoDay, AccountPagedV1DataSettingsChargesFundingTimeThreeDay:
-		return true
-	}
-	return false
 }
 
 type AccountPagedV1DataSettingsPayouts struct {
 	// The maximum dollar amount of payouts in a day.
-	DailyAmount int64 `json:"daily_amount,required"`
+	DailyAmount int64 `json:"daily_amount" api:"required"`
 	// The amount of time it takes for a payout to be funded. This value is defined by
 	// Straddle.
-	FundingTime AccountPagedV1DataSettingsPayoutsFundingTime `json:"funding_time,required"`
+	//
+	// Any of "immediate", "next_day", "one_day", "two_day", "three_day", "four_day",
+	// "five_day".
+	FundingTime string `json:"funding_time" api:"required"`
 	// The unique identifier of the linked bank account to use for payouts.
-	LinkedBankAccountID string `json:"linked_bank_account_id,required" format:"uuid"`
+	LinkedBankAccountID string `json:"linked_bank_account_id" api:"required" format:"uuid"`
 	// The maximum amount of a single payout.
-	MaxAmount int64 `json:"max_amount,required"`
+	MaxAmount int64 `json:"max_amount" api:"required"`
 	// The maximum dollar amount of payouts in a month.
-	MonthlyAmount int64 `json:"monthly_amount,required"`
+	MonthlyAmount int64 `json:"monthly_amount" api:"required"`
 	// The maximum number of payouts in a month.
-	MonthlyCount int64                                 `json:"monthly_count,required"`
-	JSON         accountPagedV1DataSettingsPayoutsJSON `json:"-"`
+	MonthlyCount int64 `json:"monthly_count" api:"required"`
+	// JSON contains metadata for fields, check presence with [respjson.Field.Valid].
+	JSON struct {
+		DailyAmount         respjson.Field
+		FundingTime         respjson.Field
+		LinkedBankAccountID respjson.Field
+		MaxAmount           respjson.Field
+		MonthlyAmount       respjson.Field
+		MonthlyCount        respjson.Field
+		ExtraFields         map[string]respjson.Field
+		raw                 string
+	} `json:"-"`
 }
 
-// accountPagedV1DataSettingsPayoutsJSON contains the JSON metadata for the struct
-// [AccountPagedV1DataSettingsPayouts]
-type accountPagedV1DataSettingsPayoutsJSON struct {
-	DailyAmount         apijson.Field
-	FundingTime         apijson.Field
-	LinkedBankAccountID apijson.Field
-	MaxAmount           apijson.Field
-	MonthlyAmount       apijson.Field
-	MonthlyCount        apijson.Field
-	raw                 string
-	ExtraFields         map[string]apijson.Field
-}
-
-func (r *AccountPagedV1DataSettingsPayouts) UnmarshalJSON(data []byte) (err error) {
+// Returns the unmodified JSON received from the API
+func (r AccountPagedV1DataSettingsPayouts) RawJSON() string { return r.JSON.raw }
+func (r *AccountPagedV1DataSettingsPayouts) UnmarshalJSON(data []byte) error {
 	return apijson.UnmarshalRoot(data, r)
-}
-
-func (r accountPagedV1DataSettingsPayoutsJSON) RawJSON() string {
-	return r.raw
-}
-
-// The amount of time it takes for a payout to be funded. This value is defined by
-// Straddle.
-type AccountPagedV1DataSettingsPayoutsFundingTime string
-
-const (
-	AccountPagedV1DataSettingsPayoutsFundingTimeImmediate AccountPagedV1DataSettingsPayoutsFundingTime = "immediate"
-	AccountPagedV1DataSettingsPayoutsFundingTimeNextDay   AccountPagedV1DataSettingsPayoutsFundingTime = "next_day"
-	AccountPagedV1DataSettingsPayoutsFundingTimeOneDay    AccountPagedV1DataSettingsPayoutsFundingTime = "one_day"
-	AccountPagedV1DataSettingsPayoutsFundingTimeTwoDay    AccountPagedV1DataSettingsPayoutsFundingTime = "two_day"
-	AccountPagedV1DataSettingsPayoutsFundingTimeThreeDay  AccountPagedV1DataSettingsPayoutsFundingTime = "three_day"
-)
-
-func (r AccountPagedV1DataSettingsPayoutsFundingTime) IsKnown() bool {
-	switch r {
-	case AccountPagedV1DataSettingsPayoutsFundingTimeImmediate, AccountPagedV1DataSettingsPayoutsFundingTimeNextDay, AccountPagedV1DataSettingsPayoutsFundingTimeOneDay, AccountPagedV1DataSettingsPayoutsFundingTimeTwoDay, AccountPagedV1DataSettingsPayoutsFundingTimeThreeDay:
-		return true
-	}
-	return false
 }
 
 // Indicates the structure of the returned content.
@@ -640,18 +504,10 @@ const (
 	AccountPagedV1ResponseTypeNone   AccountPagedV1ResponseType = "none"
 )
 
-func (r AccountPagedV1ResponseType) IsKnown() bool {
-	switch r {
-	case AccountPagedV1ResponseTypeObject, AccountPagedV1ResponseTypeArray, AccountPagedV1ResponseTypeError, AccountPagedV1ResponseTypeNone:
-		return true
-	}
-	return false
-}
-
 type AccountV1 struct {
-	Data AccountV1Data `json:"data,required"`
+	Data AccountV1Data `json:"data" api:"required"`
 	// Metadata about the API request, including an identifier and timestamp.
-	Meta shared.ResponseMetadata `json:"meta,required"`
+	Meta shared.ResponseMetadata `json:"meta" api:"required"`
 	// Indicates the structure of the returned content.
 	//
 	//   - "object" means the `data` field contains a single JSON object.
@@ -659,446 +515,286 @@ type AccountV1 struct {
 	//   - "error" means the `data` field contains an error object with details of the
 	//     issue.
 	//   - "none" means no data is returned.
-	ResponseType AccountV1ResponseType `json:"response_type,required"`
-	JSON         accountV1JSON         `json:"-"`
+	//
+	// Any of "object", "array", "error", "none".
+	ResponseType AccountV1ResponseType `json:"response_type" api:"required"`
+	// JSON contains metadata for fields, check presence with [respjson.Field.Valid].
+	JSON struct {
+		Data         respjson.Field
+		Meta         respjson.Field
+		ResponseType respjson.Field
+		ExtraFields  map[string]respjson.Field
+		raw          string
+	} `json:"-"`
 }
 
-// accountV1JSON contains the JSON metadata for the struct [AccountV1]
-type accountV1JSON struct {
-	Data         apijson.Field
-	Meta         apijson.Field
-	ResponseType apijson.Field
-	raw          string
-	ExtraFields  map[string]apijson.Field
-}
-
-func (r *AccountV1) UnmarshalJSON(data []byte) (err error) {
+// Returns the unmodified JSON received from the API
+func (r AccountV1) RawJSON() string { return r.JSON.raw }
+func (r *AccountV1) UnmarshalJSON(data []byte) error {
 	return apijson.UnmarshalRoot(data, r)
-}
-
-func (r accountV1JSON) RawJSON() string {
-	return r.raw
 }
 
 type AccountV1Data struct {
 	// Unique identifier for the account.
-	ID string `json:"id,required" format:"uuid"`
+	ID string `json:"id" api:"required" format:"uuid"`
 	// The access level granted to the account. This is determined by your platform
 	// configuration. Use `standard` unless instructed otherwise by Straddle.
-	AccessLevel AccountV1DataAccessLevel `json:"access_level,required"`
+	//
+	// Any of "standard", "managed".
+	AccessLevel string `json:"access_level" api:"required"`
 	// The unique identifier of the organization this account belongs to.
-	OrganizationID string `json:"organization_id,required" format:"uuid"`
+	OrganizationID string `json:"organization_id" api:"required" format:"uuid"`
 	// The current status of the account (e.g., 'active', 'inactive', 'pending').
-	Status       AccountV1DataStatus       `json:"status,required"`
-	StatusDetail AccountV1DataStatusDetail `json:"status_detail,required"`
+	//
+	// Any of "created", "onboarding", "active", "rejected", "inactive".
+	Status       string                    `json:"status" api:"required"`
+	StatusDetail AccountV1DataStatusDetail `json:"status_detail" api:"required"`
 	// The type of account (e.g., 'individual', 'business').
-	Type            AccountV1DataType         `json:"type,required"`
+	//
+	// Any of "business".
+	Type            string                    `json:"type" api:"required"`
 	BusinessProfile BusinessProfileV1         `json:"business_profile"`
 	Capabilities    AccountV1DataCapabilities `json:"capabilities"`
 	// Timestamp of when the account was created.
-	CreatedAt time.Time `json:"created_at,nullable" format:"date-time"`
+	CreatedAt time.Time `json:"created_at" api:"nullable" format:"date-time"`
 	// Unique identifier for the account in your database, used for cross-referencing
 	// between Straddle and your systems.
-	ExternalID string `json:"external_id,nullable"`
+	ExternalID string `json:"external_id" api:"nullable"`
 	// Up to 20 additional user-defined key-value pairs. Useful for storing additional
 	// information about the account in a structured format.
-	Metadata       map[string]string     `json:"metadata,nullable"`
+	Metadata       map[string]string     `json:"metadata" api:"nullable"`
 	Settings       AccountV1DataSettings `json:"settings"`
 	TermsOfService TermsOfServiceV1      `json:"terms_of_service"`
 	// Timestamp of the most recent update to the account.
-	UpdatedAt time.Time         `json:"updated_at,nullable" format:"date-time"`
-	JSON      accountV1DataJSON `json:"-"`
+	UpdatedAt time.Time `json:"updated_at" api:"nullable" format:"date-time"`
+	// JSON contains metadata for fields, check presence with [respjson.Field.Valid].
+	JSON struct {
+		ID              respjson.Field
+		AccessLevel     respjson.Field
+		OrganizationID  respjson.Field
+		Status          respjson.Field
+		StatusDetail    respjson.Field
+		Type            respjson.Field
+		BusinessProfile respjson.Field
+		Capabilities    respjson.Field
+		CreatedAt       respjson.Field
+		ExternalID      respjson.Field
+		Metadata        respjson.Field
+		Settings        respjson.Field
+		TermsOfService  respjson.Field
+		UpdatedAt       respjson.Field
+		ExtraFields     map[string]respjson.Field
+		raw             string
+	} `json:"-"`
 }
 
-// accountV1DataJSON contains the JSON metadata for the struct [AccountV1Data]
-type accountV1DataJSON struct {
-	ID              apijson.Field
-	AccessLevel     apijson.Field
-	OrganizationID  apijson.Field
-	Status          apijson.Field
-	StatusDetail    apijson.Field
-	Type            apijson.Field
-	BusinessProfile apijson.Field
-	Capabilities    apijson.Field
-	CreatedAt       apijson.Field
-	ExternalID      apijson.Field
-	Metadata        apijson.Field
-	Settings        apijson.Field
-	TermsOfService  apijson.Field
-	UpdatedAt       apijson.Field
-	raw             string
-	ExtraFields     map[string]apijson.Field
-}
-
-func (r *AccountV1Data) UnmarshalJSON(data []byte) (err error) {
+// Returns the unmodified JSON received from the API
+func (r AccountV1Data) RawJSON() string { return r.JSON.raw }
+func (r *AccountV1Data) UnmarshalJSON(data []byte) error {
 	return apijson.UnmarshalRoot(data, r)
-}
-
-func (r accountV1DataJSON) RawJSON() string {
-	return r.raw
-}
-
-// The access level granted to the account. This is determined by your platform
-// configuration. Use `standard` unless instructed otherwise by Straddle.
-type AccountV1DataAccessLevel string
-
-const (
-	AccountV1DataAccessLevelStandard AccountV1DataAccessLevel = "standard"
-	AccountV1DataAccessLevelManaged  AccountV1DataAccessLevel = "managed"
-)
-
-func (r AccountV1DataAccessLevel) IsKnown() bool {
-	switch r {
-	case AccountV1DataAccessLevelStandard, AccountV1DataAccessLevelManaged:
-		return true
-	}
-	return false
-}
-
-// The current status of the account (e.g., 'active', 'inactive', 'pending').
-type AccountV1DataStatus string
-
-const (
-	AccountV1DataStatusCreated    AccountV1DataStatus = "created"
-	AccountV1DataStatusOnboarding AccountV1DataStatus = "onboarding"
-	AccountV1DataStatusActive     AccountV1DataStatus = "active"
-	AccountV1DataStatusRejected   AccountV1DataStatus = "rejected"
-	AccountV1DataStatusInactive   AccountV1DataStatus = "inactive"
-)
-
-func (r AccountV1DataStatus) IsKnown() bool {
-	switch r {
-	case AccountV1DataStatusCreated, AccountV1DataStatusOnboarding, AccountV1DataStatusActive, AccountV1DataStatusRejected, AccountV1DataStatusInactive:
-		return true
-	}
-	return false
 }
 
 type AccountV1DataStatusDetail struct {
 	// A machine-readable code for the specific status, useful for programmatic
 	// handling.
-	Code string `json:"code,required"`
+	Code string `json:"code" api:"required"`
 	// A human-readable message describing the current status.
-	Message string `json:"message,required"`
+	Message string `json:"message" api:"required"`
 	// A machine-readable identifier for the specific status, useful for programmatic
 	// handling.
-	Reason AccountV1DataStatusDetailReason `json:"reason,required"`
+	//
+	// Any of "unverified", "in_review", "pending", "stuck", "verified",
+	// "failed_verification", "disabled", "terminated", "new".
+	Reason string `json:"reason" api:"required"`
 	// Identifies the origin of the status change (e.g., `bank_decline`, `watchtower`).
 	// This helps in tracking the cause of status updates.
-	Source AccountV1DataStatusDetailSource `json:"source,required"`
-	JSON   accountV1DataStatusDetailJSON   `json:"-"`
+	//
+	// Any of "watchtower".
+	Source string `json:"source" api:"required"`
+	// JSON contains metadata for fields, check presence with [respjson.Field.Valid].
+	JSON struct {
+		Code        respjson.Field
+		Message     respjson.Field
+		Reason      respjson.Field
+		Source      respjson.Field
+		ExtraFields map[string]respjson.Field
+		raw         string
+	} `json:"-"`
 }
 
-// accountV1DataStatusDetailJSON contains the JSON metadata for the struct
-// [AccountV1DataStatusDetail]
-type accountV1DataStatusDetailJSON struct {
-	Code        apijson.Field
-	Message     apijson.Field
-	Reason      apijson.Field
-	Source      apijson.Field
-	raw         string
-	ExtraFields map[string]apijson.Field
-}
-
-func (r *AccountV1DataStatusDetail) UnmarshalJSON(data []byte) (err error) {
+// Returns the unmodified JSON received from the API
+func (r AccountV1DataStatusDetail) RawJSON() string { return r.JSON.raw }
+func (r *AccountV1DataStatusDetail) UnmarshalJSON(data []byte) error {
 	return apijson.UnmarshalRoot(data, r)
-}
-
-func (r accountV1DataStatusDetailJSON) RawJSON() string {
-	return r.raw
-}
-
-// A machine-readable identifier for the specific status, useful for programmatic
-// handling.
-type AccountV1DataStatusDetailReason string
-
-const (
-	AccountV1DataStatusDetailReasonUnverified         AccountV1DataStatusDetailReason = "unverified"
-	AccountV1DataStatusDetailReasonInReview           AccountV1DataStatusDetailReason = "in_review"
-	AccountV1DataStatusDetailReasonPending            AccountV1DataStatusDetailReason = "pending"
-	AccountV1DataStatusDetailReasonStuck              AccountV1DataStatusDetailReason = "stuck"
-	AccountV1DataStatusDetailReasonVerified           AccountV1DataStatusDetailReason = "verified"
-	AccountV1DataStatusDetailReasonFailedVerification AccountV1DataStatusDetailReason = "failed_verification"
-	AccountV1DataStatusDetailReasonDisabled           AccountV1DataStatusDetailReason = "disabled"
-	AccountV1DataStatusDetailReasonTerminated         AccountV1DataStatusDetailReason = "terminated"
-	AccountV1DataStatusDetailReasonNew                AccountV1DataStatusDetailReason = "new"
-)
-
-func (r AccountV1DataStatusDetailReason) IsKnown() bool {
-	switch r {
-	case AccountV1DataStatusDetailReasonUnverified, AccountV1DataStatusDetailReasonInReview, AccountV1DataStatusDetailReasonPending, AccountV1DataStatusDetailReasonStuck, AccountV1DataStatusDetailReasonVerified, AccountV1DataStatusDetailReasonFailedVerification, AccountV1DataStatusDetailReasonDisabled, AccountV1DataStatusDetailReasonTerminated, AccountV1DataStatusDetailReasonNew:
-		return true
-	}
-	return false
-}
-
-// Identifies the origin of the status change (e.g., `bank_decline`, `watchtower`).
-// This helps in tracking the cause of status updates.
-type AccountV1DataStatusDetailSource string
-
-const (
-	AccountV1DataStatusDetailSourceWatchtower AccountV1DataStatusDetailSource = "watchtower"
-)
-
-func (r AccountV1DataStatusDetailSource) IsKnown() bool {
-	switch r {
-	case AccountV1DataStatusDetailSourceWatchtower:
-		return true
-	}
-	return false
-}
-
-// The type of account (e.g., 'individual', 'business').
-type AccountV1DataType string
-
-const (
-	AccountV1DataTypeBusiness AccountV1DataType = "business"
-)
-
-func (r AccountV1DataType) IsKnown() bool {
-	switch r {
-	case AccountV1DataTypeBusiness:
-		return true
-	}
-	return false
 }
 
 type AccountV1DataCapabilities struct {
-	ConsentTypes  AccountV1DataCapabilitiesConsentTypes  `json:"consent_types,required"`
-	CustomerTypes AccountV1DataCapabilitiesCustomerTypes `json:"customer_types,required"`
-	PaymentTypes  AccountV1DataCapabilitiesPaymentTypes  `json:"payment_types,required"`
-	JSON          accountV1DataCapabilitiesJSON          `json:"-"`
+	ConsentTypes  AccountV1DataCapabilitiesConsentTypes  `json:"consent_types" api:"required"`
+	CustomerTypes AccountV1DataCapabilitiesCustomerTypes `json:"customer_types" api:"required"`
+	PaymentTypes  AccountV1DataCapabilitiesPaymentTypes  `json:"payment_types" api:"required"`
+	// JSON contains metadata for fields, check presence with [respjson.Field.Valid].
+	JSON struct {
+		ConsentTypes  respjson.Field
+		CustomerTypes respjson.Field
+		PaymentTypes  respjson.Field
+		ExtraFields   map[string]respjson.Field
+		raw           string
+	} `json:"-"`
 }
 
-// accountV1DataCapabilitiesJSON contains the JSON metadata for the struct
-// [AccountV1DataCapabilities]
-type accountV1DataCapabilitiesJSON struct {
-	ConsentTypes  apijson.Field
-	CustomerTypes apijson.Field
-	PaymentTypes  apijson.Field
-	raw           string
-	ExtraFields   map[string]apijson.Field
-}
-
-func (r *AccountV1DataCapabilities) UnmarshalJSON(data []byte) (err error) {
+// Returns the unmodified JSON received from the API
+func (r AccountV1DataCapabilities) RawJSON() string { return r.JSON.raw }
+func (r *AccountV1DataCapabilities) UnmarshalJSON(data []byte) error {
 	return apijson.UnmarshalRoot(data, r)
-}
-
-func (r accountV1DataCapabilitiesJSON) RawJSON() string {
-	return r.raw
 }
 
 type AccountV1DataCapabilitiesConsentTypes struct {
 	// Whether the internet payment authorization capability is enabled for the
 	// account.
-	Internet CapabilityV1 `json:"internet,required"`
+	Internet CapabilityV1 `json:"internet" api:"required"`
 	// Whether the signed agreement payment authorization capability is enabled for the
 	// account.
-	SignedAgreement CapabilityV1                              `json:"signed_agreement,required"`
-	JSON            accountV1DataCapabilitiesConsentTypesJSON `json:"-"`
+	SignedAgreement CapabilityV1 `json:"signed_agreement" api:"required"`
+	// JSON contains metadata for fields, check presence with [respjson.Field.Valid].
+	JSON struct {
+		Internet        respjson.Field
+		SignedAgreement respjson.Field
+		ExtraFields     map[string]respjson.Field
+		raw             string
+	} `json:"-"`
 }
 
-// accountV1DataCapabilitiesConsentTypesJSON contains the JSON metadata for the
-// struct [AccountV1DataCapabilitiesConsentTypes]
-type accountV1DataCapabilitiesConsentTypesJSON struct {
-	Internet        apijson.Field
-	SignedAgreement apijson.Field
-	raw             string
-	ExtraFields     map[string]apijson.Field
-}
-
-func (r *AccountV1DataCapabilitiesConsentTypes) UnmarshalJSON(data []byte) (err error) {
+// Returns the unmodified JSON received from the API
+func (r AccountV1DataCapabilitiesConsentTypes) RawJSON() string { return r.JSON.raw }
+func (r *AccountV1DataCapabilitiesConsentTypes) UnmarshalJSON(data []byte) error {
 	return apijson.UnmarshalRoot(data, r)
-}
-
-func (r accountV1DataCapabilitiesConsentTypesJSON) RawJSON() string {
-	return r.raw
 }
 
 type AccountV1DataCapabilitiesCustomerTypes struct {
-	Businesses  CapabilityV1                               `json:"businesses,required"`
-	Individuals CapabilityV1                               `json:"individuals,required"`
-	JSON        accountV1DataCapabilitiesCustomerTypesJSON `json:"-"`
+	Businesses  CapabilityV1 `json:"businesses" api:"required"`
+	Individuals CapabilityV1 `json:"individuals" api:"required"`
+	// JSON contains metadata for fields, check presence with [respjson.Field.Valid].
+	JSON struct {
+		Businesses  respjson.Field
+		Individuals respjson.Field
+		ExtraFields map[string]respjson.Field
+		raw         string
+	} `json:"-"`
 }
 
-// accountV1DataCapabilitiesCustomerTypesJSON contains the JSON metadata for the
-// struct [AccountV1DataCapabilitiesCustomerTypes]
-type accountV1DataCapabilitiesCustomerTypesJSON struct {
-	Businesses  apijson.Field
-	Individuals apijson.Field
-	raw         string
-	ExtraFields map[string]apijson.Field
-}
-
-func (r *AccountV1DataCapabilitiesCustomerTypes) UnmarshalJSON(data []byte) (err error) {
+// Returns the unmodified JSON received from the API
+func (r AccountV1DataCapabilitiesCustomerTypes) RawJSON() string { return r.JSON.raw }
+func (r *AccountV1DataCapabilitiesCustomerTypes) UnmarshalJSON(data []byte) error {
 	return apijson.UnmarshalRoot(data, r)
-}
-
-func (r accountV1DataCapabilitiesCustomerTypesJSON) RawJSON() string {
-	return r.raw
 }
 
 type AccountV1DataCapabilitiesPaymentTypes struct {
-	Charges CapabilityV1                              `json:"charges,required"`
-	Payouts CapabilityV1                              `json:"payouts,required"`
-	JSON    accountV1DataCapabilitiesPaymentTypesJSON `json:"-"`
+	Charges CapabilityV1 `json:"charges" api:"required"`
+	Payouts CapabilityV1 `json:"payouts" api:"required"`
+	// JSON contains metadata for fields, check presence with [respjson.Field.Valid].
+	JSON struct {
+		Charges     respjson.Field
+		Payouts     respjson.Field
+		ExtraFields map[string]respjson.Field
+		raw         string
+	} `json:"-"`
 }
 
-// accountV1DataCapabilitiesPaymentTypesJSON contains the JSON metadata for the
-// struct [AccountV1DataCapabilitiesPaymentTypes]
-type accountV1DataCapabilitiesPaymentTypesJSON struct {
-	Charges     apijson.Field
-	Payouts     apijson.Field
-	raw         string
-	ExtraFields map[string]apijson.Field
-}
-
-func (r *AccountV1DataCapabilitiesPaymentTypes) UnmarshalJSON(data []byte) (err error) {
+// Returns the unmodified JSON received from the API
+func (r AccountV1DataCapabilitiesPaymentTypes) RawJSON() string { return r.JSON.raw }
+func (r *AccountV1DataCapabilitiesPaymentTypes) UnmarshalJSON(data []byte) error {
 	return apijson.UnmarshalRoot(data, r)
-}
-
-func (r accountV1DataCapabilitiesPaymentTypesJSON) RawJSON() string {
-	return r.raw
 }
 
 type AccountV1DataSettings struct {
-	Charges AccountV1DataSettingsCharges `json:"charges,required"`
-	Payouts AccountV1DataSettingsPayouts `json:"payouts,required"`
-	JSON    accountV1DataSettingsJSON    `json:"-"`
+	Charges AccountV1DataSettingsCharges `json:"charges" api:"required"`
+	Payouts AccountV1DataSettingsPayouts `json:"payouts" api:"required"`
+	// JSON contains metadata for fields, check presence with [respjson.Field.Valid].
+	JSON struct {
+		Charges     respjson.Field
+		Payouts     respjson.Field
+		ExtraFields map[string]respjson.Field
+		raw         string
+	} `json:"-"`
 }
 
-// accountV1DataSettingsJSON contains the JSON metadata for the struct
-// [AccountV1DataSettings]
-type accountV1DataSettingsJSON struct {
-	Charges     apijson.Field
-	Payouts     apijson.Field
-	raw         string
-	ExtraFields map[string]apijson.Field
-}
-
-func (r *AccountV1DataSettings) UnmarshalJSON(data []byte) (err error) {
+// Returns the unmodified JSON received from the API
+func (r AccountV1DataSettings) RawJSON() string { return r.JSON.raw }
+func (r *AccountV1DataSettings) UnmarshalJSON(data []byte) error {
 	return apijson.UnmarshalRoot(data, r)
-}
-
-func (r accountV1DataSettingsJSON) RawJSON() string {
-	return r.raw
 }
 
 type AccountV1DataSettingsCharges struct {
 	// The maximum dollar amount of charges in a calendar day.
-	DailyAmount int64 `json:"daily_amount,required"`
+	DailyAmount int64 `json:"daily_amount" api:"required"`
 	// The amount of time it takes for a charge to be funded. This value is defined by
 	// Straddle.
-	FundingTime AccountV1DataSettingsChargesFundingTime `json:"funding_time,required"`
+	//
+	// Any of "immediate", "next_day", "one_day", "two_day", "three_day", "four_day",
+	// "five_day".
+	FundingTime string `json:"funding_time" api:"required"`
 	// The unique identifier of the linked bank account associated with charges. This
 	// value is defined by Straddle.
-	LinkedBankAccountID string `json:"linked_bank_account_id,required" format:"uuid"`
+	LinkedBankAccountID string `json:"linked_bank_account_id" api:"required" format:"uuid"`
 	// The maximum amount of a single charge.
-	MaxAmount int64 `json:"max_amount,required"`
+	MaxAmount int64 `json:"max_amount" api:"required"`
 	// The maximum dollar amount of charges in a calendar month.
-	MonthlyAmount int64 `json:"monthly_amount,required"`
+	MonthlyAmount int64 `json:"monthly_amount" api:"required"`
 	// The maximum number of charges in a calendar month.
-	MonthlyCount int64                            `json:"monthly_count,required"`
-	JSON         accountV1DataSettingsChargesJSON `json:"-"`
+	MonthlyCount int64 `json:"monthly_count" api:"required"`
+	// JSON contains metadata for fields, check presence with [respjson.Field.Valid].
+	JSON struct {
+		DailyAmount         respjson.Field
+		FundingTime         respjson.Field
+		LinkedBankAccountID respjson.Field
+		MaxAmount           respjson.Field
+		MonthlyAmount       respjson.Field
+		MonthlyCount        respjson.Field
+		ExtraFields         map[string]respjson.Field
+		raw                 string
+	} `json:"-"`
 }
 
-// accountV1DataSettingsChargesJSON contains the JSON metadata for the struct
-// [AccountV1DataSettingsCharges]
-type accountV1DataSettingsChargesJSON struct {
-	DailyAmount         apijson.Field
-	FundingTime         apijson.Field
-	LinkedBankAccountID apijson.Field
-	MaxAmount           apijson.Field
-	MonthlyAmount       apijson.Field
-	MonthlyCount        apijson.Field
-	raw                 string
-	ExtraFields         map[string]apijson.Field
-}
-
-func (r *AccountV1DataSettingsCharges) UnmarshalJSON(data []byte) (err error) {
+// Returns the unmodified JSON received from the API
+func (r AccountV1DataSettingsCharges) RawJSON() string { return r.JSON.raw }
+func (r *AccountV1DataSettingsCharges) UnmarshalJSON(data []byte) error {
 	return apijson.UnmarshalRoot(data, r)
-}
-
-func (r accountV1DataSettingsChargesJSON) RawJSON() string {
-	return r.raw
-}
-
-// The amount of time it takes for a charge to be funded. This value is defined by
-// Straddle.
-type AccountV1DataSettingsChargesFundingTime string
-
-const (
-	AccountV1DataSettingsChargesFundingTimeImmediate AccountV1DataSettingsChargesFundingTime = "immediate"
-	AccountV1DataSettingsChargesFundingTimeNextDay   AccountV1DataSettingsChargesFundingTime = "next_day"
-	AccountV1DataSettingsChargesFundingTimeOneDay    AccountV1DataSettingsChargesFundingTime = "one_day"
-	AccountV1DataSettingsChargesFundingTimeTwoDay    AccountV1DataSettingsChargesFundingTime = "two_day"
-	AccountV1DataSettingsChargesFundingTimeThreeDay  AccountV1DataSettingsChargesFundingTime = "three_day"
-)
-
-func (r AccountV1DataSettingsChargesFundingTime) IsKnown() bool {
-	switch r {
-	case AccountV1DataSettingsChargesFundingTimeImmediate, AccountV1DataSettingsChargesFundingTimeNextDay, AccountV1DataSettingsChargesFundingTimeOneDay, AccountV1DataSettingsChargesFundingTimeTwoDay, AccountV1DataSettingsChargesFundingTimeThreeDay:
-		return true
-	}
-	return false
 }
 
 type AccountV1DataSettingsPayouts struct {
 	// The maximum dollar amount of payouts in a day.
-	DailyAmount int64 `json:"daily_amount,required"`
+	DailyAmount int64 `json:"daily_amount" api:"required"`
 	// The amount of time it takes for a payout to be funded. This value is defined by
 	// Straddle.
-	FundingTime AccountV1DataSettingsPayoutsFundingTime `json:"funding_time,required"`
+	//
+	// Any of "immediate", "next_day", "one_day", "two_day", "three_day", "four_day",
+	// "five_day".
+	FundingTime string `json:"funding_time" api:"required"`
 	// The unique identifier of the linked bank account to use for payouts.
-	LinkedBankAccountID string `json:"linked_bank_account_id,required" format:"uuid"`
+	LinkedBankAccountID string `json:"linked_bank_account_id" api:"required" format:"uuid"`
 	// The maximum amount of a single payout.
-	MaxAmount int64 `json:"max_amount,required"`
+	MaxAmount int64 `json:"max_amount" api:"required"`
 	// The maximum dollar amount of payouts in a month.
-	MonthlyAmount int64 `json:"monthly_amount,required"`
+	MonthlyAmount int64 `json:"monthly_amount" api:"required"`
 	// The maximum number of payouts in a month.
-	MonthlyCount int64                            `json:"monthly_count,required"`
-	JSON         accountV1DataSettingsPayoutsJSON `json:"-"`
+	MonthlyCount int64 `json:"monthly_count" api:"required"`
+	// JSON contains metadata for fields, check presence with [respjson.Field.Valid].
+	JSON struct {
+		DailyAmount         respjson.Field
+		FundingTime         respjson.Field
+		LinkedBankAccountID respjson.Field
+		MaxAmount           respjson.Field
+		MonthlyAmount       respjson.Field
+		MonthlyCount        respjson.Field
+		ExtraFields         map[string]respjson.Field
+		raw                 string
+	} `json:"-"`
 }
 
-// accountV1DataSettingsPayoutsJSON contains the JSON metadata for the struct
-// [AccountV1DataSettingsPayouts]
-type accountV1DataSettingsPayoutsJSON struct {
-	DailyAmount         apijson.Field
-	FundingTime         apijson.Field
-	LinkedBankAccountID apijson.Field
-	MaxAmount           apijson.Field
-	MonthlyAmount       apijson.Field
-	MonthlyCount        apijson.Field
-	raw                 string
-	ExtraFields         map[string]apijson.Field
-}
-
-func (r *AccountV1DataSettingsPayouts) UnmarshalJSON(data []byte) (err error) {
+// Returns the unmodified JSON received from the API
+func (r AccountV1DataSettingsPayouts) RawJSON() string { return r.JSON.raw }
+func (r *AccountV1DataSettingsPayouts) UnmarshalJSON(data []byte) error {
 	return apijson.UnmarshalRoot(data, r)
-}
-
-func (r accountV1DataSettingsPayoutsJSON) RawJSON() string {
-	return r.raw
-}
-
-// The amount of time it takes for a payout to be funded. This value is defined by
-// Straddle.
-type AccountV1DataSettingsPayoutsFundingTime string
-
-const (
-	AccountV1DataSettingsPayoutsFundingTimeImmediate AccountV1DataSettingsPayoutsFundingTime = "immediate"
-	AccountV1DataSettingsPayoutsFundingTimeNextDay   AccountV1DataSettingsPayoutsFundingTime = "next_day"
-	AccountV1DataSettingsPayoutsFundingTimeOneDay    AccountV1DataSettingsPayoutsFundingTime = "one_day"
-	AccountV1DataSettingsPayoutsFundingTimeTwoDay    AccountV1DataSettingsPayoutsFundingTime = "two_day"
-	AccountV1DataSettingsPayoutsFundingTimeThreeDay  AccountV1DataSettingsPayoutsFundingTime = "three_day"
-)
-
-func (r AccountV1DataSettingsPayoutsFundingTime) IsKnown() bool {
-	switch r {
-	case AccountV1DataSettingsPayoutsFundingTimeImmediate, AccountV1DataSettingsPayoutsFundingTimeNextDay, AccountV1DataSettingsPayoutsFundingTimeOneDay, AccountV1DataSettingsPayoutsFundingTimeTwoDay, AccountV1DataSettingsPayoutsFundingTimeThreeDay:
-		return true
-	}
-	return false
 }
 
 // Indicates the structure of the returned content.
@@ -1117,161 +813,172 @@ const (
 	AccountV1ResponseTypeNone   AccountV1ResponseType = "none"
 )
 
-func (r AccountV1ResponseType) IsKnown() bool {
-	switch r {
-	case AccountV1ResponseTypeObject, AccountV1ResponseTypeArray, AccountV1ResponseTypeError, AccountV1ResponseTypeNone:
-		return true
-	}
-	return false
-}
-
 // The address object is optional. If provided, it must be a valid address.
 type AddressV1 struct {
 	// City, district, suburb, town, or village.
-	City string `json:"city,nullable"`
-	// The country of the address, in ISO 3166-1 alpha-2 format.
-	Country string `json:"country,nullable"`
+	City string `json:"city" api:"required"`
 	// Primary address line (e.g., street, PO Box).
-	Line1 string `json:"line1,nullable"`
-	// Secondary address line (e.g., apartment, suite, unit, or building).
-	Line2 string `json:"line2,nullable"`
+	Line1 string `json:"line1" api:"required"`
 	// Postal or ZIP code.
-	PostalCode string `json:"postal_code,nullable"`
+	PostalCode string `json:"postal_code" api:"required"`
 	// Two-letter state code.
-	State string        `json:"state,nullable"`
-	JSON  addressV1JSON `json:"-"`
+	State string `json:"state" api:"required"`
+	// The country of the address, in ISO 3166-1 alpha-2 format.
+	Country string `json:"country" api:"nullable"`
+	// Secondary address line (e.g., apartment, suite, unit, or building).
+	Line2 string `json:"line2" api:"nullable"`
+	// JSON contains metadata for fields, check presence with [respjson.Field.Valid].
+	JSON struct {
+		City        respjson.Field
+		Line1       respjson.Field
+		PostalCode  respjson.Field
+		State       respjson.Field
+		Country     respjson.Field
+		Line2       respjson.Field
+		ExtraFields map[string]respjson.Field
+		raw         string
+	} `json:"-"`
 }
 
-// addressV1JSON contains the JSON metadata for the struct [AddressV1]
-type addressV1JSON struct {
-	City        apijson.Field
-	Country     apijson.Field
-	Line1       apijson.Field
-	Line2       apijson.Field
-	PostalCode  apijson.Field
-	State       apijson.Field
-	raw         string
-	ExtraFields map[string]apijson.Field
-}
-
-func (r *AddressV1) UnmarshalJSON(data []byte) (err error) {
+// Returns the unmodified JSON received from the API
+func (r AddressV1) RawJSON() string { return r.JSON.raw }
+func (r *AddressV1) UnmarshalJSON(data []byte) error {
 	return apijson.UnmarshalRoot(data, r)
 }
 
-func (r addressV1JSON) RawJSON() string {
-	return r.raw
+// ToParam converts this AddressV1 to a AddressV1Param.
+//
+// Warning: the fields of the param type will not be present. ToParam should only
+// be used at the last possible moment before sending a request. Test for this with
+// AddressV1Param.Overrides()
+func (r AddressV1) ToParam() AddressV1Param {
+	return param.Override[AddressV1Param](json.RawMessage(r.RawJSON()))
 }
 
 // The address object is optional. If provided, it must be a valid address.
+//
+// The properties City, Line1, PostalCode, State are required.
 type AddressV1Param struct {
 	// City, district, suburb, town, or village.
-	City param.Field[string] `json:"city"`
-	// The country of the address, in ISO 3166-1 alpha-2 format.
-	Country param.Field[string] `json:"country"`
+	City param.Opt[string] `json:"city,omitzero" api:"required"`
 	// Primary address line (e.g., street, PO Box).
-	Line1 param.Field[string] `json:"line1"`
-	// Secondary address line (e.g., apartment, suite, unit, or building).
-	Line2 param.Field[string] `json:"line2"`
+	Line1 param.Opt[string] `json:"line1,omitzero" api:"required"`
 	// Postal or ZIP code.
-	PostalCode param.Field[string] `json:"postal_code"`
+	PostalCode param.Opt[string] `json:"postal_code,omitzero" api:"required"`
 	// Two-letter state code.
-	State param.Field[string] `json:"state"`
+	State param.Opt[string] `json:"state,omitzero" api:"required"`
+	// The country of the address, in ISO 3166-1 alpha-2 format.
+	Country param.Opt[string] `json:"country,omitzero"`
+	// Secondary address line (e.g., apartment, suite, unit, or building).
+	Line2 param.Opt[string] `json:"line2,omitzero"`
+	paramObj
 }
 
 func (r AddressV1Param) MarshalJSON() (data []byte, err error) {
-	return apijson.MarshalRoot(r)
+	type shadow AddressV1Param
+	return param.MarshalObject(r, (*shadow)(&r))
+}
+func (r *AddressV1Param) UnmarshalJSON(data []byte) error {
+	return apijson.UnmarshalRoot(data, r)
 }
 
 type BusinessProfileV1 struct {
 	// The operating or trade name of the business.
-	Name string `json:"name,required"`
+	Name string `json:"name" api:"required"`
 	// URL of the business's primary marketing website.
-	Website string `json:"website,required" format:"uri"`
+	Website string `json:"website" api:"required" format:"uri"`
 	// The address object is optional. If provided, it must be a valid address.
-	Address AddressV1 `json:"address,nullable"`
+	Address AddressV1 `json:"address" api:"nullable"`
 	// A brief description of the business and its products or services.
-	Description string     `json:"description,nullable"`
+	Description string     `json:"description" api:"nullable"`
 	Industry    IndustryV1 `json:"industry"`
 	// The official registered name of the business.
-	LegalName string `json:"legal_name,nullable"`
+	LegalName string `json:"legal_name" api:"nullable"`
 	// The primary contact phone number for the business.
-	Phone           string            `json:"phone,nullable"`
+	Phone           string            `json:"phone" api:"nullable"`
 	SupportChannels SupportChannelsV1 `json:"support_channels"`
 	// The business's tax identification number (e.g., EIN in the US).
-	TaxID string `json:"tax_id,nullable"`
+	TaxID string `json:"tax_id" api:"nullable"`
 	// A description of how the business intends to use Straddle's services.
-	UseCase string                `json:"use_case,nullable"`
-	JSON    businessProfileV1JSON `json:"-"`
+	UseCase string `json:"use_case" api:"nullable"`
+	// JSON contains metadata for fields, check presence with [respjson.Field.Valid].
+	JSON struct {
+		Name            respjson.Field
+		Website         respjson.Field
+		Address         respjson.Field
+		Description     respjson.Field
+		Industry        respjson.Field
+		LegalName       respjson.Field
+		Phone           respjson.Field
+		SupportChannels respjson.Field
+		TaxID           respjson.Field
+		UseCase         respjson.Field
+		ExtraFields     map[string]respjson.Field
+		raw             string
+	} `json:"-"`
 }
 
-// businessProfileV1JSON contains the JSON metadata for the struct
-// [BusinessProfileV1]
-type businessProfileV1JSON struct {
-	Name            apijson.Field
-	Website         apijson.Field
-	Address         apijson.Field
-	Description     apijson.Field
-	Industry        apijson.Field
-	LegalName       apijson.Field
-	Phone           apijson.Field
-	SupportChannels apijson.Field
-	TaxID           apijson.Field
-	UseCase         apijson.Field
-	raw             string
-	ExtraFields     map[string]apijson.Field
-}
-
-func (r *BusinessProfileV1) UnmarshalJSON(data []byte) (err error) {
+// Returns the unmodified JSON received from the API
+func (r BusinessProfileV1) RawJSON() string { return r.JSON.raw }
+func (r *BusinessProfileV1) UnmarshalJSON(data []byte) error {
 	return apijson.UnmarshalRoot(data, r)
 }
 
-func (r businessProfileV1JSON) RawJSON() string {
-	return r.raw
+// ToParam converts this BusinessProfileV1 to a BusinessProfileV1Param.
+//
+// Warning: the fields of the param type will not be present. ToParam should only
+// be used at the last possible moment before sending a request. Test for this with
+// BusinessProfileV1Param.Overrides()
+func (r BusinessProfileV1) ToParam() BusinessProfileV1Param {
+	return param.Override[BusinessProfileV1Param](json.RawMessage(r.RawJSON()))
 }
 
+// The properties Name, Website are required.
 type BusinessProfileV1Param struct {
 	// The operating or trade name of the business.
-	Name param.Field[string] `json:"name,required"`
+	Name string `json:"name" api:"required"`
 	// URL of the business's primary marketing website.
-	Website param.Field[string] `json:"website,required" format:"uri"`
-	// The address object is optional. If provided, it must be a valid address.
-	Address param.Field[AddressV1Param] `json:"address"`
+	Website string `json:"website" api:"required" format:"uri"`
 	// A brief description of the business and its products or services.
-	Description param.Field[string]          `json:"description"`
-	Industry    param.Field[IndustryV1Param] `json:"industry"`
+	Description param.Opt[string] `json:"description,omitzero"`
 	// The official registered name of the business.
-	LegalName param.Field[string] `json:"legal_name"`
+	LegalName param.Opt[string] `json:"legal_name,omitzero"`
 	// The primary contact phone number for the business.
-	Phone           param.Field[string]                 `json:"phone"`
-	SupportChannels param.Field[SupportChannelsV1Param] `json:"support_channels"`
+	Phone param.Opt[string] `json:"phone,omitzero"`
 	// The business's tax identification number (e.g., EIN in the US).
-	TaxID param.Field[string] `json:"tax_id"`
+	TaxID param.Opt[string] `json:"tax_id,omitzero"`
 	// A description of how the business intends to use Straddle's services.
-	UseCase param.Field[string] `json:"use_case"`
+	UseCase param.Opt[string] `json:"use_case,omitzero"`
+	// The address object is optional. If provided, it must be a valid address.
+	Address         AddressV1Param         `json:"address,omitzero"`
+	Industry        IndustryV1Param        `json:"industry,omitzero"`
+	SupportChannels SupportChannelsV1Param `json:"support_channels,omitzero"`
+	paramObj
 }
 
 func (r BusinessProfileV1Param) MarshalJSON() (data []byte, err error) {
-	return apijson.MarshalRoot(r)
+	type shadow BusinessProfileV1Param
+	return param.MarshalObject(r, (*shadow)(&r))
 }
-
-type CapabilityV1 struct {
-	CapabilityStatus CapabilityV1CapabilityStatus `json:"capability_status,required"`
-	JSON             capabilityV1JSON             `json:"-"`
-}
-
-// capabilityV1JSON contains the JSON metadata for the struct [CapabilityV1]
-type capabilityV1JSON struct {
-	CapabilityStatus apijson.Field
-	raw              string
-	ExtraFields      map[string]apijson.Field
-}
-
-func (r *CapabilityV1) UnmarshalJSON(data []byte) (err error) {
+func (r *BusinessProfileV1Param) UnmarshalJSON(data []byte) error {
 	return apijson.UnmarshalRoot(data, r)
 }
 
-func (r capabilityV1JSON) RawJSON() string {
-	return r.raw
+type CapabilityV1 struct {
+	// Any of "active", "inactive".
+	CapabilityStatus CapabilityV1CapabilityStatus `json:"capability_status" api:"required"`
+	// JSON contains metadata for fields, check presence with [respjson.Field.Valid].
+	JSON struct {
+		CapabilityStatus respjson.Field
+		ExtraFields      map[string]respjson.Field
+		raw              string
+	} `json:"-"`
+}
+
+// Returns the unmodified JSON received from the API
+func (r CapabilityV1) RawJSON() string { return r.JSON.raw }
+func (r *CapabilityV1) UnmarshalJSON(data []byte) error {
+	return apijson.UnmarshalRoot(data, r)
 }
 
 type CapabilityV1CapabilityStatus string
@@ -1281,128 +988,145 @@ const (
 	CapabilityV1CapabilityStatusInactive CapabilityV1CapabilityStatus = "inactive"
 )
 
-func (r CapabilityV1CapabilityStatus) IsKnown() bool {
-	switch r {
-	case CapabilityV1CapabilityStatusActive, CapabilityV1CapabilityStatusInactive:
-		return true
-	}
-	return false
-}
-
 type IndustryV1 struct {
 	// The general category of the industry. Required if not providing MCC.
-	Category string `json:"category,nullable"`
+	Category string `json:"category" api:"nullable"`
 	// The Merchant Category Code (MCC) that best describes the business. Optional.
-	Mcc string `json:"mcc,nullable"`
+	Mcc string `json:"mcc" api:"nullable"`
 	// The specific sector within the industry category. Required if not providing MCC.
-	Sector string         `json:"sector,nullable"`
-	JSON   industryV1JSON `json:"-"`
+	Sector string `json:"sector" api:"nullable"`
+	// JSON contains metadata for fields, check presence with [respjson.Field.Valid].
+	JSON struct {
+		Category    respjson.Field
+		Mcc         respjson.Field
+		Sector      respjson.Field
+		ExtraFields map[string]respjson.Field
+		raw         string
+	} `json:"-"`
 }
 
-// industryV1JSON contains the JSON metadata for the struct [IndustryV1]
-type industryV1JSON struct {
-	Category    apijson.Field
-	Mcc         apijson.Field
-	Sector      apijson.Field
-	raw         string
-	ExtraFields map[string]apijson.Field
-}
-
-func (r *IndustryV1) UnmarshalJSON(data []byte) (err error) {
+// Returns the unmodified JSON received from the API
+func (r IndustryV1) RawJSON() string { return r.JSON.raw }
+func (r *IndustryV1) UnmarshalJSON(data []byte) error {
 	return apijson.UnmarshalRoot(data, r)
 }
 
-func (r industryV1JSON) RawJSON() string {
-	return r.raw
+// ToParam converts this IndustryV1 to a IndustryV1Param.
+//
+// Warning: the fields of the param type will not be present. ToParam should only
+// be used at the last possible moment before sending a request. Test for this with
+// IndustryV1Param.Overrides()
+func (r IndustryV1) ToParam() IndustryV1Param {
+	return param.Override[IndustryV1Param](json.RawMessage(r.RawJSON()))
 }
 
 type IndustryV1Param struct {
 	// The general category of the industry. Required if not providing MCC.
-	Category param.Field[string] `json:"category"`
+	Category param.Opt[string] `json:"category,omitzero"`
 	// The Merchant Category Code (MCC) that best describes the business. Optional.
-	Mcc param.Field[string] `json:"mcc"`
+	Mcc param.Opt[string] `json:"mcc,omitzero"`
 	// The specific sector within the industry category. Required if not providing MCC.
-	Sector param.Field[string] `json:"sector"`
+	Sector param.Opt[string] `json:"sector,omitzero"`
+	paramObj
 }
 
 func (r IndustryV1Param) MarshalJSON() (data []byte, err error) {
-	return apijson.MarshalRoot(r)
+	type shadow IndustryV1Param
+	return param.MarshalObject(r, (*shadow)(&r))
+}
+func (r *IndustryV1Param) UnmarshalJSON(data []byte) error {
+	return apijson.UnmarshalRoot(data, r)
 }
 
 type SupportChannelsV1 struct {
 	// The email address for customer support inquiries.
-	Email string `json:"email,nullable" format:"email"`
+	Email string `json:"email" api:"nullable" format:"email"`
 	// The phone number for customer support.
-	Phone string `json:"phone,nullable"`
+	Phone string `json:"phone" api:"nullable"`
 	// The URL of the business's customer support page or contact form.
-	URL  string                `json:"url,nullable" format:"uri"`
-	JSON supportChannelsV1JSON `json:"-"`
+	URL string `json:"url" api:"nullable" format:"uri"`
+	// JSON contains metadata for fields, check presence with [respjson.Field.Valid].
+	JSON struct {
+		Email       respjson.Field
+		Phone       respjson.Field
+		URL         respjson.Field
+		ExtraFields map[string]respjson.Field
+		raw         string
+	} `json:"-"`
 }
 
-// supportChannelsV1JSON contains the JSON metadata for the struct
-// [SupportChannelsV1]
-type supportChannelsV1JSON struct {
-	Email       apijson.Field
-	Phone       apijson.Field
-	URL         apijson.Field
-	raw         string
-	ExtraFields map[string]apijson.Field
-}
-
-func (r *SupportChannelsV1) UnmarshalJSON(data []byte) (err error) {
+// Returns the unmodified JSON received from the API
+func (r SupportChannelsV1) RawJSON() string { return r.JSON.raw }
+func (r *SupportChannelsV1) UnmarshalJSON(data []byte) error {
 	return apijson.UnmarshalRoot(data, r)
 }
 
-func (r supportChannelsV1JSON) RawJSON() string {
-	return r.raw
+// ToParam converts this SupportChannelsV1 to a SupportChannelsV1Param.
+//
+// Warning: the fields of the param type will not be present. ToParam should only
+// be used at the last possible moment before sending a request. Test for this with
+// SupportChannelsV1Param.Overrides()
+func (r SupportChannelsV1) ToParam() SupportChannelsV1Param {
+	return param.Override[SupportChannelsV1Param](json.RawMessage(r.RawJSON()))
 }
 
 type SupportChannelsV1Param struct {
 	// The email address for customer support inquiries.
-	Email param.Field[string] `json:"email" format:"email"`
+	Email param.Opt[string] `json:"email,omitzero" format:"email"`
 	// The phone number for customer support.
-	Phone param.Field[string] `json:"phone"`
+	Phone param.Opt[string] `json:"phone,omitzero"`
 	// The URL of the business's customer support page or contact form.
-	URL param.Field[string] `json:"url" format:"uri"`
+	URL param.Opt[string] `json:"url,omitzero" format:"uri"`
+	paramObj
 }
 
 func (r SupportChannelsV1Param) MarshalJSON() (data []byte, err error) {
-	return apijson.MarshalRoot(r)
+	type shadow SupportChannelsV1Param
+	return param.MarshalObject(r, (*shadow)(&r))
+}
+func (r *SupportChannelsV1Param) UnmarshalJSON(data []byte) error {
+	return apijson.UnmarshalRoot(data, r)
 }
 
 type TermsOfServiceV1 struct {
 	// The datetime of when the terms of service were accepted, in ISO 8601 format.
-	AcceptedDate time.Time `json:"accepted_date,required" format:"date-time"`
+	AcceptedDate time.Time `json:"accepted_date" api:"required" format:"date-time"`
 	// The type or version of the agreement accepted. Use `embedded` unless your
 	// platform was specifically enabled for `direct` agreements.
-	AgreementType TermsOfServiceV1AgreementType `json:"agreement_type,required"`
+	//
+	// Any of "embedded", "direct".
+	AgreementType TermsOfServiceV1AgreementType `json:"agreement_type" api:"required"`
 	// The URL where the full text of the accepted agreement can be found.
-	AgreementURL string `json:"agreement_url,required,nullable"`
+	AgreementURL string `json:"agreement_url" api:"required"`
 	// The IP address from which the terms of service were accepted.
-	AcceptedIP string `json:"accepted_ip,nullable"`
+	AcceptedIP string `json:"accepted_ip" api:"nullable"`
 	// The user agent string of the browser or application used to accept the terms.
-	AcceptedUserAgent string               `json:"accepted_user_agent,nullable"`
-	JSON              termsOfServiceV1JSON `json:"-"`
+	AcceptedUserAgent string `json:"accepted_user_agent" api:"nullable"`
+	// JSON contains metadata for fields, check presence with [respjson.Field.Valid].
+	JSON struct {
+		AcceptedDate      respjson.Field
+		AgreementType     respjson.Field
+		AgreementURL      respjson.Field
+		AcceptedIP        respjson.Field
+		AcceptedUserAgent respjson.Field
+		ExtraFields       map[string]respjson.Field
+		raw               string
+	} `json:"-"`
 }
 
-// termsOfServiceV1JSON contains the JSON metadata for the struct
-// [TermsOfServiceV1]
-type termsOfServiceV1JSON struct {
-	AcceptedDate      apijson.Field
-	AgreementType     apijson.Field
-	AgreementURL      apijson.Field
-	AcceptedIP        apijson.Field
-	AcceptedUserAgent apijson.Field
-	raw               string
-	ExtraFields       map[string]apijson.Field
-}
-
-func (r *TermsOfServiceV1) UnmarshalJSON(data []byte) (err error) {
+// Returns the unmodified JSON received from the API
+func (r TermsOfServiceV1) RawJSON() string { return r.JSON.raw }
+func (r *TermsOfServiceV1) UnmarshalJSON(data []byte) error {
 	return apijson.UnmarshalRoot(data, r)
 }
 
-func (r termsOfServiceV1JSON) RawJSON() string {
-	return r.raw
+// ToParam converts this TermsOfServiceV1 to a TermsOfServiceV1Param.
+//
+// Warning: the fields of the param type will not be present. ToParam should only
+// be used at the last possible moment before sending a request. Test for this with
+// TermsOfServiceV1Param.Overrides()
+func (r TermsOfServiceV1) ToParam() TermsOfServiceV1Param {
+	return param.Override[TermsOfServiceV1Param](json.RawMessage(r.RawJSON()))
 }
 
 // The type or version of the agreement accepted. Use `embedded` unless your
@@ -1414,53 +1138,63 @@ const (
 	TermsOfServiceV1AgreementTypeDirect   TermsOfServiceV1AgreementType = "direct"
 )
 
-func (r TermsOfServiceV1AgreementType) IsKnown() bool {
-	switch r {
-	case TermsOfServiceV1AgreementTypeEmbedded, TermsOfServiceV1AgreementTypeDirect:
-		return true
-	}
-	return false
-}
-
+// The properties AcceptedDate, AgreementType, AgreementURL are required.
 type TermsOfServiceV1Param struct {
+	// The URL where the full text of the accepted agreement can be found.
+	AgreementURL param.Opt[string] `json:"agreement_url,omitzero" api:"required"`
 	// The datetime of when the terms of service were accepted, in ISO 8601 format.
-	AcceptedDate param.Field[time.Time] `json:"accepted_date,required" format:"date-time"`
+	AcceptedDate time.Time `json:"accepted_date" api:"required" format:"date-time"`
 	// The type or version of the agreement accepted. Use `embedded` unless your
 	// platform was specifically enabled for `direct` agreements.
-	AgreementType param.Field[TermsOfServiceV1AgreementType] `json:"agreement_type,required"`
-	// The URL where the full text of the accepted agreement can be found.
-	AgreementURL param.Field[string] `json:"agreement_url,required"`
+	//
+	// Any of "embedded", "direct".
+	AgreementType TermsOfServiceV1AgreementType `json:"agreement_type,omitzero" api:"required"`
 	// The IP address from which the terms of service were accepted.
-	AcceptedIP param.Field[string] `json:"accepted_ip"`
+	AcceptedIP param.Opt[string] `json:"accepted_ip,omitzero"`
 	// The user agent string of the browser or application used to accept the terms.
-	AcceptedUserAgent param.Field[string] `json:"accepted_user_agent"`
+	AcceptedUserAgent param.Opt[string] `json:"accepted_user_agent,omitzero"`
+	paramObj
 }
 
 func (r TermsOfServiceV1Param) MarshalJSON() (data []byte, err error) {
-	return apijson.MarshalRoot(r)
+	type shadow TermsOfServiceV1Param
+	return param.MarshalObject(r, (*shadow)(&r))
+}
+func (r *TermsOfServiceV1Param) UnmarshalJSON(data []byte) error {
+	return apijson.UnmarshalRoot(data, r)
 }
 
 type EmbedAccountNewParams struct {
 	// The access level granted to the account. This is determined by your platform
 	// configuration. Use `standard` unless instructed otherwise by Straddle.
-	AccessLevel param.Field[EmbedAccountNewParamsAccessLevel] `json:"access_level,required"`
+	//
+	// Any of "standard", "managed".
+	AccessLevel EmbedAccountNewParamsAccessLevel `json:"access_level,omitzero" api:"required"`
 	// The type of account to be created. Currently, only `business` is supported.
-	AccountType     param.Field[EmbedAccountNewParamsAccountType] `json:"account_type,required"`
-	BusinessProfile param.Field[BusinessProfileV1Param]           `json:"business_profile,required"`
+	//
+	// Any of "business".
+	AccountType     EmbedAccountNewParamsAccountType `json:"account_type,omitzero" api:"required"`
+	BusinessProfile BusinessProfileV1Param           `json:"business_profile,omitzero" api:"required"`
 	// The unique identifier of the organization related to this account.
-	OrganizationID param.Field[string] `json:"organization_id,required" format:"uuid"`
+	OrganizationID string `json:"organization_id" api:"required" format:"uuid"`
 	// Unique identifier for the account in your database, used for cross-referencing
 	// between Straddle and your systems.
-	ExternalID param.Field[string] `json:"external_id"`
+	ExternalID     param.Opt[string] `json:"external_id,omitzero"`
+	CorrelationID  param.Opt[string] `header:"correlation-id,omitzero" json:"-"`
+	IdempotencyKey param.Opt[string] `header:"idempotency-key,omitzero" json:"-"`
+	RequestID      param.Opt[string] `header:"request-id,omitzero" json:"-"`
 	// Up to 20 additional user-defined key-value pairs. Useful for storing additional
 	// information about the account in a structured format.
-	Metadata      param.Field[map[string]string] `json:"metadata"`
-	CorrelationID param.Field[string]            `header:"correlation-id"`
-	RequestID     param.Field[string]            `header:"request-id"`
+	Metadata map[string]string `json:"metadata,omitzero"`
+	paramObj
 }
 
 func (r EmbedAccountNewParams) MarshalJSON() (data []byte, err error) {
-	return apijson.MarshalRoot(r)
+	type shadow EmbedAccountNewParams
+	return param.MarshalObject(r, (*shadow)(&r))
+}
+func (r *EmbedAccountNewParams) UnmarshalJSON(data []byte) error {
+	return apijson.UnmarshalRoot(data, r)
 }
 
 // The access level granted to the account. This is determined by your platform
@@ -1472,14 +1206,6 @@ const (
 	EmbedAccountNewParamsAccessLevelManaged  EmbedAccountNewParamsAccessLevel = "managed"
 )
 
-func (r EmbedAccountNewParamsAccessLevel) IsKnown() bool {
-	switch r {
-	case EmbedAccountNewParamsAccessLevelStandard, EmbedAccountNewParamsAccessLevelManaged:
-		return true
-	}
-	return false
-}
-
 // The type of account to be created. Currently, only `business` is supported.
 type EmbedAccountNewParamsAccountType string
 
@@ -1487,46 +1213,51 @@ const (
 	EmbedAccountNewParamsAccountTypeBusiness EmbedAccountNewParamsAccountType = "business"
 )
 
-func (r EmbedAccountNewParamsAccountType) IsKnown() bool {
-	switch r {
-	case EmbedAccountNewParamsAccountTypeBusiness:
-		return true
-	}
-	return false
-}
-
 type EmbedAccountUpdateParams struct {
-	BusinessProfile param.Field[BusinessProfileV1Param] `json:"business_profile,required"`
+	BusinessProfile BusinessProfileV1Param `json:"business_profile,omitzero" api:"required"`
 	// Unique identifier for the account in your database, used for cross-referencing
 	// between Straddle and your systems.
-	ExternalID param.Field[string] `json:"external_id"`
+	ExternalID     param.Opt[string] `json:"external_id,omitzero"`
+	CorrelationID  param.Opt[string] `header:"correlation-id,omitzero" json:"-"`
+	IdempotencyKey param.Opt[string] `header:"idempotency-key,omitzero" json:"-"`
+	RequestID      param.Opt[string] `header:"request-id,omitzero" json:"-"`
 	// Up to 20 additional user-defined key-value pairs. Useful for storing additional
 	// information about the account in a structured format.
-	Metadata      param.Field[map[string]string] `json:"metadata"`
-	CorrelationID param.Field[string]            `header:"correlation-id"`
-	RequestID     param.Field[string]            `header:"request-id"`
+	Metadata map[string]string `json:"metadata,omitzero"`
+	paramObj
 }
 
 func (r EmbedAccountUpdateParams) MarshalJSON() (data []byte, err error) {
-	return apijson.MarshalRoot(r)
+	type shadow EmbedAccountUpdateParams
+	return param.MarshalObject(r, (*shadow)(&r))
+}
+func (r *EmbedAccountUpdateParams) UnmarshalJSON(data []byte) error {
+	return apijson.UnmarshalRoot(data, r)
 }
 
 type EmbedAccountListParams struct {
 	// Results page number. Starts at page 1. Default value: 1
-	PageNumber param.Field[int64] `query:"page_number"`
+	PageNumber param.Opt[int64] `query:"page_number,omitzero" json:"-"`
 	// Page size. Default value: 100. Max value: 1000
-	PageSize   param.Field[int64]  `query:"page_size"`
-	SearchText param.Field[string] `query:"search_text"`
+	PageSize   param.Opt[int64]  `query:"page_size,omitzero" json:"-"`
+	SearchText param.Opt[string] `query:"search_text,omitzero" json:"-"`
 	// Sort By. Default value: 'id'.
-	SortBy param.Field[string] `query:"sort_by"`
+	SortBy        param.Opt[string] `query:"sort_by,omitzero" json:"-"`
+	CorrelationID param.Opt[string] `header:"correlation-id,omitzero" json:"-"`
+	RequestID     param.Opt[string] `header:"request-id,omitzero" json:"-"`
 	// Sort Order. Default value: 'asc'.
-	SortOrder     param.Field[EmbedAccountListParamsSortOrder] `query:"sort_order"`
-	CorrelationID param.Field[string]                          `header:"correlation-id"`
-	RequestID     param.Field[string]                          `header:"request-id"`
+	//
+	// Any of "asc", "desc".
+	SortOrder EmbedAccountListParamsSortOrder `query:"sort_order,omitzero" json:"-"`
+	// Any of "created", "onboarding", "active", "rejected", "inactive".
+	Status EmbedAccountListParamsStatus `query:"status,omitzero" json:"-"`
+	// Any of "business".
+	Type EmbedAccountListParamsType `query:"type,omitzero" json:"-"`
+	paramObj
 }
 
 // URLQuery serializes [EmbedAccountListParams]'s query parameters as `url.Values`.
-func (r EmbedAccountListParams) URLQuery() (v url.Values) {
+func (r EmbedAccountListParams) URLQuery() (v url.Values, err error) {
 	return apiquery.MarshalWithSettings(r, apiquery.QuerySettings{
 		ArrayFormat:  apiquery.ArrayQueryFormatComma,
 		NestedFormat: apiquery.NestedQueryFormatBrackets,
@@ -1541,38 +1272,56 @@ const (
 	EmbedAccountListParamsSortOrderDesc EmbedAccountListParamsSortOrder = "desc"
 )
 
-func (r EmbedAccountListParamsSortOrder) IsKnown() bool {
-	switch r {
-	case EmbedAccountListParamsSortOrderAsc, EmbedAccountListParamsSortOrderDesc:
-		return true
-	}
-	return false
-}
+type EmbedAccountListParamsStatus string
+
+const (
+	EmbedAccountListParamsStatusCreated    EmbedAccountListParamsStatus = "created"
+	EmbedAccountListParamsStatusOnboarding EmbedAccountListParamsStatus = "onboarding"
+	EmbedAccountListParamsStatusActive     EmbedAccountListParamsStatus = "active"
+	EmbedAccountListParamsStatusRejected   EmbedAccountListParamsStatus = "rejected"
+	EmbedAccountListParamsStatusInactive   EmbedAccountListParamsStatus = "inactive"
+)
+
+type EmbedAccountListParamsType string
+
+const (
+	EmbedAccountListParamsTypeBusiness EmbedAccountListParamsType = "business"
+)
 
 type EmbedAccountGetParams struct {
-	CorrelationID param.Field[string] `header:"correlation-id"`
-	RequestID     param.Field[string] `header:"request-id"`
+	CorrelationID param.Opt[string] `header:"correlation-id,omitzero" json:"-"`
+	RequestID     param.Opt[string] `header:"request-id,omitzero" json:"-"`
+	paramObj
 }
 
 type EmbedAccountOnboardParams struct {
-	TermsOfService param.Field[TermsOfServiceV1Param] `json:"terms_of_service,required"`
-	CorrelationID  param.Field[string]                `header:"correlation-id"`
-	RequestID      param.Field[string]                `header:"request-id"`
+	TermsOfService TermsOfServiceV1Param `json:"terms_of_service,omitzero" api:"required"`
+	CorrelationID  param.Opt[string]     `header:"correlation-id,omitzero" json:"-"`
+	IdempotencyKey param.Opt[string]     `header:"idempotency-key,omitzero" json:"-"`
+	RequestID      param.Opt[string]     `header:"request-id,omitzero" json:"-"`
+	paramObj
 }
 
 func (r EmbedAccountOnboardParams) MarshalJSON() (data []byte, err error) {
-	return apijson.MarshalRoot(r)
+	type shadow EmbedAccountOnboardParams
+	return param.MarshalObject(r, (*shadow)(&r))
+}
+func (r *EmbedAccountOnboardParams) UnmarshalJSON(data []byte) error {
+	return apijson.UnmarshalRoot(data, r)
 }
 
 type EmbedAccountSimulateParams struct {
-	FinalStatus   param.Field[EmbedAccountSimulateParamsFinalStatus] `query:"final_status"`
-	CorrelationID param.Field[string]                                `header:"correlation-id"`
-	RequestID     param.Field[string]                                `header:"request-id"`
+	CorrelationID  param.Opt[string] `header:"correlation-id,omitzero" json:"-"`
+	IdempotencyKey param.Opt[string] `header:"idempotency-key,omitzero" json:"-"`
+	RequestID      param.Opt[string] `header:"request-id,omitzero" json:"-"`
+	// Any of "onboarding", "active".
+	FinalStatus EmbedAccountSimulateParamsFinalStatus `query:"final_status,omitzero" json:"-"`
+	paramObj
 }
 
 // URLQuery serializes [EmbedAccountSimulateParams]'s query parameters as
 // `url.Values`.
-func (r EmbedAccountSimulateParams) URLQuery() (v url.Values) {
+func (r EmbedAccountSimulateParams) URLQuery() (v url.Values, err error) {
 	return apiquery.MarshalWithSettings(r, apiquery.QuerySettings{
 		ArrayFormat:  apiquery.ArrayQueryFormatComma,
 		NestedFormat: apiquery.NestedQueryFormatBrackets,
@@ -1585,11 +1334,3 @@ const (
 	EmbedAccountSimulateParamsFinalStatusOnboarding EmbedAccountSimulateParamsFinalStatus = "onboarding"
 	EmbedAccountSimulateParamsFinalStatusActive     EmbedAccountSimulateParamsFinalStatus = "active"
 )
-
-func (r EmbedAccountSimulateParamsFinalStatus) IsKnown() bool {
-	switch r {
-	case EmbedAccountSimulateParamsFinalStatusOnboarding, EmbedAccountSimulateParamsFinalStatusActive:
-		return true
-	}
-	return false
-}

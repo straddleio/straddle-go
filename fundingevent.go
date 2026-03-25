@@ -8,17 +8,26 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"slices"
 	"time"
 
 	"github.com/stainless-sdks/straddle-go/internal/apijson"
 	"github.com/stainless-sdks/straddle-go/internal/apiquery"
-	"github.com/stainless-sdks/straddle-go/internal/param"
 	"github.com/stainless-sdks/straddle-go/internal/requestconfig"
 	"github.com/stainless-sdks/straddle-go/option"
 	"github.com/stainless-sdks/straddle-go/packages/pagination"
+	"github.com/stainless-sdks/straddle-go/packages/param"
+	"github.com/stainless-sdks/straddle-go/packages/respjson"
 	"github.com/stainless-sdks/straddle-go/shared"
 )
 
+// Funding events represent all money movement between Straddle and an Account's
+// external bank accounts. They are automatically generated when charges settle or
+// payouts are initiated. Each event provides detailed tracking of settlement
+// status, fee breakdowns, and reconciliation data across both incoming and
+// outgoing transfers. Use funding events to monitor your platform's entire money
+// movement lifecycle.
+//
 // FundingEventService contains methods and other services that help with
 // interacting with the straddle API.
 //
@@ -26,15 +35,15 @@ import (
 // automatically. You should not instantiate this service directly, and instead use
 // the [NewFundingEventService] method instead.
 type FundingEventService struct {
-	Options []option.RequestOption
+	options []option.RequestOption
 }
 
 // NewFundingEventService generates a new service that applies the given options to
 // each request. These options are applied after the parent client's options (if
 // there is one), and before any request-specific options.
-func NewFundingEventService(opts ...option.RequestOption) (r *FundingEventService) {
-	r = &FundingEventService{}
-	r.Options = opts
+func NewFundingEventService(opts ...option.RequestOption) (r FundingEventService) {
+	r = FundingEventService{}
+	r.options = opts
 	return
 }
 
@@ -42,16 +51,16 @@ func NewFundingEventService(opts ...option.RequestOption) (r *FundingEventServic
 // advanced sorting and filtering options.
 func (r *FundingEventService) List(ctx context.Context, params FundingEventListParams, opts ...option.RequestOption) (res *pagination.PageNumberSchema[FundingEventSummaryPagedV1Data], err error) {
 	var raw *http.Response
-	if params.CorrelationID.Present {
-		opts = append(opts, option.WithHeader("Correlation-Id", fmt.Sprintf("%s", params.CorrelationID)))
+	if !param.IsOmitted(params.CorrelationID) {
+		opts = append(opts, option.WithHeader("Correlation-Id", fmt.Sprintf("%v", params.CorrelationID.Value)))
 	}
-	if params.RequestID.Present {
-		opts = append(opts, option.WithHeader("Request-Id", fmt.Sprintf("%s", params.RequestID)))
+	if !param.IsOmitted(params.RequestID) {
+		opts = append(opts, option.WithHeader("Request-Id", fmt.Sprintf("%v", params.RequestID.Value)))
 	}
-	if params.StraddleAccountID.Present {
-		opts = append(opts, option.WithHeader("Straddle-Account-Id", fmt.Sprintf("%s", params.StraddleAccountID)))
+	if !param.IsOmitted(params.StraddleAccountID) {
+		opts = append(opts, option.WithHeader("Straddle-Account-Id", fmt.Sprintf("%v", params.StraddleAccountID.Value)))
 	}
-	opts = append(r.Options[:], opts...)
+	opts = slices.Concat(r.options, opts)
 	opts = append([]option.RequestOption{option.WithResponseInto(&raw)}, opts...)
 	path := "v1/funding_events"
 	cfg, err := requestconfig.NewRequestConfig(ctx, http.MethodGet, path, params, &res, opts...)
@@ -76,29 +85,29 @@ func (r *FundingEventService) ListAutoPaging(ctx context.Context, params Funding
 // event `id`, and Straddle will return the individual transaction items that make
 // up the funding event.
 func (r *FundingEventService) Get(ctx context.Context, id string, query FundingEventGetParams, opts ...option.RequestOption) (res *FundingEventSummaryItemV1, err error) {
-	if query.CorrelationID.Present {
-		opts = append(opts, option.WithHeader("Correlation-Id", fmt.Sprintf("%s", query.CorrelationID)))
+	if !param.IsOmitted(query.CorrelationID) {
+		opts = append(opts, option.WithHeader("Correlation-Id", fmt.Sprintf("%v", query.CorrelationID.Value)))
 	}
-	if query.RequestID.Present {
-		opts = append(opts, option.WithHeader("Request-Id", fmt.Sprintf("%s", query.RequestID)))
+	if !param.IsOmitted(query.RequestID) {
+		opts = append(opts, option.WithHeader("Request-Id", fmt.Sprintf("%v", query.RequestID.Value)))
 	}
-	if query.StraddleAccountID.Present {
-		opts = append(opts, option.WithHeader("Straddle-Account-Id", fmt.Sprintf("%s", query.StraddleAccountID)))
+	if !param.IsOmitted(query.StraddleAccountID) {
+		opts = append(opts, option.WithHeader("Straddle-Account-Id", fmt.Sprintf("%v", query.StraddleAccountID.Value)))
 	}
-	opts = append(r.Options[:], opts...)
+	opts = slices.Concat(r.options, opts)
 	if id == "" {
 		err = errors.New("missing required id parameter")
-		return
+		return nil, err
 	}
 	path := fmt.Sprintf("v1/funding_events/%s", id)
 	err = requestconfig.ExecuteNewRequest(ctx, http.MethodGet, path, nil, &res, opts...)
-	return
+	return res, err
 }
 
 type FundingEventSummaryItemV1 struct {
-	Data FundingEventSummaryItemV1Data `json:"data,required"`
+	Data FundingEventSummaryItemV1Data `json:"data" api:"required"`
 	// Metadata about the API request, including an identifier and timestamp.
-	Meta shared.ResponseMetadata `json:"meta,required"`
+	Meta shared.ResponseMetadata `json:"meta" api:"required"`
 	// Indicates the structure of the returned content.
 	//
 	//   - "object" means the `data` field contains a single JSON object.
@@ -106,109 +115,123 @@ type FundingEventSummaryItemV1 struct {
 	//   - "error" means the `data` field contains an error object with details of the
 	//     issue.
 	//   - "none" means no data is returned.
-	ResponseType FundingEventSummaryItemV1ResponseType `json:"response_type,required"`
-	JSON         fundingEventSummaryItemV1JSON         `json:"-"`
+	//
+	// Any of "object", "array", "error", "none".
+	ResponseType FundingEventSummaryItemV1ResponseType `json:"response_type" api:"required"`
+	// JSON contains metadata for fields, check presence with [respjson.Field.Valid].
+	JSON struct {
+		Data         respjson.Field
+		Meta         respjson.Field
+		ResponseType respjson.Field
+		ExtraFields  map[string]respjson.Field
+		raw          string
+	} `json:"-"`
 }
 
-// fundingEventSummaryItemV1JSON contains the JSON metadata for the struct
-// [FundingEventSummaryItemV1]
-type fundingEventSummaryItemV1JSON struct {
-	Data         apijson.Field
-	Meta         apijson.Field
-	ResponseType apijson.Field
-	raw          string
-	ExtraFields  map[string]apijson.Field
-}
-
-func (r *FundingEventSummaryItemV1) UnmarshalJSON(data []byte) (err error) {
+// Returns the unmodified JSON received from the API
+func (r FundingEventSummaryItemV1) RawJSON() string { return r.JSON.raw }
+func (r *FundingEventSummaryItemV1) UnmarshalJSON(data []byte) error {
 	return apijson.UnmarshalRoot(data, r)
-}
-
-func (r fundingEventSummaryItemV1JSON) RawJSON() string {
-	return r.raw
 }
 
 type FundingEventSummaryItemV1Data struct {
 	// Unique identifier for the funding event.
-	ID string `json:"id,required" format:"uuid"`
+	ID string `json:"id" api:"required" format:"uuid"`
 	// The amount of the funding event in cents.
-	Amount int64 `json:"amount,required"`
+	Amount int64 `json:"amount" api:"required"`
+	// Created at.
+	CreatedAt time.Time `json:"created_at" api:"required" format:"date-time"`
 	// Describes the direction of the funding event from the perspective of the
 	// `linked_bank_account`.
-	Direction FundingEventSummaryItemV1DataDirection `json:"direction,required"`
+	//
+	// Any of "deposit", "withdrawal".
+	Direction string `json:"direction" api:"required"`
 	// The funding event types describes the direction and reason for the funding
 	// event.
-	EventType FundingEventSummaryItemV1DataEventType `json:"event_type,required"`
+	//
+	// Any of "charge_deposit", "charge_reversal", "payout_return",
+	// "payout_withdrawal".
+	EventType string `json:"event_type" api:"required"`
 	// The number of payments associated with the funding event.
-	PaymentCount int64 `json:"payment_count,required"`
+	PaymentCount int64 `json:"payment_count" api:"required"`
+	// Trace Ids.
+	TraceIDs map[string]string `json:"trace_ids" api:"required"`
 	// Trace number.
-	TraceNumbers []string `json:"trace_numbers,required"`
+	TraceNumbers []string `json:"trace_numbers" api:"required"`
 	// The date on which the funding event occurred. For `deposits` and `returns`, this
 	// is the date the funds were credited to your bank account. For `withdrawals` and
 	// `reversals`, this is the date the funds were debited from your bank account.
-	TransferDate time.Time `json:"transfer_date,required" format:"date"`
+	TransferDate time.Time `json:"transfer_date" api:"required" format:"date"`
+	// Updated at.
+	UpdatedAt time.Time `json:"updated_at" api:"required" format:"date-time"`
+	// The current status of the `charge` or `payout`.
+	//
+	// Any of "created", "scheduled", "failed", "cancelled", "on_hold", "pending",
+	// "paid", "reversed", "validating".
+	Status        string                                     `json:"status"`
+	StatusDetails FundingEventSummaryItemV1DataStatusDetails `json:"status_details"`
 	// The trace number of the funding event.
-	TraceNumber string                            `json:"trace_number,nullable"`
-	JSON        fundingEventSummaryItemV1DataJSON `json:"-"`
+	TraceNumber string `json:"trace_number" api:"nullable"`
+	// JSON contains metadata for fields, check presence with [respjson.Field.Valid].
+	JSON struct {
+		ID            respjson.Field
+		Amount        respjson.Field
+		CreatedAt     respjson.Field
+		Direction     respjson.Field
+		EventType     respjson.Field
+		PaymentCount  respjson.Field
+		TraceIDs      respjson.Field
+		TraceNumbers  respjson.Field
+		TransferDate  respjson.Field
+		UpdatedAt     respjson.Field
+		Status        respjson.Field
+		StatusDetails respjson.Field
+		TraceNumber   respjson.Field
+		ExtraFields   map[string]respjson.Field
+		raw           string
+	} `json:"-"`
 }
 
-// fundingEventSummaryItemV1DataJSON contains the JSON metadata for the struct
-// [FundingEventSummaryItemV1Data]
-type fundingEventSummaryItemV1DataJSON struct {
-	ID           apijson.Field
-	Amount       apijson.Field
-	Direction    apijson.Field
-	EventType    apijson.Field
-	PaymentCount apijson.Field
-	TraceNumbers apijson.Field
-	TransferDate apijson.Field
-	TraceNumber  apijson.Field
-	raw          string
-	ExtraFields  map[string]apijson.Field
-}
-
-func (r *FundingEventSummaryItemV1Data) UnmarshalJSON(data []byte) (err error) {
+// Returns the unmodified JSON received from the API
+func (r FundingEventSummaryItemV1Data) RawJSON() string { return r.JSON.raw }
+func (r *FundingEventSummaryItemV1Data) UnmarshalJSON(data []byte) error {
 	return apijson.UnmarshalRoot(data, r)
 }
 
-func (r fundingEventSummaryItemV1DataJSON) RawJSON() string {
-	return r.raw
+type FundingEventSummaryItemV1DataStatusDetails struct {
+	// The time the status change occurred.
+	ChangedAt time.Time `json:"changed_at" api:"required" format:"date-time"`
+	// A human-readable description of the current status.
+	Message string `json:"message" api:"required"`
+	// Any of "insufficient_funds", "closed_bank_account", "invalid_bank_account",
+	// "invalid_routing", "disputed", "payment_stopped", "owner_deceased",
+	// "frozen_bank_account", "risk_review", "fraudulent", "duplicate_entry",
+	// "invalid_paykey", "payment_blocked", "amount_too_large", "too_many_attempts",
+	// "internal_system_error", "user_request", "ok", "other_network_return",
+	// "payout_refused", "cancel_request", "failed_verification", "require_review",
+	// "blocked_by_system", "watchtower_review", "validating", "auto_hold".
+	Reason string `json:"reason" api:"required"`
+	// Any of "watchtower", "bank_decline", "customer_dispute", "user_action",
+	// "system".
+	Source string `json:"source" api:"required"`
+	// The status code if applicable.
+	Code string `json:"code" api:"nullable"`
+	// JSON contains metadata for fields, check presence with [respjson.Field.Valid].
+	JSON struct {
+		ChangedAt   respjson.Field
+		Message     respjson.Field
+		Reason      respjson.Field
+		Source      respjson.Field
+		Code        respjson.Field
+		ExtraFields map[string]respjson.Field
+		raw         string
+	} `json:"-"`
 }
 
-// Describes the direction of the funding event from the perspective of the
-// `linked_bank_account`.
-type FundingEventSummaryItemV1DataDirection string
-
-const (
-	FundingEventSummaryItemV1DataDirectionDeposit    FundingEventSummaryItemV1DataDirection = "deposit"
-	FundingEventSummaryItemV1DataDirectionWithdrawal FundingEventSummaryItemV1DataDirection = "withdrawal"
-)
-
-func (r FundingEventSummaryItemV1DataDirection) IsKnown() bool {
-	switch r {
-	case FundingEventSummaryItemV1DataDirectionDeposit, FundingEventSummaryItemV1DataDirectionWithdrawal:
-		return true
-	}
-	return false
-}
-
-// The funding event types describes the direction and reason for the funding
-// event.
-type FundingEventSummaryItemV1DataEventType string
-
-const (
-	FundingEventSummaryItemV1DataEventTypeChargeDeposit    FundingEventSummaryItemV1DataEventType = "charge_deposit"
-	FundingEventSummaryItemV1DataEventTypeChargeReversal   FundingEventSummaryItemV1DataEventType = "charge_reversal"
-	FundingEventSummaryItemV1DataEventTypePayoutReturn     FundingEventSummaryItemV1DataEventType = "payout_return"
-	FundingEventSummaryItemV1DataEventTypePayoutWithdrawal FundingEventSummaryItemV1DataEventType = "payout_withdrawal"
-)
-
-func (r FundingEventSummaryItemV1DataEventType) IsKnown() bool {
-	switch r {
-	case FundingEventSummaryItemV1DataEventTypeChargeDeposit, FundingEventSummaryItemV1DataEventTypeChargeReversal, FundingEventSummaryItemV1DataEventTypePayoutReturn, FundingEventSummaryItemV1DataEventTypePayoutWithdrawal:
-		return true
-	}
-	return false
+// Returns the unmodified JSON received from the API
+func (r FundingEventSummaryItemV1DataStatusDetails) RawJSON() string { return r.JSON.raw }
+func (r *FundingEventSummaryItemV1DataStatusDetails) UnmarshalJSON(data []byte) error {
+	return apijson.UnmarshalRoot(data, r)
 }
 
 // Indicates the structure of the returned content.
@@ -227,17 +250,9 @@ const (
 	FundingEventSummaryItemV1ResponseTypeNone   FundingEventSummaryItemV1ResponseType = "none"
 )
 
-func (r FundingEventSummaryItemV1ResponseType) IsKnown() bool {
-	switch r {
-	case FundingEventSummaryItemV1ResponseTypeObject, FundingEventSummaryItemV1ResponseTypeArray, FundingEventSummaryItemV1ResponseTypeError, FundingEventSummaryItemV1ResponseTypeNone:
-		return true
-	}
-	return false
-}
-
 type FundingEventSummaryPagedV1 struct {
-	Data []FundingEventSummaryPagedV1Data `json:"data,required"`
-	Meta FundingEventSummaryPagedV1Meta   `json:"meta,required"`
+	Data []FundingEventSummaryPagedV1Data `json:"data" api:"required"`
+	Meta FundingEventSummaryPagedV1Meta   `json:"meta" api:"required"`
 	// Indicates the structure of the returned content.
 	//
 	//   - "object" means the `data` field contains a single JSON object.
@@ -245,168 +260,163 @@ type FundingEventSummaryPagedV1 struct {
 	//   - "error" means the `data` field contains an error object with details of the
 	//     issue.
 	//   - "none" means no data is returned.
-	ResponseType FundingEventSummaryPagedV1ResponseType `json:"response_type,required"`
-	JSON         fundingEventSummaryPagedV1JSON         `json:"-"`
+	//
+	// Any of "object", "array", "error", "none".
+	ResponseType FundingEventSummaryPagedV1ResponseType `json:"response_type" api:"required"`
+	// JSON contains metadata for fields, check presence with [respjson.Field.Valid].
+	JSON struct {
+		Data         respjson.Field
+		Meta         respjson.Field
+		ResponseType respjson.Field
+		ExtraFields  map[string]respjson.Field
+		raw          string
+	} `json:"-"`
 }
 
-// fundingEventSummaryPagedV1JSON contains the JSON metadata for the struct
-// [FundingEventSummaryPagedV1]
-type fundingEventSummaryPagedV1JSON struct {
-	Data         apijson.Field
-	Meta         apijson.Field
-	ResponseType apijson.Field
-	raw          string
-	ExtraFields  map[string]apijson.Field
-}
-
-func (r *FundingEventSummaryPagedV1) UnmarshalJSON(data []byte) (err error) {
+// Returns the unmodified JSON received from the API
+func (r FundingEventSummaryPagedV1) RawJSON() string { return r.JSON.raw }
+func (r *FundingEventSummaryPagedV1) UnmarshalJSON(data []byte) error {
 	return apijson.UnmarshalRoot(data, r)
-}
-
-func (r fundingEventSummaryPagedV1JSON) RawJSON() string {
-	return r.raw
 }
 
 type FundingEventSummaryPagedV1Data struct {
 	// Unique identifier for the funding event.
-	ID string `json:"id,required" format:"uuid"`
+	ID string `json:"id" api:"required" format:"uuid"`
 	// The amount of the funding event in cents.
-	Amount int64 `json:"amount,required"`
+	Amount int64 `json:"amount" api:"required"`
+	// Created at.
+	CreatedAt time.Time `json:"created_at" api:"required" format:"date-time"`
 	// Describes the direction of the funding event from the perspective of the
 	// `linked_bank_account`.
-	Direction FundingEventSummaryPagedV1DataDirection `json:"direction,required"`
+	//
+	// Any of "deposit", "withdrawal".
+	Direction string `json:"direction" api:"required"`
 	// The funding event types describes the direction and reason for the funding
 	// event.
-	EventType FundingEventSummaryPagedV1DataEventType `json:"event_type,required"`
+	//
+	// Any of "charge_deposit", "charge_reversal", "payout_return",
+	// "payout_withdrawal".
+	EventType string `json:"event_type" api:"required"`
 	// The number of payments associated with the funding event.
-	PaymentCount int64 `json:"payment_count,required"`
+	PaymentCount int64 `json:"payment_count" api:"required"`
+	// Trace Ids.
+	TraceIDs map[string]string `json:"trace_ids" api:"required"`
 	// Trace number.
-	TraceNumbers []string `json:"trace_numbers,required"`
+	TraceNumbers []string `json:"trace_numbers" api:"required"`
 	// The date on which the funding event occurred. For `deposits` and `returns`, this
 	// is the date the funds were credited to your bank account. For `withdrawals` and
 	// `reversals`, this is the date the funds were debited from your bank account.
-	TransferDate time.Time `json:"transfer_date,required" format:"date"`
+	TransferDate time.Time `json:"transfer_date" api:"required" format:"date"`
+	// Updated at.
+	UpdatedAt time.Time `json:"updated_at" api:"required" format:"date-time"`
+	// The current status of the `charge` or `payout`.
+	//
+	// Any of "created", "scheduled", "failed", "cancelled", "on_hold", "pending",
+	// "paid", "reversed", "validating".
+	Status        string                                      `json:"status"`
+	StatusDetails FundingEventSummaryPagedV1DataStatusDetails `json:"status_details"`
 	// The trace number of the funding event.
-	TraceNumber string                             `json:"trace_number,nullable"`
-	JSON        fundingEventSummaryPagedV1DataJSON `json:"-"`
+	TraceNumber string `json:"trace_number" api:"nullable"`
+	// JSON contains metadata for fields, check presence with [respjson.Field.Valid].
+	JSON struct {
+		ID            respjson.Field
+		Amount        respjson.Field
+		CreatedAt     respjson.Field
+		Direction     respjson.Field
+		EventType     respjson.Field
+		PaymentCount  respjson.Field
+		TraceIDs      respjson.Field
+		TraceNumbers  respjson.Field
+		TransferDate  respjson.Field
+		UpdatedAt     respjson.Field
+		Status        respjson.Field
+		StatusDetails respjson.Field
+		TraceNumber   respjson.Field
+		ExtraFields   map[string]respjson.Field
+		raw           string
+	} `json:"-"`
 }
 
-// fundingEventSummaryPagedV1DataJSON contains the JSON metadata for the struct
-// [FundingEventSummaryPagedV1Data]
-type fundingEventSummaryPagedV1DataJSON struct {
-	ID           apijson.Field
-	Amount       apijson.Field
-	Direction    apijson.Field
-	EventType    apijson.Field
-	PaymentCount apijson.Field
-	TraceNumbers apijson.Field
-	TransferDate apijson.Field
-	TraceNumber  apijson.Field
-	raw          string
-	ExtraFields  map[string]apijson.Field
-}
-
-func (r *FundingEventSummaryPagedV1Data) UnmarshalJSON(data []byte) (err error) {
+// Returns the unmodified JSON received from the API
+func (r FundingEventSummaryPagedV1Data) RawJSON() string { return r.JSON.raw }
+func (r *FundingEventSummaryPagedV1Data) UnmarshalJSON(data []byte) error {
 	return apijson.UnmarshalRoot(data, r)
 }
 
-func (r fundingEventSummaryPagedV1DataJSON) RawJSON() string {
-	return r.raw
+type FundingEventSummaryPagedV1DataStatusDetails struct {
+	// The time the status change occurred.
+	ChangedAt time.Time `json:"changed_at" api:"required" format:"date-time"`
+	// A human-readable description of the current status.
+	Message string `json:"message" api:"required"`
+	// Any of "insufficient_funds", "closed_bank_account", "invalid_bank_account",
+	// "invalid_routing", "disputed", "payment_stopped", "owner_deceased",
+	// "frozen_bank_account", "risk_review", "fraudulent", "duplicate_entry",
+	// "invalid_paykey", "payment_blocked", "amount_too_large", "too_many_attempts",
+	// "internal_system_error", "user_request", "ok", "other_network_return",
+	// "payout_refused", "cancel_request", "failed_verification", "require_review",
+	// "blocked_by_system", "watchtower_review", "validating", "auto_hold".
+	Reason string `json:"reason" api:"required"`
+	// Any of "watchtower", "bank_decline", "customer_dispute", "user_action",
+	// "system".
+	Source string `json:"source" api:"required"`
+	// The status code if applicable.
+	Code string `json:"code" api:"nullable"`
+	// JSON contains metadata for fields, check presence with [respjson.Field.Valid].
+	JSON struct {
+		ChangedAt   respjson.Field
+		Message     respjson.Field
+		Reason      respjson.Field
+		Source      respjson.Field
+		Code        respjson.Field
+		ExtraFields map[string]respjson.Field
+		raw         string
+	} `json:"-"`
 }
 
-// Describes the direction of the funding event from the perspective of the
-// `linked_bank_account`.
-type FundingEventSummaryPagedV1DataDirection string
-
-const (
-	FundingEventSummaryPagedV1DataDirectionDeposit    FundingEventSummaryPagedV1DataDirection = "deposit"
-	FundingEventSummaryPagedV1DataDirectionWithdrawal FundingEventSummaryPagedV1DataDirection = "withdrawal"
-)
-
-func (r FundingEventSummaryPagedV1DataDirection) IsKnown() bool {
-	switch r {
-	case FundingEventSummaryPagedV1DataDirectionDeposit, FundingEventSummaryPagedV1DataDirectionWithdrawal:
-		return true
-	}
-	return false
-}
-
-// The funding event types describes the direction and reason for the funding
-// event.
-type FundingEventSummaryPagedV1DataEventType string
-
-const (
-	FundingEventSummaryPagedV1DataEventTypeChargeDeposit    FundingEventSummaryPagedV1DataEventType = "charge_deposit"
-	FundingEventSummaryPagedV1DataEventTypeChargeReversal   FundingEventSummaryPagedV1DataEventType = "charge_reversal"
-	FundingEventSummaryPagedV1DataEventTypePayoutReturn     FundingEventSummaryPagedV1DataEventType = "payout_return"
-	FundingEventSummaryPagedV1DataEventTypePayoutWithdrawal FundingEventSummaryPagedV1DataEventType = "payout_withdrawal"
-)
-
-func (r FundingEventSummaryPagedV1DataEventType) IsKnown() bool {
-	switch r {
-	case FundingEventSummaryPagedV1DataEventTypeChargeDeposit, FundingEventSummaryPagedV1DataEventTypeChargeReversal, FundingEventSummaryPagedV1DataEventTypePayoutReturn, FundingEventSummaryPagedV1DataEventTypePayoutWithdrawal:
-		return true
-	}
-	return false
+// Returns the unmodified JSON received from the API
+func (r FundingEventSummaryPagedV1DataStatusDetails) RawJSON() string { return r.JSON.raw }
+func (r *FundingEventSummaryPagedV1DataStatusDetails) UnmarshalJSON(data []byte) error {
+	return apijson.UnmarshalRoot(data, r)
 }
 
 type FundingEventSummaryPagedV1Meta struct {
 	// Unique identifier for this API request, useful for troubleshooting.
-	APIRequestID string `json:"api_request_id,required" format:"uuid"`
+	APIRequestID string `json:"api_request_id" api:"required" format:"uuid"`
 	// Timestamp for this API request, useful for troubleshooting.
-	APIRequestTimestamp time.Time `json:"api_request_timestamp,required" format:"date-time"`
+	APIRequestTimestamp time.Time `json:"api_request_timestamp" api:"required" format:"date-time"`
 	// Maximum allowed page size for this endpoint.
-	MaxPageSize int64 `json:"max_page_size,required"`
+	MaxPageSize int64 `json:"max_page_size" api:"required"`
 	// Page number for paginated results.
-	PageNumber int64 `json:"page_number,required"`
+	PageNumber int64 `json:"page_number" api:"required"`
 	// Number of items per page in this response.
-	PageSize int64 `json:"page_size,required"`
+	PageSize int64 `json:"page_size" api:"required"`
 	// The field that the results were sorted by.
-	SortBy     string                                  `json:"sort_by,required"`
-	SortOrder  FundingEventSummaryPagedV1MetaSortOrder `json:"sort_order,required"`
-	TotalItems int64                                   `json:"total_items,required"`
+	SortBy string `json:"sort_by" api:"required"`
+	// Any of "asc", "desc".
+	SortOrder  string `json:"sort_order" api:"required"`
+	TotalItems int64  `json:"total_items" api:"required"`
 	// The number of pages available.
-	TotalPages int64                              `json:"total_pages,required"`
-	JSON       fundingEventSummaryPagedV1MetaJSON `json:"-"`
+	TotalPages int64 `json:"total_pages" api:"required"`
+	// JSON contains metadata for fields, check presence with [respjson.Field.Valid].
+	JSON struct {
+		APIRequestID        respjson.Field
+		APIRequestTimestamp respjson.Field
+		MaxPageSize         respjson.Field
+		PageNumber          respjson.Field
+		PageSize            respjson.Field
+		SortBy              respjson.Field
+		SortOrder           respjson.Field
+		TotalItems          respjson.Field
+		TotalPages          respjson.Field
+		ExtraFields         map[string]respjson.Field
+		raw                 string
+	} `json:"-"`
 }
 
-// fundingEventSummaryPagedV1MetaJSON contains the JSON metadata for the struct
-// [FundingEventSummaryPagedV1Meta]
-type fundingEventSummaryPagedV1MetaJSON struct {
-	APIRequestID        apijson.Field
-	APIRequestTimestamp apijson.Field
-	MaxPageSize         apijson.Field
-	PageNumber          apijson.Field
-	PageSize            apijson.Field
-	SortBy              apijson.Field
-	SortOrder           apijson.Field
-	TotalItems          apijson.Field
-	TotalPages          apijson.Field
-	raw                 string
-	ExtraFields         map[string]apijson.Field
-}
-
-func (r *FundingEventSummaryPagedV1Meta) UnmarshalJSON(data []byte) (err error) {
+// Returns the unmodified JSON received from the API
+func (r FundingEventSummaryPagedV1Meta) RawJSON() string { return r.JSON.raw }
+func (r *FundingEventSummaryPagedV1Meta) UnmarshalJSON(data []byte) error {
 	return apijson.UnmarshalRoot(data, r)
-}
-
-func (r fundingEventSummaryPagedV1MetaJSON) RawJSON() string {
-	return r.raw
-}
-
-type FundingEventSummaryPagedV1MetaSortOrder string
-
-const (
-	FundingEventSummaryPagedV1MetaSortOrderAsc  FundingEventSummaryPagedV1MetaSortOrder = "asc"
-	FundingEventSummaryPagedV1MetaSortOrderDesc FundingEventSummaryPagedV1MetaSortOrder = "desc"
-)
-
-func (r FundingEventSummaryPagedV1MetaSortOrder) IsKnown() bool {
-	switch r {
-	case FundingEventSummaryPagedV1MetaSortOrderAsc, FundingEventSummaryPagedV1MetaSortOrderDesc:
-		return true
-	}
-	return false
 }
 
 // Indicates the structure of the returned content.
@@ -425,42 +435,68 @@ const (
 	FundingEventSummaryPagedV1ResponseTypeNone   FundingEventSummaryPagedV1ResponseType = "none"
 )
 
-func (r FundingEventSummaryPagedV1ResponseType) IsKnown() bool {
-	switch r {
-	case FundingEventSummaryPagedV1ResponseTypeObject, FundingEventSummaryPagedV1ResponseTypeArray, FundingEventSummaryPagedV1ResponseTypeError, FundingEventSummaryPagedV1ResponseTypeNone:
-		return true
-	}
-	return false
-}
-
 type FundingEventListParams struct {
 	// The start date of the range to filter by using the `YYYY-MM-DD` format.
-	CreatedFrom param.Field[time.Time] `query:"created_from" format:"date"`
+	CreatedFrom param.Opt[time.Time] `query:"created_from,omitzero" format:"date" json:"-"`
 	// The end date of the range to filter by using the `YYYY-MM-DD` format.
-	CreatedTo param.Field[time.Time] `query:"created_to" format:"date"`
+	CreatedTo param.Opt[time.Time] `query:"created_to,omitzero" format:"date" json:"-"`
+	// Search text.
+	SearchText param.Opt[string] `query:"search_text,omitzero" json:"-"`
+	// Trace Id.
+	TraceID param.Opt[string] `query:"trace_id,omitzero" json:"-"`
+	// Trace number.
+	TraceNumber param.Opt[string] `query:"trace_number,omitzero" json:"-"`
+	// Results page number. Starts at page 1.
+	PageNumber param.Opt[int64] `query:"page_number,omitzero" json:"-"`
+	// Results page size. Max value: 1000
+	PageSize          param.Opt[int64]  `query:"page_size,omitzero" json:"-"`
+	CorrelationID     param.Opt[string] `header:"Correlation-Id,omitzero" json:"-"`
+	RequestID         param.Opt[string] `header:"Request-Id,omitzero" json:"-"`
+	StraddleAccountID param.Opt[string] `header:"Straddle-Account-Id,omitzero" format:"uuid" json:"-"`
+	// Funding Event status.
+	//
+	// Any of "created", "scheduled", "failed", "cancelled", "on_hold", "pending",
+	// "paid", "reversed", "validating".
+	Status []string `query:"status,omitzero" json:"-"`
+	// Reason for latest payment status change.
+	//
+	// Any of "insufficient_funds", "closed_bank_account", "invalid_bank_account",
+	// "invalid_routing", "disputed", "payment_stopped", "owner_deceased",
+	// "frozen_bank_account", "risk_review", "fraudulent", "duplicate_entry",
+	// "invalid_paykey", "payment_blocked", "amount_too_large", "too_many_attempts",
+	// "internal_system_error", "user_request", "ok", "other_network_return",
+	// "payout_refused", "cancel_request", "failed_verification", "require_review",
+	// "blocked_by_system", "watchtower_review", "validating", "auto_hold".
+	StatusReason []string `query:"status_reason,omitzero" json:"-"`
+	// Source of latest payment status change.
+	//
+	// Any of "watchtower", "bank_decline", "customer_dispute", "user_action",
+	// "system".
+	StatusSource []string `query:"status_source,omitzero" json:"-"`
 	// Describes the direction of the funding event from the perspective of the
 	// `linked_bank_account`.
-	Direction param.Field[FundingEventListParamsDirection] `query:"direction"`
+	//
+	// Any of "deposit", "withdrawal".
+	Direction FundingEventListParamsDirection `query:"direction,omitzero" json:"-"`
 	// The funding event types describes the direction and reason for the funding
 	// event.
-	EventType param.Field[FundingEventListParamsEventType] `query:"event_type"`
-	// Results page number. Starts at page 1.
-	PageNumber param.Field[int64] `query:"page_number"`
-	// Results page size. Max value: 1000
-	PageSize param.Field[int64] `query:"page_size"`
+	//
+	// Any of "charge_deposit", "charge_reversal", "payout_return",
+	// "payout_withdrawal".
+	EventType FundingEventListParamsEventType `query:"event_type,omitzero" json:"-"`
 	// The field to sort the results by.
-	SortBy param.Field[FundingEventListParamsSortBy] `query:"sort_by"`
+	//
+	// Any of "transfer_date", "id", "amount".
+	SortBy FundingEventListParamsSortBy `query:"sort_by,omitzero" json:"-"`
 	// The order in which to sort the results.
-	SortOrder param.Field[FundingEventListParamsSortOrder] `query:"sort_order"`
-	// Trace number.
-	TraceNumber       param.Field[string] `query:"trace_number"`
-	CorrelationID     param.Field[string] `header:"Correlation-Id"`
-	RequestID         param.Field[string] `header:"Request-Id"`
-	StraddleAccountID param.Field[string] `header:"Straddle-Account-Id" format:"uuid"`
+	//
+	// Any of "asc", "desc".
+	SortOrder FundingEventListParamsSortOrder `query:"sort_order,omitzero" json:"-"`
+	paramObj
 }
 
 // URLQuery serializes [FundingEventListParams]'s query parameters as `url.Values`.
-func (r FundingEventListParams) URLQuery() (v url.Values) {
+func (r FundingEventListParams) URLQuery() (v url.Values, err error) {
 	return apiquery.MarshalWithSettings(r, apiquery.QuerySettings{
 		ArrayFormat:  apiquery.ArrayQueryFormatComma,
 		NestedFormat: apiquery.NestedQueryFormatBrackets,
@@ -476,14 +512,6 @@ const (
 	FundingEventListParamsDirectionWithdrawal FundingEventListParamsDirection = "withdrawal"
 )
 
-func (r FundingEventListParamsDirection) IsKnown() bool {
-	switch r {
-	case FundingEventListParamsDirectionDeposit, FundingEventListParamsDirectionWithdrawal:
-		return true
-	}
-	return false
-}
-
 // The funding event types describes the direction and reason for the funding
 // event.
 type FundingEventListParamsEventType string
@@ -495,14 +523,6 @@ const (
 	FundingEventListParamsEventTypePayoutWithdrawal FundingEventListParamsEventType = "payout_withdrawal"
 )
 
-func (r FundingEventListParamsEventType) IsKnown() bool {
-	switch r {
-	case FundingEventListParamsEventTypeChargeDeposit, FundingEventListParamsEventTypeChargeReversal, FundingEventListParamsEventTypePayoutReturn, FundingEventListParamsEventTypePayoutWithdrawal:
-		return true
-	}
-	return false
-}
-
 // The field to sort the results by.
 type FundingEventListParamsSortBy string
 
@@ -512,14 +532,6 @@ const (
 	FundingEventListParamsSortByAmount       FundingEventListParamsSortBy = "amount"
 )
 
-func (r FundingEventListParamsSortBy) IsKnown() bool {
-	switch r {
-	case FundingEventListParamsSortByTransferDate, FundingEventListParamsSortByID, FundingEventListParamsSortByAmount:
-		return true
-	}
-	return false
-}
-
 // The order in which to sort the results.
 type FundingEventListParamsSortOrder string
 
@@ -528,16 +540,9 @@ const (
 	FundingEventListParamsSortOrderDesc FundingEventListParamsSortOrder = "desc"
 )
 
-func (r FundingEventListParamsSortOrder) IsKnown() bool {
-	switch r {
-	case FundingEventListParamsSortOrderAsc, FundingEventListParamsSortOrderDesc:
-		return true
-	}
-	return false
-}
-
 type FundingEventGetParams struct {
-	CorrelationID     param.Field[string] `header:"Correlation-Id"`
-	RequestID         param.Field[string] `header:"Request-Id"`
-	StraddleAccountID param.Field[string] `header:"Straddle-Account-Id" format:"uuid"`
+	CorrelationID     param.Opt[string] `header:"Correlation-Id,omitzero" json:"-"`
+	RequestID         param.Opt[string] `header:"Request-Id,omitzero" json:"-"`
+	StraddleAccountID param.Opt[string] `header:"Straddle-Account-Id,omitzero" format:"uuid" json:"-"`
+	paramObj
 }

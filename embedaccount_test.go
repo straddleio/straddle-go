@@ -27,42 +27,43 @@ func TestEmbedAccountNewWithOptionalParams(t *testing.T) {
 		option.WithAPIKey("My API Key"),
 	)
 	_, err := client.Embed.Accounts.New(context.TODO(), straddle.EmbedAccountNewParams{
-		AccessLevel: straddle.F(straddle.EmbedAccountNewParamsAccessLevelStandard),
-		AccountType: straddle.F(straddle.EmbedAccountNewParamsAccountTypeBusiness),
-		BusinessProfile: straddle.F(straddle.BusinessProfileV1Param{
-			Name:    straddle.F("name"),
-			Website: straddle.F("https://example.com"),
-			Address: straddle.F(straddle.AddressV1Param{
-				City:       straddle.F("city"),
-				Country:    straddle.F("country"),
-				Line1:      straddle.F("line1"),
-				Line2:      straddle.F("line2"),
-				PostalCode: straddle.F("21029-1360"),
-				State:      straddle.F("SE"),
-			}),
-			Description: straddle.F("description"),
-			Industry: straddle.F(straddle.IndustryV1Param{
-				Category: straddle.F("category"),
-				Mcc:      straddle.F("mcc"),
-				Sector:   straddle.F("sector"),
-			}),
-			LegalName: straddle.F("legal_name"),
-			Phone:     straddle.F("+46991022"),
-			SupportChannels: straddle.F(straddle.SupportChannelsV1Param{
-				Email: straddle.F("dev@stainless.com"),
-				Phone: straddle.F("+46991022"),
-				URL:   straddle.F("https://example.com"),
-			}),
-			TaxID:   straddle.F("210297980"),
-			UseCase: straddle.F("use_case"),
-		}),
-		OrganizationID: straddle.F("182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e"),
-		ExternalID:     straddle.F("external_id"),
-		Metadata: straddle.F(map[string]string{
+		AccessLevel: straddle.EmbedAccountNewParamsAccessLevelStandard,
+		AccountType: straddle.EmbedAccountNewParamsAccountTypeBusiness,
+		BusinessProfile: straddle.BusinessProfileV1Param{
+			Name:    "name",
+			Website: "https://example.com",
+			Address: straddle.AddressV1Param{
+				City:       straddle.String("city"),
+				Line1:      straddle.String("line1"),
+				PostalCode: straddle.String("21029-1360"),
+				State:      straddle.String("SE"),
+				Country:    straddle.String("country"),
+				Line2:      straddle.String("line2"),
+			},
+			Description: straddle.String("description"),
+			Industry: straddle.IndustryV1Param{
+				Category: straddle.String("category"),
+				Mcc:      straddle.String("mcc"),
+				Sector:   straddle.String("sector"),
+			},
+			LegalName: straddle.String("legal_name"),
+			Phone:     straddle.String("+46991022"),
+			SupportChannels: straddle.SupportChannelsV1Param{
+				Email: straddle.String("dev@stainless.com"),
+				Phone: straddle.String("+46991022"),
+				URL:   straddle.String("https://example.com"),
+			},
+			TaxID:   straddle.String("210297980"),
+			UseCase: straddle.String("use_case"),
+		},
+		OrganizationID: "182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e",
+		ExternalID:     straddle.String("external_id"),
+		Metadata: map[string]string{
 			"foo": "string",
-		}),
-		CorrelationID: straddle.F("correlation-id"),
-		RequestID:     straddle.F("request-id"),
+		},
+		CorrelationID:  straddle.String("correlation-id"),
+		IdempotencyKey: straddle.String("xxxxxxxxxx"),
+		RequestID:      straddle.String("request-id"),
 	})
 	if err != nil {
 		var apierr *straddle.Error
@@ -89,39 +90,40 @@ func TestEmbedAccountUpdateWithOptionalParams(t *testing.T) {
 		context.TODO(),
 		"182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e",
 		straddle.EmbedAccountUpdateParams{
-			BusinessProfile: straddle.F(straddle.BusinessProfileV1Param{
-				Name:    straddle.F("name"),
-				Website: straddle.F("https://example.com"),
-				Address: straddle.F(straddle.AddressV1Param{
-					City:       straddle.F("city"),
-					Country:    straddle.F("country"),
-					Line1:      straddle.F("line1"),
-					Line2:      straddle.F("line2"),
-					PostalCode: straddle.F("21029-1360"),
-					State:      straddle.F("SE"),
-				}),
-				Description: straddle.F("description"),
-				Industry: straddle.F(straddle.IndustryV1Param{
-					Category: straddle.F("category"),
-					Mcc:      straddle.F("mcc"),
-					Sector:   straddle.F("sector"),
-				}),
-				LegalName: straddle.F("legal_name"),
-				Phone:     straddle.F("+46991022"),
-				SupportChannels: straddle.F(straddle.SupportChannelsV1Param{
-					Email: straddle.F("dev@stainless.com"),
-					Phone: straddle.F("+46991022"),
-					URL:   straddle.F("https://example.com"),
-				}),
-				TaxID:   straddle.F("210297980"),
-				UseCase: straddle.F("use_case"),
-			}),
-			ExternalID: straddle.F("external_id"),
-			Metadata: straddle.F(map[string]string{
+			BusinessProfile: straddle.BusinessProfileV1Param{
+				Name:    "name",
+				Website: "https://example.com",
+				Address: straddle.AddressV1Param{
+					City:       straddle.String("city"),
+					Line1:      straddle.String("line1"),
+					PostalCode: straddle.String("21029-1360"),
+					State:      straddle.String("SE"),
+					Country:    straddle.String("country"),
+					Line2:      straddle.String("line2"),
+				},
+				Description: straddle.String("description"),
+				Industry: straddle.IndustryV1Param{
+					Category: straddle.String("category"),
+					Mcc:      straddle.String("mcc"),
+					Sector:   straddle.String("sector"),
+				},
+				LegalName: straddle.String("legal_name"),
+				Phone:     straddle.String("+46991022"),
+				SupportChannels: straddle.SupportChannelsV1Param{
+					Email: straddle.String("dev@stainless.com"),
+					Phone: straddle.String("+46991022"),
+					URL:   straddle.String("https://example.com"),
+				},
+				TaxID:   straddle.String("210297980"),
+				UseCase: straddle.String("use_case"),
+			},
+			ExternalID: straddle.String("external_id"),
+			Metadata: map[string]string{
 				"foo": "string",
-			}),
-			CorrelationID: straddle.F("correlation-id"),
-			RequestID:     straddle.F("request-id"),
+			},
+			CorrelationID:  straddle.String("correlation-id"),
+			IdempotencyKey: straddle.String("xxxxxxxxxx"),
+			RequestID:      straddle.String("request-id"),
 		},
 	)
 	if err != nil {
@@ -146,13 +148,15 @@ func TestEmbedAccountListWithOptionalParams(t *testing.T) {
 		option.WithAPIKey("My API Key"),
 	)
 	_, err := client.Embed.Accounts.List(context.TODO(), straddle.EmbedAccountListParams{
-		PageNumber:    straddle.F(int64(0)),
-		PageSize:      straddle.F(int64(0)),
-		SearchText:    straddle.F("search_text"),
-		SortBy:        straddle.F("sort_by"),
-		SortOrder:     straddle.F(straddle.EmbedAccountListParamsSortOrderAsc),
-		CorrelationID: straddle.F("correlation-id"),
-		RequestID:     straddle.F("request-id"),
+		PageNumber:    straddle.Int(0),
+		PageSize:      straddle.Int(0),
+		SearchText:    straddle.String("search_text"),
+		SortBy:        straddle.String("sort_by"),
+		SortOrder:     straddle.EmbedAccountListParamsSortOrderAsc,
+		Status:        straddle.EmbedAccountListParamsStatusCreated,
+		Type:          straddle.EmbedAccountListParamsTypeBusiness,
+		CorrelationID: straddle.String("correlation-id"),
+		RequestID:     straddle.String("request-id"),
 	})
 	if err != nil {
 		var apierr *straddle.Error
@@ -179,8 +183,8 @@ func TestEmbedAccountGetWithOptionalParams(t *testing.T) {
 		context.TODO(),
 		"182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e",
 		straddle.EmbedAccountGetParams{
-			CorrelationID: straddle.F("correlation-id"),
-			RequestID:     straddle.F("request-id"),
+			CorrelationID: straddle.String("correlation-id"),
+			RequestID:     straddle.String("request-id"),
 		},
 	)
 	if err != nil {
@@ -208,15 +212,16 @@ func TestEmbedAccountOnboardWithOptionalParams(t *testing.T) {
 		context.TODO(),
 		"182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e",
 		straddle.EmbedAccountOnboardParams{
-			TermsOfService: straddle.F(straddle.TermsOfServiceV1Param{
-				AcceptedDate:      straddle.F(time.Now()),
-				AgreementType:     straddle.F(straddle.TermsOfServiceV1AgreementTypeEmbedded),
-				AgreementURL:      straddle.F("agreement_url"),
-				AcceptedIP:        straddle.F("accepted_ip"),
-				AcceptedUserAgent: straddle.F("accepted_user_agent"),
-			}),
-			CorrelationID: straddle.F("correlation-id"),
-			RequestID:     straddle.F("request-id"),
+			TermsOfService: straddle.TermsOfServiceV1Param{
+				AcceptedDate:      time.Now(),
+				AgreementType:     straddle.TermsOfServiceV1AgreementTypeEmbedded,
+				AgreementURL:      straddle.String("agreement_url"),
+				AcceptedIP:        straddle.String("accepted_ip"),
+				AcceptedUserAgent: straddle.String("accepted_user_agent"),
+			},
+			CorrelationID:  straddle.String("correlation-id"),
+			IdempotencyKey: straddle.String("xxxxxxxxxx"),
+			RequestID:      straddle.String("request-id"),
 		},
 	)
 	if err != nil {
@@ -244,9 +249,10 @@ func TestEmbedAccountSimulateWithOptionalParams(t *testing.T) {
 		context.TODO(),
 		"182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e",
 		straddle.EmbedAccountSimulateParams{
-			FinalStatus:   straddle.F(straddle.EmbedAccountSimulateParamsFinalStatusOnboarding),
-			CorrelationID: straddle.F("correlation-id"),
-			RequestID:     straddle.F("request-id"),
+			FinalStatus:    straddle.EmbedAccountSimulateParamsFinalStatusOnboarding,
+			CorrelationID:  straddle.String("correlation-id"),
+			IdempotencyKey: straddle.String("xxxxxxxxxx"),
+			RequestID:      straddle.String("request-id"),
 		},
 	)
 	if err != nil {

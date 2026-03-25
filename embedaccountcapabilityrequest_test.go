@@ -29,34 +29,35 @@ func TestEmbedAccountCapabilityRequestNewWithOptionalParams(t *testing.T) {
 		context.TODO(),
 		"182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e",
 		straddle.EmbedAccountCapabilityRequestNewParams{
-			Businesses: straddle.F(straddle.EmbedAccountCapabilityRequestNewParamsBusinesses{
-				Enable: straddle.F(true),
-			}),
-			Charges: straddle.F(straddle.EmbedAccountCapabilityRequestNewParamsCharges{
-				DailyAmount:   straddle.F(0.000000),
-				Enable:        straddle.F(true),
-				MaxAmount:     straddle.F(0.000000),
-				MonthlyAmount: straddle.F(0.000000),
-				MonthlyCount:  straddle.F(int64(0)),
-			}),
-			Individuals: straddle.F(straddle.EmbedAccountCapabilityRequestNewParamsIndividuals{
-				Enable: straddle.F(true),
-			}),
-			Internet: straddle.F(straddle.EmbedAccountCapabilityRequestNewParamsInternet{
-				Enable: straddle.F(true),
-			}),
-			Payouts: straddle.F(straddle.EmbedAccountCapabilityRequestNewParamsPayouts{
-				DailyAmount:   straddle.F(0.000000),
-				Enable:        straddle.F(true),
-				MaxAmount:     straddle.F(0.000000),
-				MonthlyAmount: straddle.F(0.000000),
-				MonthlyCount:  straddle.F(int64(0)),
-			}),
-			SignedAgreement: straddle.F(straddle.EmbedAccountCapabilityRequestNewParamsSignedAgreement{
-				Enable: straddle.F(true),
-			}),
-			CorrelationID: straddle.F("correlation-id"),
-			RequestID:     straddle.F("request-id"),
+			Businesses: straddle.EmbedAccountCapabilityRequestNewParamsBusinesses{
+				Enable: true,
+			},
+			Charges: straddle.EmbedAccountCapabilityRequestNewParamsCharges{
+				DailyAmount:   0,
+				Enable:        true,
+				MaxAmount:     0,
+				MonthlyAmount: 0,
+				MonthlyCount:  0,
+			},
+			Individuals: straddle.EmbedAccountCapabilityRequestNewParamsIndividuals{
+				Enable: true,
+			},
+			Internet: straddle.EmbedAccountCapabilityRequestNewParamsInternet{
+				Enable: true,
+			},
+			Payouts: straddle.EmbedAccountCapabilityRequestNewParamsPayouts{
+				DailyAmount:   0,
+				Enable:        true,
+				MaxAmount:     0,
+				MonthlyAmount: 0,
+				MonthlyCount:  0,
+			},
+			SignedAgreement: straddle.EmbedAccountCapabilityRequestNewParamsSignedAgreement{
+				Enable: true,
+			},
+			CorrelationID:  straddle.String("correlation-id"),
+			IdempotencyKey: straddle.String("xxxxxxxxxx"),
+			RequestID:      straddle.String("request-id"),
 		},
 	)
 	if err != nil {
@@ -84,15 +85,15 @@ func TestEmbedAccountCapabilityRequestListWithOptionalParams(t *testing.T) {
 		context.TODO(),
 		"182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e",
 		straddle.EmbedAccountCapabilityRequestListParams{
-			Category:      straddle.F(straddle.EmbedAccountCapabilityRequestListParamsCategoryPaymentType),
-			PageNumber:    straddle.F(int64(0)),
-			PageSize:      straddle.F(int64(0)),
-			SortBy:        straddle.F("sort_by"),
-			SortOrder:     straddle.F(straddle.EmbedAccountCapabilityRequestListParamsSortOrderAsc),
-			Status:        straddle.F(straddle.EmbedAccountCapabilityRequestListParamsStatusActive),
-			Type:          straddle.F(straddle.EmbedAccountCapabilityRequestListParamsTypeCharges),
-			CorrelationID: straddle.F("correlation-id"),
-			RequestID:     straddle.F("request-id"),
+			Category:      straddle.EmbedAccountCapabilityRequestListParamsCategoryPaymentType,
+			PageNumber:    straddle.Int(0),
+			PageSize:      straddle.Int(0),
+			SortBy:        straddle.String("sort_by"),
+			SortOrder:     straddle.EmbedAccountCapabilityRequestListParamsSortOrderAsc,
+			Status:        straddle.EmbedAccountCapabilityRequestListParamsStatusActive,
+			Type:          straddle.EmbedAccountCapabilityRequestListParamsTypeCharges,
+			CorrelationID: straddle.String("correlation-id"),
+			RequestID:     straddle.String("request-id"),
 		},
 	)
 	if err != nil {

@@ -4,23 +4,31 @@ package straddle
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
-	"reflect"
+	"slices"
 	"time"
 
 	"github.com/stainless-sdks/straddle-go/internal/apijson"
 	"github.com/stainless-sdks/straddle-go/internal/apiquery"
-	"github.com/stainless-sdks/straddle-go/internal/param"
 	"github.com/stainless-sdks/straddle-go/internal/requestconfig"
 	"github.com/stainless-sdks/straddle-go/option"
 	"github.com/stainless-sdks/straddle-go/packages/pagination"
+	"github.com/stainless-sdks/straddle-go/packages/param"
+	"github.com/stainless-sdks/straddle-go/packages/respjson"
 	"github.com/stainless-sdks/straddle-go/shared"
-	"github.com/tidwall/gjson"
 )
 
+// Customers represent the end users who send or receive payments through your
+// integration. Each customer undergoes automatic identity verification and fraud
+// screening upon creation. Use customers to track payment history, manage bank
+// account connections, and maintain a secure record of all transactions associated
+// with a user. Customers can be either individuals or businesses with appropriate
+// compliance checks for each type.
+//
 // CustomerService contains methods and other services that help with interacting
 // with the straddle API.
 //
@@ -28,16 +36,22 @@ import (
 // automatically. You should not instantiate this service directly, and instead use
 // the [NewCustomerService] method instead.
 type CustomerService struct {
-	Options []option.RequestOption
-	Review  *CustomerReviewService
+	options []option.RequestOption
+	// Customers represent the end users who send or receive payments through your
+	// integration. Each customer undergoes automatic identity verification and fraud
+	// screening upon creation. Use customers to track payment history, manage bank
+	// account connections, and maintain a secure record of all transactions associated
+	// with a user. Customers can be either individuals or businesses with appropriate
+	// compliance checks for each type.
+	Review CustomerReviewService
 }
 
 // NewCustomerService generates a new service that applies the given options to
 // each request. These options are applied after the parent client's options (if
 // there is one), and before any request-specific options.
-func NewCustomerService(opts ...option.RequestOption) (r *CustomerService) {
-	r = &CustomerService{}
-	r.Options = opts
+func NewCustomerService(opts ...option.RequestOption) (r CustomerService) {
+	r = CustomerService{}
+	r.options = opts
 	r.Review = NewCustomerReviewService(opts...)
 	return
 }
@@ -46,41 +60,47 @@ func NewCustomerService(opts ...option.RequestOption) (r *CustomerService) {
 // risk assessment scores. This endpoint allows you to create a customer profile
 // and associate it with paykeys and payments.
 func (r *CustomerService) New(ctx context.Context, params CustomerNewParams, opts ...option.RequestOption) (res *CustomerV1, err error) {
-	if params.CorrelationID.Present {
-		opts = append(opts, option.WithHeader("Correlation-Id", fmt.Sprintf("%s", params.CorrelationID)))
+	if !param.IsOmitted(params.CorrelationID) {
+		opts = append(opts, option.WithHeader("Correlation-Id", fmt.Sprintf("%v", params.CorrelationID.Value)))
 	}
-	if params.RequestID.Present {
-		opts = append(opts, option.WithHeader("Request-Id", fmt.Sprintf("%s", params.RequestID)))
+	if !param.IsOmitted(params.IdempotencyKey) {
+		opts = append(opts, option.WithHeader("Idempotency-Key", fmt.Sprintf("%v", params.IdempotencyKey.Value)))
 	}
-	if params.StraddleAccountID.Present {
-		opts = append(opts, option.WithHeader("Straddle-Account-Id", fmt.Sprintf("%s", params.StraddleAccountID)))
+	if !param.IsOmitted(params.RequestID) {
+		opts = append(opts, option.WithHeader("Request-Id", fmt.Sprintf("%v", params.RequestID.Value)))
 	}
-	opts = append(r.Options[:], opts...)
+	if !param.IsOmitted(params.StraddleAccountID) {
+		opts = append(opts, option.WithHeader("Straddle-Account-Id", fmt.Sprintf("%v", params.StraddleAccountID.Value)))
+	}
+	opts = slices.Concat(r.options, opts)
 	path := "v1/customers"
 	err = requestconfig.ExecuteNewRequest(ctx, http.MethodPost, path, params, &res, opts...)
-	return
+	return res, err
 }
 
 // Updates an existing customer's information. This endpoint allows you to modify
 // the customer's contact details, PII, and metadata.
 func (r *CustomerService) Update(ctx context.Context, id string, params CustomerUpdateParams, opts ...option.RequestOption) (res *CustomerV1, err error) {
-	if params.CorrelationID.Present {
-		opts = append(opts, option.WithHeader("Correlation-Id", fmt.Sprintf("%s", params.CorrelationID)))
+	if !param.IsOmitted(params.CorrelationID) {
+		opts = append(opts, option.WithHeader("Correlation-Id", fmt.Sprintf("%v", params.CorrelationID.Value)))
 	}
-	if params.RequestID.Present {
-		opts = append(opts, option.WithHeader("Request-Id", fmt.Sprintf("%s", params.RequestID)))
+	if !param.IsOmitted(params.IdempotencyKey) {
+		opts = append(opts, option.WithHeader("Idempotency-Key", fmt.Sprintf("%v", params.IdempotencyKey.Value)))
 	}
-	if params.StraddleAccountID.Present {
-		opts = append(opts, option.WithHeader("Straddle-Account-Id", fmt.Sprintf("%s", params.StraddleAccountID)))
+	if !param.IsOmitted(params.RequestID) {
+		opts = append(opts, option.WithHeader("Request-Id", fmt.Sprintf("%v", params.RequestID.Value)))
 	}
-	opts = append(r.Options[:], opts...)
+	if !param.IsOmitted(params.StraddleAccountID) {
+		opts = append(opts, option.WithHeader("Straddle-Account-Id", fmt.Sprintf("%v", params.StraddleAccountID.Value)))
+	}
+	opts = slices.Concat(r.options, opts)
 	if id == "" {
 		err = errors.New("missing required id parameter")
-		return
+		return nil, err
 	}
 	path := fmt.Sprintf("v1/customers/%s", id)
 	err = requestconfig.ExecuteNewRequest(ctx, http.MethodPut, path, params, &res, opts...)
-	return
+	return res, err
 }
 
 // Lists or searches customers connected to your account. All supported query
@@ -89,16 +109,16 @@ func (r *CustomerService) Update(ctx context.Context, id string, params Customer
 // filtering options.
 func (r *CustomerService) List(ctx context.Context, params CustomerListParams, opts ...option.RequestOption) (res *pagination.PageNumberSchema[CustomerSummaryPagedV1Data], err error) {
 	var raw *http.Response
-	if params.CorrelationID.Present {
-		opts = append(opts, option.WithHeader("Correlation-Id", fmt.Sprintf("%s", params.CorrelationID)))
+	if !param.IsOmitted(params.CorrelationID) {
+		opts = append(opts, option.WithHeader("Correlation-Id", fmt.Sprintf("%v", params.CorrelationID.Value)))
 	}
-	if params.RequestID.Present {
-		opts = append(opts, option.WithHeader("Request-Id", fmt.Sprintf("%s", params.RequestID)))
+	if !param.IsOmitted(params.RequestID) {
+		opts = append(opts, option.WithHeader("Request-Id", fmt.Sprintf("%v", params.RequestID.Value)))
 	}
-	if params.StraddleAccountID.Present {
-		opts = append(opts, option.WithHeader("Straddle-Account-Id", fmt.Sprintf("%s", params.StraddleAccountID)))
+	if !param.IsOmitted(params.StraddleAccountID) {
+		opts = append(opts, option.WithHeader("Straddle-Account-Id", fmt.Sprintf("%v", params.StraddleAccountID.Value)))
 	}
-	opts = append(r.Options[:], opts...)
+	opts = slices.Concat(r.options, opts)
 	opts = append([]option.RequestOption{option.WithResponseInto(&raw)}, opts...)
 	path := "v1/customers"
 	cfg, err := requestconfig.NewRequestConfig(ctx, http.MethodGet, path, params, &res, opts...)
@@ -125,69 +145,49 @@ func (r *CustomerService) ListAutoPaging(ctx context.Context, params CustomerLis
 // undone and should only be used to satisfy regulatory requirements or for privacy
 // compliance.
 func (r *CustomerService) Delete(ctx context.Context, id string, body CustomerDeleteParams, opts ...option.RequestOption) (res *CustomerV1, err error) {
-	if body.CorrelationID.Present {
-		opts = append(opts, option.WithHeader("Correlation-Id", fmt.Sprintf("%s", body.CorrelationID)))
+	if !param.IsOmitted(body.CorrelationID) {
+		opts = append(opts, option.WithHeader("Correlation-Id", fmt.Sprintf("%v", body.CorrelationID.Value)))
 	}
-	if body.RequestID.Present {
-		opts = append(opts, option.WithHeader("Request-Id", fmt.Sprintf("%s", body.RequestID)))
+	if !param.IsOmitted(body.IdempotencyKey) {
+		opts = append(opts, option.WithHeader("Idempotency-Key", fmt.Sprintf("%v", body.IdempotencyKey.Value)))
 	}
-	if body.StraddleAccountID.Present {
-		opts = append(opts, option.WithHeader("Straddle-Account-Id", fmt.Sprintf("%s", body.StraddleAccountID)))
+	if !param.IsOmitted(body.RequestID) {
+		opts = append(opts, option.WithHeader("Request-Id", fmt.Sprintf("%v", body.RequestID.Value)))
 	}
-	opts = append(r.Options[:], opts...)
+	if !param.IsOmitted(body.StraddleAccountID) {
+		opts = append(opts, option.WithHeader("Straddle-Account-Id", fmt.Sprintf("%v", body.StraddleAccountID.Value)))
+	}
+	opts = slices.Concat(r.options, opts)
 	if id == "" {
 		err = errors.New("missing required id parameter")
-		return
+		return nil, err
 	}
 	path := fmt.Sprintf("v1/customers/%s", id)
 	err = requestconfig.ExecuteNewRequest(ctx, http.MethodDelete, path, nil, &res, opts...)
-	return
+	return res, err
 }
 
 // Retrieves the details of an existing customer. Supply the unique customer ID
 // that was returned from your 'create customer' request, and Straddle will return
 // the corresponding customer information.
 func (r *CustomerService) Get(ctx context.Context, id string, query CustomerGetParams, opts ...option.RequestOption) (res *CustomerV1, err error) {
-	if query.CorrelationID.Present {
-		opts = append(opts, option.WithHeader("Correlation-Id", fmt.Sprintf("%s", query.CorrelationID)))
+	if !param.IsOmitted(query.CorrelationID) {
+		opts = append(opts, option.WithHeader("Correlation-Id", fmt.Sprintf("%v", query.CorrelationID.Value)))
 	}
-	if query.RequestID.Present {
-		opts = append(opts, option.WithHeader("Request-Id", fmt.Sprintf("%s", query.RequestID)))
+	if !param.IsOmitted(query.RequestID) {
+		opts = append(opts, option.WithHeader("Request-Id", fmt.Sprintf("%v", query.RequestID.Value)))
 	}
-	if query.StraddleAccountID.Present {
-		opts = append(opts, option.WithHeader("Straddle-Account-Id", fmt.Sprintf("%s", query.StraddleAccountID)))
+	if !param.IsOmitted(query.StraddleAccountID) {
+		opts = append(opts, option.WithHeader("Straddle-Account-Id", fmt.Sprintf("%v", query.StraddleAccountID.Value)))
 	}
-	opts = append(r.Options[:], opts...)
+	opts = slices.Concat(r.options, opts)
 	if id == "" {
 		err = errors.New("missing required id parameter")
-		return
+		return nil, err
 	}
 	path := fmt.Sprintf("v1/customers/%s", id)
 	err = requestconfig.ExecuteNewRequest(ctx, http.MethodGet, path, nil, &res, opts...)
-	return
-}
-
-// Updates the decision of a customer's identity validation. This endpoint allows
-// you to modify the outcome of a customer decision and is useful for correcting or
-// updating the status of a customer's verification.
-func (r *CustomerService) RefreshReview(ctx context.Context, id string, body CustomerRefreshReviewParams, opts ...option.RequestOption) (res *CustomerV1, err error) {
-	if body.CorrelationID.Present {
-		opts = append(opts, option.WithHeader("Correlation-Id", fmt.Sprintf("%s", body.CorrelationID)))
-	}
-	if body.RequestID.Present {
-		opts = append(opts, option.WithHeader("Request-Id", fmt.Sprintf("%s", body.RequestID)))
-	}
-	if body.StraddleAccountID.Present {
-		opts = append(opts, option.WithHeader("Straddle-Account-Id", fmt.Sprintf("%s", body.StraddleAccountID)))
-	}
-	opts = append(r.Options[:], opts...)
-	if id == "" {
-		err = errors.New("missing required id parameter")
-		return
-	}
-	path := fmt.Sprintf("v1/customers/%s/refresh_review", id)
-	err = requestconfig.ExecuteNewRequest(ctx, http.MethodPut, path, nil, &res, opts...)
-	return
+	return res, err
 }
 
 // Retrieves the unmasked details, including PII, of an existing customer. Supply
@@ -196,83 +196,94 @@ func (r *CustomerService) RefreshReview(ctx context.Context, id string, body Cus
 // needs to be enabled by Straddle and should only be used when absolutely
 // necessary.
 func (r *CustomerService) Unmasked(ctx context.Context, id string, query CustomerUnmaskedParams, opts ...option.RequestOption) (res *CustomerUnmaskedV1, err error) {
-	if query.CorrelationID.Present {
-		opts = append(opts, option.WithHeader("Correlation-Id", fmt.Sprintf("%s", query.CorrelationID)))
+	if !param.IsOmitted(query.CorrelationID) {
+		opts = append(opts, option.WithHeader("Correlation-Id", fmt.Sprintf("%v", query.CorrelationID.Value)))
 	}
-	if query.RequestID.Present {
-		opts = append(opts, option.WithHeader("Request-Id", fmt.Sprintf("%s", query.RequestID)))
+	if !param.IsOmitted(query.RequestID) {
+		opts = append(opts, option.WithHeader("Request-Id", fmt.Sprintf("%v", query.RequestID.Value)))
 	}
-	if query.StraddleAccountID.Present {
-		opts = append(opts, option.WithHeader("Straddle-Account-Id", fmt.Sprintf("%s", query.StraddleAccountID)))
+	if !param.IsOmitted(query.StraddleAccountID) {
+		opts = append(opts, option.WithHeader("Straddle-Account-Id", fmt.Sprintf("%v", query.StraddleAccountID.Value)))
 	}
-	opts = append(r.Options[:], opts...)
+	opts = slices.Concat(r.options, opts)
 	if id == "" {
 		err = errors.New("missing required id parameter")
-		return
+		return nil, err
 	}
 	path := fmt.Sprintf("v1/customers/%s/unmasked", id)
 	err = requestconfig.ExecuteNewRequest(ctx, http.MethodGet, path, nil, &res, opts...)
-	return
+	return res, err
 }
 
 // An object containing the customer's address. This is optional, but if provided,
 // all required fields must be present.
 type CustomerAddressV1 struct {
 	// Primary address line (e.g., street, PO Box).
-	Address1 string `json:"address1,required"`
+	Address1 string `json:"address1" api:"required"`
 	// City, district, suburb, town, or village.
-	City string `json:"city,required"`
+	City string `json:"city" api:"required"`
 	// Two-letter state code.
-	State string `json:"state,required"`
+	State string `json:"state" api:"required"`
 	// Zip or postal code.
-	Zip string `json:"zip,required"`
+	Zip string `json:"zip" api:"required"`
 	// Secondary address line (e.g., apartment, suite, unit, or building).
-	Address2 string                `json:"address2,nullable"`
-	JSON     customerAddressV1JSON `json:"-"`
+	Address2 string `json:"address2" api:"nullable"`
+	// JSON contains metadata for fields, check presence with [respjson.Field.Valid].
+	JSON struct {
+		Address1    respjson.Field
+		City        respjson.Field
+		State       respjson.Field
+		Zip         respjson.Field
+		Address2    respjson.Field
+		ExtraFields map[string]respjson.Field
+		raw         string
+	} `json:"-"`
 }
 
-// customerAddressV1JSON contains the JSON metadata for the struct
-// [CustomerAddressV1]
-type customerAddressV1JSON struct {
-	Address1    apijson.Field
-	City        apijson.Field
-	State       apijson.Field
-	Zip         apijson.Field
-	Address2    apijson.Field
-	raw         string
-	ExtraFields map[string]apijson.Field
-}
-
-func (r *CustomerAddressV1) UnmarshalJSON(data []byte) (err error) {
+// Returns the unmodified JSON received from the API
+func (r CustomerAddressV1) RawJSON() string { return r.JSON.raw }
+func (r *CustomerAddressV1) UnmarshalJSON(data []byte) error {
 	return apijson.UnmarshalRoot(data, r)
 }
 
-func (r customerAddressV1JSON) RawJSON() string {
-	return r.raw
+// ToParam converts this CustomerAddressV1 to a CustomerAddressV1Param.
+//
+// Warning: the fields of the param type will not be present. ToParam should only
+// be used at the last possible moment before sending a request. Test for this with
+// CustomerAddressV1Param.Overrides()
+func (r CustomerAddressV1) ToParam() CustomerAddressV1Param {
+	return param.Override[CustomerAddressV1Param](json.RawMessage(r.RawJSON()))
 }
 
 // An object containing the customer's address. This is optional, but if provided,
 // all required fields must be present.
+//
+// The properties Address1, City, State, Zip are required.
 type CustomerAddressV1Param struct {
 	// Primary address line (e.g., street, PO Box).
-	Address1 param.Field[string] `json:"address1,required"`
+	Address1 string `json:"address1" api:"required"`
 	// City, district, suburb, town, or village.
-	City param.Field[string] `json:"city,required"`
+	City string `json:"city" api:"required"`
 	// Two-letter state code.
-	State param.Field[string] `json:"state,required"`
+	State string `json:"state" api:"required"`
 	// Zip or postal code.
-	Zip param.Field[string] `json:"zip,required"`
+	Zip string `json:"zip" api:"required"`
 	// Secondary address line (e.g., apartment, suite, unit, or building).
-	Address2 param.Field[string] `json:"address2"`
+	Address2 param.Opt[string] `json:"address2,omitzero"`
+	paramObj
 }
 
 func (r CustomerAddressV1Param) MarshalJSON() (data []byte, err error) {
-	return apijson.MarshalRoot(r)
+	type shadow CustomerAddressV1Param
+	return param.MarshalObject(r, (*shadow)(&r))
+}
+func (r *CustomerAddressV1Param) UnmarshalJSON(data []byte) error {
+	return apijson.UnmarshalRoot(data, r)
 }
 
 type CustomerSummaryPagedV1 struct {
-	Data []CustomerSummaryPagedV1Data `json:"data,required"`
-	Meta CustomerSummaryPagedV1Meta   `json:"meta,required"`
+	Data []CustomerSummaryPagedV1Data `json:"data" api:"required"`
+	Meta CustomerSummaryPagedV1Meta   `json:"meta" api:"required"`
 	// Indicates the structure of the returned content.
 	//
 	//   - "object" means the `data` field contains a single JSON object.
@@ -280,163 +291,105 @@ type CustomerSummaryPagedV1 struct {
 	//   - "error" means the `data` field contains an error object with details of the
 	//     issue.
 	//   - "none" means no data is returned.
-	ResponseType CustomerSummaryPagedV1ResponseType `json:"response_type,required"`
-	JSON         customerSummaryPagedV1JSON         `json:"-"`
+	//
+	// Any of "object", "array", "error", "none".
+	ResponseType CustomerSummaryPagedV1ResponseType `json:"response_type" api:"required"`
+	// JSON contains metadata for fields, check presence with [respjson.Field.Valid].
+	JSON struct {
+		Data         respjson.Field
+		Meta         respjson.Field
+		ResponseType respjson.Field
+		ExtraFields  map[string]respjson.Field
+		raw          string
+	} `json:"-"`
 }
 
-// customerSummaryPagedV1JSON contains the JSON metadata for the struct
-// [CustomerSummaryPagedV1]
-type customerSummaryPagedV1JSON struct {
-	Data         apijson.Field
-	Meta         apijson.Field
-	ResponseType apijson.Field
-	raw          string
-	ExtraFields  map[string]apijson.Field
-}
-
-func (r *CustomerSummaryPagedV1) UnmarshalJSON(data []byte) (err error) {
+// Returns the unmodified JSON received from the API
+func (r CustomerSummaryPagedV1) RawJSON() string { return r.JSON.raw }
+func (r *CustomerSummaryPagedV1) UnmarshalJSON(data []byte) error {
 	return apijson.UnmarshalRoot(data, r)
-}
-
-func (r customerSummaryPagedV1JSON) RawJSON() string {
-	return r.raw
 }
 
 type CustomerSummaryPagedV1Data struct {
 	// Unique identifier for the customer.
-	ID string `json:"id,required" format:"uuid"`
+	ID string `json:"id" api:"required" format:"uuid"`
 	// Timestamp of when the customer record was created.
-	CreatedAt time.Time `json:"created_at,required" format:"date-time"`
+	CreatedAt time.Time `json:"created_at" api:"required" format:"date-time"`
 	// The customer's email address.
-	Email string `json:"email,required" format:"email"`
+	Email string `json:"email" api:"required" format:"email"`
 	// Full name of the individual or business name.
-	Name string `json:"name,required"`
+	Name string `json:"name" api:"required"`
 	// The customer's phone number in E.164 format.
-	Phone  string                           `json:"phone,required"`
-	Status CustomerSummaryPagedV1DataStatus `json:"status,required"`
-	Type   CustomerSummaryPagedV1DataType   `json:"type,required"`
+	Phone string `json:"phone" api:"required"`
+	// Any of "pending", "review", "verified", "inactive", "rejected".
+	Status string `json:"status" api:"required"`
+	// Any of "individual", "business".
+	Type string `json:"type" api:"required"`
 	// Timestamp of the most recent update to the customer record.
-	UpdatedAt time.Time `json:"updated_at,required" format:"date-time"`
+	UpdatedAt time.Time `json:"updated_at" api:"required" format:"date-time"`
 	// Unique identifier for the customer in your database, used for cross-referencing
 	// between Straddle and your systems.
-	ExternalID string                         `json:"external_id,nullable"`
-	JSON       customerSummaryPagedV1DataJSON `json:"-"`
+	ExternalID string `json:"external_id" api:"nullable"`
+	// JSON contains metadata for fields, check presence with [respjson.Field.Valid].
+	JSON struct {
+		ID          respjson.Field
+		CreatedAt   respjson.Field
+		Email       respjson.Field
+		Name        respjson.Field
+		Phone       respjson.Field
+		Status      respjson.Field
+		Type        respjson.Field
+		UpdatedAt   respjson.Field
+		ExternalID  respjson.Field
+		ExtraFields map[string]respjson.Field
+		raw         string
+	} `json:"-"`
 }
 
-// customerSummaryPagedV1DataJSON contains the JSON metadata for the struct
-// [CustomerSummaryPagedV1Data]
-type customerSummaryPagedV1DataJSON struct {
-	ID          apijson.Field
-	CreatedAt   apijson.Field
-	Email       apijson.Field
-	Name        apijson.Field
-	Phone       apijson.Field
-	Status      apijson.Field
-	Type        apijson.Field
-	UpdatedAt   apijson.Field
-	ExternalID  apijson.Field
-	raw         string
-	ExtraFields map[string]apijson.Field
-}
-
-func (r *CustomerSummaryPagedV1Data) UnmarshalJSON(data []byte) (err error) {
+// Returns the unmodified JSON received from the API
+func (r CustomerSummaryPagedV1Data) RawJSON() string { return r.JSON.raw }
+func (r *CustomerSummaryPagedV1Data) UnmarshalJSON(data []byte) error {
 	return apijson.UnmarshalRoot(data, r)
-}
-
-func (r customerSummaryPagedV1DataJSON) RawJSON() string {
-	return r.raw
-}
-
-type CustomerSummaryPagedV1DataStatus string
-
-const (
-	CustomerSummaryPagedV1DataStatusPending  CustomerSummaryPagedV1DataStatus = "pending"
-	CustomerSummaryPagedV1DataStatusReview   CustomerSummaryPagedV1DataStatus = "review"
-	CustomerSummaryPagedV1DataStatusVerified CustomerSummaryPagedV1DataStatus = "verified"
-	CustomerSummaryPagedV1DataStatusInactive CustomerSummaryPagedV1DataStatus = "inactive"
-	CustomerSummaryPagedV1DataStatusRejected CustomerSummaryPagedV1DataStatus = "rejected"
-)
-
-func (r CustomerSummaryPagedV1DataStatus) IsKnown() bool {
-	switch r {
-	case CustomerSummaryPagedV1DataStatusPending, CustomerSummaryPagedV1DataStatusReview, CustomerSummaryPagedV1DataStatusVerified, CustomerSummaryPagedV1DataStatusInactive, CustomerSummaryPagedV1DataStatusRejected:
-		return true
-	}
-	return false
-}
-
-type CustomerSummaryPagedV1DataType string
-
-const (
-	CustomerSummaryPagedV1DataTypeIndividual CustomerSummaryPagedV1DataType = "individual"
-	CustomerSummaryPagedV1DataTypeBusiness   CustomerSummaryPagedV1DataType = "business"
-)
-
-func (r CustomerSummaryPagedV1DataType) IsKnown() bool {
-	switch r {
-	case CustomerSummaryPagedV1DataTypeIndividual, CustomerSummaryPagedV1DataTypeBusiness:
-		return true
-	}
-	return false
 }
 
 type CustomerSummaryPagedV1Meta struct {
 	// Unique identifier for this API request, useful for troubleshooting.
-	APIRequestID string `json:"api_request_id,required" format:"uuid"`
+	APIRequestID string `json:"api_request_id" api:"required" format:"uuid"`
 	// Timestamp for this API request, useful for troubleshooting.
-	APIRequestTimestamp time.Time `json:"api_request_timestamp,required" format:"date-time"`
+	APIRequestTimestamp time.Time `json:"api_request_timestamp" api:"required" format:"date-time"`
 	// Maximum allowed page size for this endpoint.
-	MaxPageSize int64 `json:"max_page_size,required"`
+	MaxPageSize int64 `json:"max_page_size" api:"required"`
 	// Page number for paginated results.
-	PageNumber int64 `json:"page_number,required"`
+	PageNumber int64 `json:"page_number" api:"required"`
 	// Number of items per page in this response.
-	PageSize int64 `json:"page_size,required"`
+	PageSize int64 `json:"page_size" api:"required"`
 	// The field that the results were sorted by.
-	SortBy     string                              `json:"sort_by,required"`
-	SortOrder  CustomerSummaryPagedV1MetaSortOrder `json:"sort_order,required"`
-	TotalItems int64                               `json:"total_items,required"`
+	SortBy string `json:"sort_by" api:"required"`
+	// Any of "asc", "desc".
+	SortOrder  string `json:"sort_order" api:"required"`
+	TotalItems int64  `json:"total_items" api:"required"`
 	// The number of pages available.
-	TotalPages int64                          `json:"total_pages,required"`
-	JSON       customerSummaryPagedV1MetaJSON `json:"-"`
+	TotalPages int64 `json:"total_pages" api:"required"`
+	// JSON contains metadata for fields, check presence with [respjson.Field.Valid].
+	JSON struct {
+		APIRequestID        respjson.Field
+		APIRequestTimestamp respjson.Field
+		MaxPageSize         respjson.Field
+		PageNumber          respjson.Field
+		PageSize            respjson.Field
+		SortBy              respjson.Field
+		SortOrder           respjson.Field
+		TotalItems          respjson.Field
+		TotalPages          respjson.Field
+		ExtraFields         map[string]respjson.Field
+		raw                 string
+	} `json:"-"`
 }
 
-// customerSummaryPagedV1MetaJSON contains the JSON metadata for the struct
-// [CustomerSummaryPagedV1Meta]
-type customerSummaryPagedV1MetaJSON struct {
-	APIRequestID        apijson.Field
-	APIRequestTimestamp apijson.Field
-	MaxPageSize         apijson.Field
-	PageNumber          apijson.Field
-	PageSize            apijson.Field
-	SortBy              apijson.Field
-	SortOrder           apijson.Field
-	TotalItems          apijson.Field
-	TotalPages          apijson.Field
-	raw                 string
-	ExtraFields         map[string]apijson.Field
-}
-
-func (r *CustomerSummaryPagedV1Meta) UnmarshalJSON(data []byte) (err error) {
+// Returns the unmodified JSON received from the API
+func (r CustomerSummaryPagedV1Meta) RawJSON() string { return r.JSON.raw }
+func (r *CustomerSummaryPagedV1Meta) UnmarshalJSON(data []byte) error {
 	return apijson.UnmarshalRoot(data, r)
-}
-
-func (r customerSummaryPagedV1MetaJSON) RawJSON() string {
-	return r.raw
-}
-
-type CustomerSummaryPagedV1MetaSortOrder string
-
-const (
-	CustomerSummaryPagedV1MetaSortOrderAsc  CustomerSummaryPagedV1MetaSortOrder = "asc"
-	CustomerSummaryPagedV1MetaSortOrderDesc CustomerSummaryPagedV1MetaSortOrder = "desc"
-)
-
-func (r CustomerSummaryPagedV1MetaSortOrder) IsKnown() bool {
-	switch r {
-	case CustomerSummaryPagedV1MetaSortOrderAsc, CustomerSummaryPagedV1MetaSortOrderDesc:
-		return true
-	}
-	return false
 }
 
 // Indicates the structure of the returned content.
@@ -455,18 +408,10 @@ const (
 	CustomerSummaryPagedV1ResponseTypeNone   CustomerSummaryPagedV1ResponseType = "none"
 )
 
-func (r CustomerSummaryPagedV1ResponseType) IsKnown() bool {
-	switch r {
-	case CustomerSummaryPagedV1ResponseTypeObject, CustomerSummaryPagedV1ResponseTypeArray, CustomerSummaryPagedV1ResponseTypeError, CustomerSummaryPagedV1ResponseTypeNone:
-		return true
-	}
-	return false
-}
-
 type CustomerUnmaskedV1 struct {
-	Data CustomerUnmaskedV1Data `json:"data,required"`
+	Data CustomerUnmaskedV1Data `json:"data" api:"required"`
 	// Metadata about the API request, including an identifier and timestamp.
-	Meta shared.ResponseMetadata `json:"meta,required"`
+	Meta shared.ResponseMetadata `json:"meta" api:"required"`
 	// Indicates the structure of the returned content.
 	//
 	//   - "object" means the `data` field contains a single JSON object.
@@ -474,226 +419,157 @@ type CustomerUnmaskedV1 struct {
 	//   - "error" means the `data` field contains an error object with details of the
 	//     issue.
 	//   - "none" means no data is returned.
-	ResponseType CustomerUnmaskedV1ResponseType `json:"response_type,required"`
-	JSON         customerUnmaskedV1JSON         `json:"-"`
+	//
+	// Any of "object", "array", "error", "none".
+	ResponseType CustomerUnmaskedV1ResponseType `json:"response_type" api:"required"`
+	// JSON contains metadata for fields, check presence with [respjson.Field.Valid].
+	JSON struct {
+		Data         respjson.Field
+		Meta         respjson.Field
+		ResponseType respjson.Field
+		ExtraFields  map[string]respjson.Field
+		raw          string
+	} `json:"-"`
 }
 
-// customerUnmaskedV1JSON contains the JSON metadata for the struct
-// [CustomerUnmaskedV1]
-type customerUnmaskedV1JSON struct {
-	Data         apijson.Field
-	Meta         apijson.Field
-	ResponseType apijson.Field
-	raw          string
-	ExtraFields  map[string]apijson.Field
-}
-
-func (r *CustomerUnmaskedV1) UnmarshalJSON(data []byte) (err error) {
+// Returns the unmodified JSON received from the API
+func (r CustomerUnmaskedV1) RawJSON() string { return r.JSON.raw }
+func (r *CustomerUnmaskedV1) UnmarshalJSON(data []byte) error {
 	return apijson.UnmarshalRoot(data, r)
-}
-
-func (r customerUnmaskedV1JSON) RawJSON() string {
-	return r.raw
 }
 
 type CustomerUnmaskedV1Data struct {
 	// Unique identifier for the customer.
-	ID string `json:"id,required" format:"uuid"`
+	ID string `json:"id" api:"required" format:"uuid"`
 	// Timestamp of when the customer record was created.
-	CreatedAt time.Time `json:"created_at,required" format:"date-time"`
+	CreatedAt time.Time `json:"created_at" api:"required" format:"date-time"`
 	// The customer's email address.
-	Email string `json:"email,required" format:"email"`
+	Email string `json:"email" api:"required" format:"email"`
 	// Full name of the individual or business name.
-	Name string `json:"name,required"`
+	Name string `json:"name" api:"required"`
 	// The customer's phone number in E.164 format.
-	Phone  string                       `json:"phone,required"`
-	Status CustomerUnmaskedV1DataStatus `json:"status,required"`
-	Type   CustomerUnmaskedV1DataType   `json:"type,required"`
+	Phone string `json:"phone" api:"required"`
+	// Any of "pending", "review", "verified", "inactive", "rejected".
+	Status string `json:"status" api:"required"`
+	// Any of "individual", "business".
+	Type string `json:"type" api:"required"`
 	// Timestamp of the most recent update to the customer record.
-	UpdatedAt time.Time `json:"updated_at,required" format:"date-time"`
+	UpdatedAt time.Time `json:"updated_at" api:"required" format:"date-time"`
 	// An object containing the customer's address. This is optional, but if provided,
 	// all required fields must be present.
-	Address CustomerAddressV1 `json:"address,nullable"`
+	Address CustomerAddressV1 `json:"address" api:"nullable"`
 	// Individual PII data required to trigger Patriot Act compliant KYC verification.
-	ComplianceProfile CustomerUnmaskedV1DataComplianceProfile `json:"compliance_profile,nullable"`
-	Device            DeviceUnmaskedV1                        `json:"device"`
+	ComplianceProfile CustomerUnmaskedV1DataComplianceProfileUnion `json:"compliance_profile" api:"nullable"`
+	Config            CustomerUnmaskedV1DataConfig                 `json:"config"`
+	Device            DeviceUnmaskedV1                             `json:"device"`
 	// Unique identifier for the customer in your database, used for cross-referencing
 	// between Straddle and your systems.
-	ExternalID string `json:"external_id,nullable"`
+	ExternalID string `json:"external_id" api:"nullable"`
 	// Up to 20 additional user-defined key-value pairs. Useful for storing additional
 	// information about the customer in a structured format.
-	Metadata map[string]string          `json:"metadata,nullable"`
-	JSON     customerUnmaskedV1DataJSON `json:"-"`
+	Metadata map[string]string `json:"metadata" api:"nullable"`
+	// JSON contains metadata for fields, check presence with [respjson.Field.Valid].
+	JSON struct {
+		ID                respjson.Field
+		CreatedAt         respjson.Field
+		Email             respjson.Field
+		Name              respjson.Field
+		Phone             respjson.Field
+		Status            respjson.Field
+		Type              respjson.Field
+		UpdatedAt         respjson.Field
+		Address           respjson.Field
+		ComplianceProfile respjson.Field
+		Config            respjson.Field
+		Device            respjson.Field
+		ExternalID        respjson.Field
+		Metadata          respjson.Field
+		ExtraFields       map[string]respjson.Field
+		raw               string
+	} `json:"-"`
 }
 
-// customerUnmaskedV1DataJSON contains the JSON metadata for the struct
-// [CustomerUnmaskedV1Data]
-type customerUnmaskedV1DataJSON struct {
-	ID                apijson.Field
-	CreatedAt         apijson.Field
-	Email             apijson.Field
-	Name              apijson.Field
-	Phone             apijson.Field
-	Status            apijson.Field
-	Type              apijson.Field
-	UpdatedAt         apijson.Field
-	Address           apijson.Field
-	ComplianceProfile apijson.Field
-	Device            apijson.Field
-	ExternalID        apijson.Field
-	Metadata          apijson.Field
-	raw               string
-	ExtraFields       map[string]apijson.Field
-}
-
-func (r *CustomerUnmaskedV1Data) UnmarshalJSON(data []byte) (err error) {
+// Returns the unmodified JSON received from the API
+func (r CustomerUnmaskedV1Data) RawJSON() string { return r.JSON.raw }
+func (r *CustomerUnmaskedV1Data) UnmarshalJSON(data []byte) error {
 	return apijson.UnmarshalRoot(data, r)
 }
 
-func (r customerUnmaskedV1DataJSON) RawJSON() string {
-	return r.raw
-}
-
-type CustomerUnmaskedV1DataStatus string
-
-const (
-	CustomerUnmaskedV1DataStatusPending  CustomerUnmaskedV1DataStatus = "pending"
-	CustomerUnmaskedV1DataStatusReview   CustomerUnmaskedV1DataStatus = "review"
-	CustomerUnmaskedV1DataStatusVerified CustomerUnmaskedV1DataStatus = "verified"
-	CustomerUnmaskedV1DataStatusInactive CustomerUnmaskedV1DataStatus = "inactive"
-	CustomerUnmaskedV1DataStatusRejected CustomerUnmaskedV1DataStatus = "rejected"
-)
-
-func (r CustomerUnmaskedV1DataStatus) IsKnown() bool {
-	switch r {
-	case CustomerUnmaskedV1DataStatusPending, CustomerUnmaskedV1DataStatusReview, CustomerUnmaskedV1DataStatusVerified, CustomerUnmaskedV1DataStatusInactive, CustomerUnmaskedV1DataStatusRejected:
-		return true
-	}
-	return false
-}
-
-type CustomerUnmaskedV1DataType string
-
-const (
-	CustomerUnmaskedV1DataTypeIndividual CustomerUnmaskedV1DataType = "individual"
-	CustomerUnmaskedV1DataTypeBusiness   CustomerUnmaskedV1DataType = "business"
-)
-
-func (r CustomerUnmaskedV1DataType) IsKnown() bool {
-	switch r {
-	case CustomerUnmaskedV1DataTypeIndividual, CustomerUnmaskedV1DataTypeBusiness:
-		return true
-	}
-	return false
-}
-
-// Individual PII data required to trigger Patriot Act compliant KYC verification.
-type CustomerUnmaskedV1DataComplianceProfile struct {
-	// Date of birth (YYYY-MM-DD). Required for Patriot Act-compliant KYC verification.
-	Dob time.Time `json:"dob,nullable" format:"date"`
-	// Employer Identification Number (format XX-XXXXXXX). Required for Patriot
-	// Act-compliant KYB verification.
-	Ein string `json:"ein,nullable"`
-	// Official registered business name as listed with the IRS. This value will be
-	// matched against the 'legal_business name'.
-	LegalBusinessName string `json:"legal_business_name,nullable"`
-	// Social Security Number (format XXX-XX-XXXX). Required for Patriot Act-compliant
-	// KYC verification.
-	Ssn string `json:"ssn,nullable"`
-	// Official business website URL. Optional but recommended for enhanced KYB.
-	Website string                                      `json:"website,nullable" format:"uri"`
-	JSON    customerUnmaskedV1DataComplianceProfileJSON `json:"-"`
-	union   CustomerUnmaskedV1DataComplianceProfileUnion
-}
-
-// customerUnmaskedV1DataComplianceProfileJSON contains the JSON metadata for the
-// struct [CustomerUnmaskedV1DataComplianceProfile]
-type customerUnmaskedV1DataComplianceProfileJSON struct {
-	Dob               apijson.Field
-	Ein               apijson.Field
-	LegalBusinessName apijson.Field
-	Ssn               apijson.Field
-	Website           apijson.Field
-	raw               string
-	ExtraFields       map[string]apijson.Field
-}
-
-func (r customerUnmaskedV1DataComplianceProfileJSON) RawJSON() string {
-	return r.raw
-}
-
-func (r *CustomerUnmaskedV1DataComplianceProfile) UnmarshalJSON(data []byte) (err error) {
-	*r = CustomerUnmaskedV1DataComplianceProfile{}
-	err = apijson.UnmarshalRoot(data, &r.union)
-	if err != nil {
-		return err
-	}
-	return apijson.Port(r.union, &r)
-}
-
-// AsUnion returns a [CustomerUnmaskedV1DataComplianceProfileUnion] interface which
-// you can cast to the specific types for more type safety.
-//
-// Possible runtime types of the union are
+// CustomerUnmaskedV1DataComplianceProfileUnion contains all possible properties
+// and values from
 // [CustomerUnmaskedV1DataComplianceProfileIndividualComplianceProfile],
 // [CustomerUnmaskedV1DataComplianceProfileBusinessComplianceProfile].
-func (r CustomerUnmaskedV1DataComplianceProfile) AsUnion() CustomerUnmaskedV1DataComplianceProfileUnion {
-	return r.union
-}
-
-// Individual PII data required to trigger Patriot Act compliant KYC verification.
 //
-// Union satisfied by
-// [CustomerUnmaskedV1DataComplianceProfileIndividualComplianceProfile] or
-// [CustomerUnmaskedV1DataComplianceProfileBusinessComplianceProfile].
-type CustomerUnmaskedV1DataComplianceProfileUnion interface {
-	implementsCustomerUnmaskedV1DataComplianceProfile()
+// Use the methods beginning with 'As' to cast the union to one of its variants.
+type CustomerUnmaskedV1DataComplianceProfileUnion struct {
+	// This field is from variant
+	// [CustomerUnmaskedV1DataComplianceProfileIndividualComplianceProfile].
+	Dob time.Time `json:"dob"`
+	// This field is from variant
+	// [CustomerUnmaskedV1DataComplianceProfileIndividualComplianceProfile].
+	Ssn string `json:"ssn"`
+	// This field is from variant
+	// [CustomerUnmaskedV1DataComplianceProfileBusinessComplianceProfile].
+	Ein string `json:"ein"`
+	// This field is from variant
+	// [CustomerUnmaskedV1DataComplianceProfileBusinessComplianceProfile].
+	LegalBusinessName string `json:"legal_business_name"`
+	// This field is from variant
+	// [CustomerUnmaskedV1DataComplianceProfileBusinessComplianceProfile].
+	Representatives []CustomerUnmaskedV1DataComplianceProfileBusinessComplianceProfileRepresentative `json:"representatives"`
+	// This field is from variant
+	// [CustomerUnmaskedV1DataComplianceProfileBusinessComplianceProfile].
+	Website string `json:"website"`
+	JSON    struct {
+		Dob               respjson.Field
+		Ssn               respjson.Field
+		Ein               respjson.Field
+		LegalBusinessName respjson.Field
+		Representatives   respjson.Field
+		Website           respjson.Field
+		raw               string
+	} `json:"-"`
 }
 
-func init() {
-	apijson.RegisterUnion(
-		reflect.TypeOf((*CustomerUnmaskedV1DataComplianceProfileUnion)(nil)).Elem(),
-		"",
-		apijson.UnionVariant{
-			TypeFilter: gjson.JSON,
-			Type:       reflect.TypeOf(CustomerUnmaskedV1DataComplianceProfileIndividualComplianceProfile{}),
-		},
-		apijson.UnionVariant{
-			TypeFilter: gjson.JSON,
-			Type:       reflect.TypeOf(CustomerUnmaskedV1DataComplianceProfileBusinessComplianceProfile{}),
-		},
-	)
+func (u CustomerUnmaskedV1DataComplianceProfileUnion) AsIndividualComplianceProfile() (v CustomerUnmaskedV1DataComplianceProfileIndividualComplianceProfile) {
+	apijson.UnmarshalRoot(json.RawMessage(u.JSON.raw), &v)
+	return
+}
+
+func (u CustomerUnmaskedV1DataComplianceProfileUnion) AsBusinessComplianceProfile() (v CustomerUnmaskedV1DataComplianceProfileBusinessComplianceProfile) {
+	apijson.UnmarshalRoot(json.RawMessage(u.JSON.raw), &v)
+	return
+}
+
+// Returns the unmodified JSON received from the API
+func (u CustomerUnmaskedV1DataComplianceProfileUnion) RawJSON() string { return u.JSON.raw }
+
+func (r *CustomerUnmaskedV1DataComplianceProfileUnion) UnmarshalJSON(data []byte) error {
+	return apijson.UnmarshalRoot(data, r)
 }
 
 // Individual PII data required to trigger Patriot Act compliant KYC verification.
 type CustomerUnmaskedV1DataComplianceProfileIndividualComplianceProfile struct {
 	// Date of birth (YYYY-MM-DD). Required for Patriot Act-compliant KYC verification.
-	Dob time.Time `json:"dob,required,nullable" format:"date"`
+	Dob time.Time `json:"dob" api:"required" format:"date"`
 	// Social Security Number (format XXX-XX-XXXX). Required for Patriot Act-compliant
 	// KYC verification.
-	Ssn  string                                                                 `json:"ssn,required,nullable"`
-	JSON customerUnmaskedV1DataComplianceProfileIndividualComplianceProfileJSON `json:"-"`
+	Ssn string `json:"ssn" api:"required"`
+	// JSON contains metadata for fields, check presence with [respjson.Field.Valid].
+	JSON struct {
+		Dob         respjson.Field
+		Ssn         respjson.Field
+		ExtraFields map[string]respjson.Field
+		raw         string
+	} `json:"-"`
 }
 
-// customerUnmaskedV1DataComplianceProfileIndividualComplianceProfileJSON contains
-// the JSON metadata for the struct
-// [CustomerUnmaskedV1DataComplianceProfileIndividualComplianceProfile]
-type customerUnmaskedV1DataComplianceProfileIndividualComplianceProfileJSON struct {
-	Dob         apijson.Field
-	Ssn         apijson.Field
-	raw         string
-	ExtraFields map[string]apijson.Field
+// Returns the unmodified JSON received from the API
+func (r CustomerUnmaskedV1DataComplianceProfileIndividualComplianceProfile) RawJSON() string {
+	return r.JSON.raw
 }
-
-func (r *CustomerUnmaskedV1DataComplianceProfileIndividualComplianceProfile) UnmarshalJSON(data []byte) (err error) {
+func (r *CustomerUnmaskedV1DataComplianceProfileIndividualComplianceProfile) UnmarshalJSON(data []byte) error {
 	return apijson.UnmarshalRoot(data, r)
-}
-
-func (r customerUnmaskedV1DataComplianceProfileIndividualComplianceProfileJSON) RawJSON() string {
-	return r.raw
-}
-
-func (r CustomerUnmaskedV1DataComplianceProfileIndividualComplianceProfile) implementsCustomerUnmaskedV1DataComplianceProfile() {
 }
 
 // Business registration data required to trigger Patriot Act compliant KYB
@@ -701,35 +577,74 @@ func (r CustomerUnmaskedV1DataComplianceProfileIndividualComplianceProfile) impl
 type CustomerUnmaskedV1DataComplianceProfileBusinessComplianceProfile struct {
 	// Employer Identification Number (format XX-XXXXXXX). Required for Patriot
 	// Act-compliant KYB verification.
-	Ein string `json:"ein,required,nullable"`
+	Ein string `json:"ein" api:"required"`
 	// Official registered business name as listed with the IRS. This value will be
 	// matched against the 'legal_business name'.
-	LegalBusinessName string `json:"legal_business_name,required,nullable"`
+	LegalBusinessName string `json:"legal_business_name" api:"required"`
+	// A list of people related to the company. Only valid where customer type is
+	// 'business'.
+	Representatives []CustomerUnmaskedV1DataComplianceProfileBusinessComplianceProfileRepresentative `json:"representatives" api:"nullable"`
 	// Official business website URL. Optional but recommended for enhanced KYB.
-	Website string                                                               `json:"website,nullable" format:"uri"`
-	JSON    customerUnmaskedV1DataComplianceProfileBusinessComplianceProfileJSON `json:"-"`
+	Website string `json:"website" api:"nullable" format:"uri"`
+	// JSON contains metadata for fields, check presence with [respjson.Field.Valid].
+	JSON struct {
+		Ein               respjson.Field
+		LegalBusinessName respjson.Field
+		Representatives   respjson.Field
+		Website           respjson.Field
+		ExtraFields       map[string]respjson.Field
+		raw               string
+	} `json:"-"`
 }
 
-// customerUnmaskedV1DataComplianceProfileBusinessComplianceProfileJSON contains
-// the JSON metadata for the struct
-// [CustomerUnmaskedV1DataComplianceProfileBusinessComplianceProfile]
-type customerUnmaskedV1DataComplianceProfileBusinessComplianceProfileJSON struct {
-	Ein               apijson.Field
-	LegalBusinessName apijson.Field
-	Website           apijson.Field
-	raw               string
-	ExtraFields       map[string]apijson.Field
+// Returns the unmodified JSON received from the API
+func (r CustomerUnmaskedV1DataComplianceProfileBusinessComplianceProfile) RawJSON() string {
+	return r.JSON.raw
 }
-
-func (r *CustomerUnmaskedV1DataComplianceProfileBusinessComplianceProfile) UnmarshalJSON(data []byte) (err error) {
+func (r *CustomerUnmaskedV1DataComplianceProfileBusinessComplianceProfile) UnmarshalJSON(data []byte) error {
 	return apijson.UnmarshalRoot(data, r)
 }
 
-func (r customerUnmaskedV1DataComplianceProfileBusinessComplianceProfileJSON) RawJSON() string {
-	return r.raw
+type CustomerUnmaskedV1DataComplianceProfileBusinessComplianceProfileRepresentative struct {
+	Name  string `json:"name" api:"required"`
+	Email string `json:"email" api:"nullable"`
+	Phone string `json:"phone" api:"nullable"`
+	// JSON contains metadata for fields, check presence with [respjson.Field.Valid].
+	JSON struct {
+		Name        respjson.Field
+		Email       respjson.Field
+		Phone       respjson.Field
+		ExtraFields map[string]respjson.Field
+		raw         string
+	} `json:"-"`
 }
 
-func (r CustomerUnmaskedV1DataComplianceProfileBusinessComplianceProfile) implementsCustomerUnmaskedV1DataComplianceProfile() {
+// Returns the unmodified JSON received from the API
+func (r CustomerUnmaskedV1DataComplianceProfileBusinessComplianceProfileRepresentative) RawJSON() string {
+	return r.JSON.raw
+}
+func (r *CustomerUnmaskedV1DataComplianceProfileBusinessComplianceProfileRepresentative) UnmarshalJSON(data []byte) error {
+	return apijson.UnmarshalRoot(data, r)
+}
+
+type CustomerUnmaskedV1DataConfig struct {
+	// Any of "inline", "background", "skip".
+	ProcessingMethod string `json:"processing_method"`
+	// Any of "standard", "verified", "rejected", "review".
+	SandboxOutcome string `json:"sandbox_outcome"`
+	// JSON contains metadata for fields, check presence with [respjson.Field.Valid].
+	JSON struct {
+		ProcessingMethod respjson.Field
+		SandboxOutcome   respjson.Field
+		ExtraFields      map[string]respjson.Field
+		raw              string
+	} `json:"-"`
+}
+
+// Returns the unmodified JSON received from the API
+func (r CustomerUnmaskedV1DataConfig) RawJSON() string { return r.JSON.raw }
+func (r *CustomerUnmaskedV1DataConfig) UnmarshalJSON(data []byte) error {
+	return apijson.UnmarshalRoot(data, r)
 }
 
 // Indicates the structure of the returned content.
@@ -748,18 +663,10 @@ const (
 	CustomerUnmaskedV1ResponseTypeNone   CustomerUnmaskedV1ResponseType = "none"
 )
 
-func (r CustomerUnmaskedV1ResponseType) IsKnown() bool {
-	switch r {
-	case CustomerUnmaskedV1ResponseTypeObject, CustomerUnmaskedV1ResponseTypeArray, CustomerUnmaskedV1ResponseTypeError, CustomerUnmaskedV1ResponseTypeNone:
-		return true
-	}
-	return false
-}
-
 type CustomerV1 struct {
-	Data CustomerV1Data `json:"data,required"`
+	Data CustomerV1Data `json:"data" api:"required"`
 	// Metadata about the API request, including an identifier and timestamp.
-	Meta shared.ResponseMetadata `json:"meta,required"`
+	Meta shared.ResponseMetadata `json:"meta" api:"required"`
 	// Indicates the structure of the returned content.
 	//
 	//   - "object" means the `data` field contains a single JSON object.
@@ -767,278 +674,245 @@ type CustomerV1 struct {
 	//   - "error" means the `data` field contains an error object with details of the
 	//     issue.
 	//   - "none" means no data is returned.
-	ResponseType CustomerV1ResponseType `json:"response_type,required"`
-	JSON         customerV1JSON         `json:"-"`
+	//
+	// Any of "object", "array", "error", "none".
+	ResponseType CustomerV1ResponseType `json:"response_type" api:"required"`
+	// JSON contains metadata for fields, check presence with [respjson.Field.Valid].
+	JSON struct {
+		Data         respjson.Field
+		Meta         respjson.Field
+		ResponseType respjson.Field
+		ExtraFields  map[string]respjson.Field
+		raw          string
+	} `json:"-"`
 }
 
-// customerV1JSON contains the JSON metadata for the struct [CustomerV1]
-type customerV1JSON struct {
-	Data         apijson.Field
-	Meta         apijson.Field
-	ResponseType apijson.Field
-	raw          string
-	ExtraFields  map[string]apijson.Field
-}
-
-func (r *CustomerV1) UnmarshalJSON(data []byte) (err error) {
+// Returns the unmodified JSON received from the API
+func (r CustomerV1) RawJSON() string { return r.JSON.raw }
+func (r *CustomerV1) UnmarshalJSON(data []byte) error {
 	return apijson.UnmarshalRoot(data, r)
-}
-
-func (r customerV1JSON) RawJSON() string {
-	return r.raw
 }
 
 type CustomerV1Data struct {
 	// Unique identifier for the customer.
-	ID string `json:"id,required" format:"uuid"`
+	ID string `json:"id" api:"required" format:"uuid"`
 	// Timestamp of when the customer record was created.
-	CreatedAt time.Time `json:"created_at,required" format:"date-time"`
+	CreatedAt time.Time `json:"created_at" api:"required" format:"date-time"`
 	// The customer's email address.
-	Email string `json:"email,required" format:"email"`
+	Email string `json:"email" api:"required" format:"email"`
 	// Full name of the individual or business name.
-	Name string `json:"name,required"`
+	Name string `json:"name" api:"required"`
 	// The customer's phone number in E.164 format.
-	Phone  string               `json:"phone,required"`
-	Status CustomerV1DataStatus `json:"status,required"`
-	Type   CustomerV1DataType   `json:"type,required"`
+	Phone string `json:"phone" api:"required"`
+	// Any of "pending", "review", "verified", "inactive", "rejected".
+	Status string `json:"status" api:"required"`
+	// Any of "individual", "business".
+	Type string `json:"type" api:"required"`
 	// Timestamp of the most recent update to the customer record.
-	UpdatedAt time.Time `json:"updated_at,required" format:"date-time"`
+	UpdatedAt time.Time `json:"updated_at" api:"required" format:"date-time"`
 	// An object containing the customer's address. This is optional, but if provided,
 	// all required fields must be present.
-	Address CustomerAddressV1 `json:"address,nullable"`
+	Address CustomerAddressV1 `json:"address" api:"nullable"`
 	// PII required to trigger Patriot Act compliant KYC verification.
-	ComplianceProfile CustomerV1DataComplianceProfile `json:"compliance_profile,nullable"`
-	Device            CustomerV1DataDevice            `json:"device"`
+	ComplianceProfile CustomerV1DataComplianceProfileUnion `json:"compliance_profile" api:"nullable"`
+	Config            CustomerV1DataConfig                 `json:"config"`
+	Device            CustomerV1DataDevice                 `json:"device"`
 	// Unique identifier for the customer in your database, used for cross-referencing
 	// between Straddle and your systems.
-	ExternalID string `json:"external_id,nullable"`
+	ExternalID string `json:"external_id" api:"nullable"`
 	// Up to 20 additional user-defined key-value pairs. Useful for storing additional
 	// information about the customer in a structured format.
-	Metadata map[string]string  `json:"metadata,nullable"`
-	JSON     customerV1DataJSON `json:"-"`
+	Metadata map[string]string `json:"metadata" api:"nullable"`
+	// JSON contains metadata for fields, check presence with [respjson.Field.Valid].
+	JSON struct {
+		ID                respjson.Field
+		CreatedAt         respjson.Field
+		Email             respjson.Field
+		Name              respjson.Field
+		Phone             respjson.Field
+		Status            respjson.Field
+		Type              respjson.Field
+		UpdatedAt         respjson.Field
+		Address           respjson.Field
+		ComplianceProfile respjson.Field
+		Config            respjson.Field
+		Device            respjson.Field
+		ExternalID        respjson.Field
+		Metadata          respjson.Field
+		ExtraFields       map[string]respjson.Field
+		raw               string
+	} `json:"-"`
 }
 
-// customerV1DataJSON contains the JSON metadata for the struct [CustomerV1Data]
-type customerV1DataJSON struct {
-	ID                apijson.Field
-	CreatedAt         apijson.Field
-	Email             apijson.Field
-	Name              apijson.Field
-	Phone             apijson.Field
-	Status            apijson.Field
-	Type              apijson.Field
-	UpdatedAt         apijson.Field
-	Address           apijson.Field
-	ComplianceProfile apijson.Field
-	Device            apijson.Field
-	ExternalID        apijson.Field
-	Metadata          apijson.Field
-	raw               string
-	ExtraFields       map[string]apijson.Field
-}
-
-func (r *CustomerV1Data) UnmarshalJSON(data []byte) (err error) {
+// Returns the unmodified JSON received from the API
+func (r CustomerV1Data) RawJSON() string { return r.JSON.raw }
+func (r *CustomerV1Data) UnmarshalJSON(data []byte) error {
 	return apijson.UnmarshalRoot(data, r)
 }
 
-func (r customerV1DataJSON) RawJSON() string {
-	return r.raw
-}
-
-type CustomerV1DataStatus string
-
-const (
-	CustomerV1DataStatusPending  CustomerV1DataStatus = "pending"
-	CustomerV1DataStatusReview   CustomerV1DataStatus = "review"
-	CustomerV1DataStatusVerified CustomerV1DataStatus = "verified"
-	CustomerV1DataStatusInactive CustomerV1DataStatus = "inactive"
-	CustomerV1DataStatusRejected CustomerV1DataStatus = "rejected"
-)
-
-func (r CustomerV1DataStatus) IsKnown() bool {
-	switch r {
-	case CustomerV1DataStatusPending, CustomerV1DataStatusReview, CustomerV1DataStatusVerified, CustomerV1DataStatusInactive, CustomerV1DataStatusRejected:
-		return true
-	}
-	return false
-}
-
-type CustomerV1DataType string
-
-const (
-	CustomerV1DataTypeIndividual CustomerV1DataType = "individual"
-	CustomerV1DataTypeBusiness   CustomerV1DataType = "business"
-)
-
-func (r CustomerV1DataType) IsKnown() bool {
-	switch r {
-	case CustomerV1DataTypeIndividual, CustomerV1DataTypeBusiness:
-		return true
-	}
-	return false
-}
-
-// PII required to trigger Patriot Act compliant KYC verification.
-type CustomerV1DataComplianceProfile struct {
-	// Masked date of birth in \***\*-**-\*\* format.
-	Dob time.Time `json:"dob,nullable" format:"date"`
-	// Masked Employer Identification Number in the format **-**\*****
-	Ein string `json:"ein,nullable"`
-	// The official registered name of the business. This name should be correlated
-	// with the `ein` value.
-	LegalBusinessName string `json:"legal_business_name,nullable"`
-	// Masked Social Security Number in the format **\*-**-\*\*\*\*.
-	Ssn string `json:"ssn,nullable"`
-	// Official business website URL. Optional but recommended for enhanced KYB.
-	Website string                              `json:"website,nullable" format:"uri"`
-	JSON    customerV1DataComplianceProfileJSON `json:"-"`
-	union   CustomerV1DataComplianceProfileUnion
-}
-
-// customerV1DataComplianceProfileJSON contains the JSON metadata for the struct
-// [CustomerV1DataComplianceProfile]
-type customerV1DataComplianceProfileJSON struct {
-	Dob               apijson.Field
-	Ein               apijson.Field
-	LegalBusinessName apijson.Field
-	Ssn               apijson.Field
-	Website           apijson.Field
-	raw               string
-	ExtraFields       map[string]apijson.Field
-}
-
-func (r customerV1DataComplianceProfileJSON) RawJSON() string {
-	return r.raw
-}
-
-func (r *CustomerV1DataComplianceProfile) UnmarshalJSON(data []byte) (err error) {
-	*r = CustomerV1DataComplianceProfile{}
-	err = apijson.UnmarshalRoot(data, &r.union)
-	if err != nil {
-		return err
-	}
-	return apijson.Port(r.union, &r)
-}
-
-// AsUnion returns a [CustomerV1DataComplianceProfileUnion] interface which you can
-// cast to the specific types for more type safety.
-//
-// Possible runtime types of the union are
-// [CustomerV1DataComplianceProfileIndividualComplianceProfile],
+// CustomerV1DataComplianceProfileUnion contains all possible properties and values
+// from [CustomerV1DataComplianceProfileIndividualComplianceProfile],
 // [CustomerV1DataComplianceProfileBusinessComplianceProfile].
-func (r CustomerV1DataComplianceProfile) AsUnion() CustomerV1DataComplianceProfileUnion {
-	return r.union
-}
-
-// PII required to trigger Patriot Act compliant KYC verification.
 //
-// Union satisfied by [CustomerV1DataComplianceProfileIndividualComplianceProfile]
-// or [CustomerV1DataComplianceProfileBusinessComplianceProfile].
-type CustomerV1DataComplianceProfileUnion interface {
-	implementsCustomerV1DataComplianceProfile()
+// Use the methods beginning with 'As' to cast the union to one of its variants.
+type CustomerV1DataComplianceProfileUnion struct {
+	// This field is from variant
+	// [CustomerV1DataComplianceProfileIndividualComplianceProfile].
+	Dob time.Time `json:"dob"`
+	// This field is from variant
+	// [CustomerV1DataComplianceProfileIndividualComplianceProfile].
+	Ssn string `json:"ssn"`
+	// This field is from variant
+	// [CustomerV1DataComplianceProfileBusinessComplianceProfile].
+	Ein string `json:"ein"`
+	// This field is from variant
+	// [CustomerV1DataComplianceProfileBusinessComplianceProfile].
+	LegalBusinessName string `json:"legal_business_name"`
+	// This field is from variant
+	// [CustomerV1DataComplianceProfileBusinessComplianceProfile].
+	Representatives []CustomerV1DataComplianceProfileBusinessComplianceProfileRepresentative `json:"representatives"`
+	// This field is from variant
+	// [CustomerV1DataComplianceProfileBusinessComplianceProfile].
+	Website string `json:"website"`
+	JSON    struct {
+		Dob               respjson.Field
+		Ssn               respjson.Field
+		Ein               respjson.Field
+		LegalBusinessName respjson.Field
+		Representatives   respjson.Field
+		Website           respjson.Field
+		raw               string
+	} `json:"-"`
 }
 
-func init() {
-	apijson.RegisterUnion(
-		reflect.TypeOf((*CustomerV1DataComplianceProfileUnion)(nil)).Elem(),
-		"",
-		apijson.UnionVariant{
-			TypeFilter: gjson.JSON,
-			Type:       reflect.TypeOf(CustomerV1DataComplianceProfileIndividualComplianceProfile{}),
-		},
-		apijson.UnionVariant{
-			TypeFilter: gjson.JSON,
-			Type:       reflect.TypeOf(CustomerV1DataComplianceProfileBusinessComplianceProfile{}),
-		},
-	)
+func (u CustomerV1DataComplianceProfileUnion) AsIndividualComplianceProfile() (v CustomerV1DataComplianceProfileIndividualComplianceProfile) {
+	apijson.UnmarshalRoot(json.RawMessage(u.JSON.raw), &v)
+	return
+}
+
+func (u CustomerV1DataComplianceProfileUnion) AsBusinessComplianceProfile() (v CustomerV1DataComplianceProfileBusinessComplianceProfile) {
+	apijson.UnmarshalRoot(json.RawMessage(u.JSON.raw), &v)
+	return
+}
+
+// Returns the unmodified JSON received from the API
+func (u CustomerV1DataComplianceProfileUnion) RawJSON() string { return u.JSON.raw }
+
+func (r *CustomerV1DataComplianceProfileUnion) UnmarshalJSON(data []byte) error {
+	return apijson.UnmarshalRoot(data, r)
 }
 
 // PII required to trigger Patriot Act compliant KYC verification.
 type CustomerV1DataComplianceProfileIndividualComplianceProfile struct {
 	// Masked date of birth in \***\*-**-\*\* format.
-	Dob time.Time `json:"dob,required,nullable" format:"date"`
+	Dob time.Time `json:"dob" api:"required" format:"date"`
 	// Masked Social Security Number in the format **\*-**-\*\*\*\*.
-	Ssn  string                                                         `json:"ssn,required,nullable"`
-	JSON customerV1DataComplianceProfileIndividualComplianceProfileJSON `json:"-"`
+	Ssn string `json:"ssn" api:"required"`
+	// JSON contains metadata for fields, check presence with [respjson.Field.Valid].
+	JSON struct {
+		Dob         respjson.Field
+		Ssn         respjson.Field
+		ExtraFields map[string]respjson.Field
+		raw         string
+	} `json:"-"`
 }
 
-// customerV1DataComplianceProfileIndividualComplianceProfileJSON contains the JSON
-// metadata for the struct
-// [CustomerV1DataComplianceProfileIndividualComplianceProfile]
-type customerV1DataComplianceProfileIndividualComplianceProfileJSON struct {
-	Dob         apijson.Field
-	Ssn         apijson.Field
-	raw         string
-	ExtraFields map[string]apijson.Field
+// Returns the unmodified JSON received from the API
+func (r CustomerV1DataComplianceProfileIndividualComplianceProfile) RawJSON() string {
+	return r.JSON.raw
 }
-
-func (r *CustomerV1DataComplianceProfileIndividualComplianceProfile) UnmarshalJSON(data []byte) (err error) {
+func (r *CustomerV1DataComplianceProfileIndividualComplianceProfile) UnmarshalJSON(data []byte) error {
 	return apijson.UnmarshalRoot(data, r)
-}
-
-func (r customerV1DataComplianceProfileIndividualComplianceProfileJSON) RawJSON() string {
-	return r.raw
-}
-
-func (r CustomerV1DataComplianceProfileIndividualComplianceProfile) implementsCustomerV1DataComplianceProfile() {
 }
 
 // Business registration data required to trigger Patriot Act compliant KYB
 // verification.
 type CustomerV1DataComplianceProfileBusinessComplianceProfile struct {
 	// Masked Employer Identification Number in the format **-**\*****
-	Ein string `json:"ein,required,nullable"`
+	Ein string `json:"ein" api:"required"`
 	// The official registered name of the business. This name should be correlated
 	// with the `ein` value.
-	LegalBusinessName string `json:"legal_business_name,required,nullable"`
+	LegalBusinessName string `json:"legal_business_name" api:"required"`
+	// A list of people related to the company. Only valid where customer type is
+	// 'business'.
+	Representatives []CustomerV1DataComplianceProfileBusinessComplianceProfileRepresentative `json:"representatives" api:"nullable"`
 	// Official business website URL. Optional but recommended for enhanced KYB.
-	Website string                                                       `json:"website,nullable" format:"uri"`
-	JSON    customerV1DataComplianceProfileBusinessComplianceProfileJSON `json:"-"`
+	Website string `json:"website" api:"nullable" format:"uri"`
+	// JSON contains metadata for fields, check presence with [respjson.Field.Valid].
+	JSON struct {
+		Ein               respjson.Field
+		LegalBusinessName respjson.Field
+		Representatives   respjson.Field
+		Website           respjson.Field
+		ExtraFields       map[string]respjson.Field
+		raw               string
+	} `json:"-"`
 }
 
-// customerV1DataComplianceProfileBusinessComplianceProfileJSON contains the JSON
-// metadata for the struct
-// [CustomerV1DataComplianceProfileBusinessComplianceProfile]
-type customerV1DataComplianceProfileBusinessComplianceProfileJSON struct {
-	Ein               apijson.Field
-	LegalBusinessName apijson.Field
-	Website           apijson.Field
-	raw               string
-	ExtraFields       map[string]apijson.Field
-}
-
-func (r *CustomerV1DataComplianceProfileBusinessComplianceProfile) UnmarshalJSON(data []byte) (err error) {
+// Returns the unmodified JSON received from the API
+func (r CustomerV1DataComplianceProfileBusinessComplianceProfile) RawJSON() string { return r.JSON.raw }
+func (r *CustomerV1DataComplianceProfileBusinessComplianceProfile) UnmarshalJSON(data []byte) error {
 	return apijson.UnmarshalRoot(data, r)
 }
 
-func (r customerV1DataComplianceProfileBusinessComplianceProfileJSON) RawJSON() string {
-	return r.raw
+type CustomerV1DataComplianceProfileBusinessComplianceProfileRepresentative struct {
+	Name  string `json:"name" api:"required"`
+	Email string `json:"email" api:"nullable"`
+	Phone string `json:"phone" api:"nullable"`
+	// JSON contains metadata for fields, check presence with [respjson.Field.Valid].
+	JSON struct {
+		Name        respjson.Field
+		Email       respjson.Field
+		Phone       respjson.Field
+		ExtraFields map[string]respjson.Field
+		raw         string
+	} `json:"-"`
 }
 
-func (r CustomerV1DataComplianceProfileBusinessComplianceProfile) implementsCustomerV1DataComplianceProfile() {
+// Returns the unmodified JSON received from the API
+func (r CustomerV1DataComplianceProfileBusinessComplianceProfileRepresentative) RawJSON() string {
+	return r.JSON.raw
+}
+func (r *CustomerV1DataComplianceProfileBusinessComplianceProfileRepresentative) UnmarshalJSON(data []byte) error {
+	return apijson.UnmarshalRoot(data, r)
+}
+
+type CustomerV1DataConfig struct {
+	// Any of "inline", "background", "skip".
+	ProcessingMethod string `json:"processing_method"`
+	// Any of "standard", "verified", "rejected", "review".
+	SandboxOutcome string `json:"sandbox_outcome"`
+	// JSON contains metadata for fields, check presence with [respjson.Field.Valid].
+	JSON struct {
+		ProcessingMethod respjson.Field
+		SandboxOutcome   respjson.Field
+		ExtraFields      map[string]respjson.Field
+		raw              string
+	} `json:"-"`
+}
+
+// Returns the unmodified JSON received from the API
+func (r CustomerV1DataConfig) RawJSON() string { return r.JSON.raw }
+func (r *CustomerV1DataConfig) UnmarshalJSON(data []byte) error {
+	return apijson.UnmarshalRoot(data, r)
 }
 
 type CustomerV1DataDevice struct {
 	// The customer's IP address at the time of profile creation. Use `0.0.0.0` to
 	// represent an offline customer registration.
-	IPAddress string                   `json:"ip_address,required" format:"ipv4"`
-	JSON      customerV1DataDeviceJSON `json:"-"`
+	IPAddress string `json:"ip_address" api:"required" format:"ipv4"`
+	// JSON contains metadata for fields, check presence with [respjson.Field.Valid].
+	JSON struct {
+		IPAddress   respjson.Field
+		ExtraFields map[string]respjson.Field
+		raw         string
+	} `json:"-"`
 }
 
-// customerV1DataDeviceJSON contains the JSON metadata for the struct
-// [CustomerV1DataDevice]
-type customerV1DataDeviceJSON struct {
-	IPAddress   apijson.Field
-	raw         string
-	ExtraFields map[string]apijson.Field
-}
-
-func (r *CustomerV1DataDevice) UnmarshalJSON(data []byte) (err error) {
+// Returns the unmodified JSON received from the API
+func (r CustomerV1DataDevice) RawJSON() string { return r.JSON.raw }
+func (r *CustomerV1DataDevice) UnmarshalJSON(data []byte) error {
 	return apijson.UnmarshalRoot(data, r)
-}
-
-func (r customerV1DataDeviceJSON) RawJSON() string {
-	return r.raw
 }
 
 // Indicates the structure of the returned content.
@@ -1057,75 +931,85 @@ const (
 	CustomerV1ResponseTypeNone   CustomerV1ResponseType = "none"
 )
 
-func (r CustomerV1ResponseType) IsKnown() bool {
-	switch r {
-	case CustomerV1ResponseTypeObject, CustomerV1ResponseTypeArray, CustomerV1ResponseTypeError, CustomerV1ResponseTypeNone:
-		return true
-	}
-	return false
-}
-
 type DeviceUnmaskedV1 struct {
 	// The customer's IP address at the time of profile creation. Use `0.0.0.0` to
 	// represent an offline customer registration.
-	IPAddress string               `json:"ip_address,required" format:"ipv4"`
-	JSON      deviceUnmaskedV1JSON `json:"-"`
+	IPAddress string `json:"ip_address" api:"required" format:"ipv4"`
+	// JSON contains metadata for fields, check presence with [respjson.Field.Valid].
+	JSON struct {
+		IPAddress   respjson.Field
+		ExtraFields map[string]respjson.Field
+		raw         string
+	} `json:"-"`
 }
 
-// deviceUnmaskedV1JSON contains the JSON metadata for the struct
-// [DeviceUnmaskedV1]
-type deviceUnmaskedV1JSON struct {
-	IPAddress   apijson.Field
-	raw         string
-	ExtraFields map[string]apijson.Field
-}
-
-func (r *DeviceUnmaskedV1) UnmarshalJSON(data []byte) (err error) {
+// Returns the unmodified JSON received from the API
+func (r DeviceUnmaskedV1) RawJSON() string { return r.JSON.raw }
+func (r *DeviceUnmaskedV1) UnmarshalJSON(data []byte) error {
 	return apijson.UnmarshalRoot(data, r)
 }
 
-func (r deviceUnmaskedV1JSON) RawJSON() string {
-	return r.raw
+// ToParam converts this DeviceUnmaskedV1 to a DeviceUnmaskedV1Param.
+//
+// Warning: the fields of the param type will not be present. ToParam should only
+// be used at the last possible moment before sending a request. Test for this with
+// DeviceUnmaskedV1Param.Overrides()
+func (r DeviceUnmaskedV1) ToParam() DeviceUnmaskedV1Param {
+	return param.Override[DeviceUnmaskedV1Param](json.RawMessage(r.RawJSON()))
 }
 
+// The property IPAddress is required.
 type DeviceUnmaskedV1Param struct {
 	// The customer's IP address at the time of profile creation. Use `0.0.0.0` to
 	// represent an offline customer registration.
-	IPAddress param.Field[string] `json:"ip_address,required" format:"ipv4"`
+	IPAddress string `json:"ip_address" api:"required" format:"ipv4"`
+	paramObj
 }
 
 func (r DeviceUnmaskedV1Param) MarshalJSON() (data []byte, err error) {
-	return apijson.MarshalRoot(r)
+	type shadow DeviceUnmaskedV1Param
+	return param.MarshalObject(r, (*shadow)(&r))
+}
+func (r *DeviceUnmaskedV1Param) UnmarshalJSON(data []byte) error {
+	return apijson.UnmarshalRoot(data, r)
 }
 
 type CustomerNewParams struct {
-	Device param.Field[DeviceUnmaskedV1Param] `json:"device,required"`
+	Device DeviceUnmaskedV1Param `json:"device,omitzero" api:"required"`
 	// The customer's email address.
-	Email param.Field[string] `json:"email,required" format:"email"`
+	Email string `json:"email" api:"required" format:"email"`
 	// Full name of the individual or business name.
-	Name param.Field[string] `json:"name,required"`
+	Name string `json:"name" api:"required"`
 	// The customer's phone number in E.164 format. Mobile number is preferred.
-	Phone param.Field[string]                `json:"phone,required"`
-	Type  param.Field[CustomerNewParamsType] `json:"type,required"`
-	// An object containing the customer's address. **This is optional.** If used, all
-	// required fields must be present.
-	Address param.Field[CustomerAddressV1Param] `json:"address"`
-	// An object containing the customer's compliance profile. **This is optional.** If
-	// all required fields must be present for the appropriate customer type.
-	ComplianceProfile param.Field[CustomerNewParamsComplianceProfileUnion] `json:"compliance_profile"`
+	Phone string `json:"phone" api:"required"`
+	// Any of "individual", "business".
+	Type CustomerNewParamsType `json:"type,omitzero" api:"required"`
 	// Unique identifier for the customer in your database, used for cross-referencing
 	// between Straddle and your systems.
-	ExternalID param.Field[string] `json:"external_id"`
+	ExternalID        param.Opt[string] `json:"external_id,omitzero"`
+	CorrelationID     param.Opt[string] `header:"Correlation-Id,omitzero" json:"-"`
+	IdempotencyKey    param.Opt[string] `header:"Idempotency-Key,omitzero" json:"-"`
+	RequestID         param.Opt[string] `header:"Request-Id,omitzero" json:"-"`
+	StraddleAccountID param.Opt[string] `header:"Straddle-Account-Id,omitzero" format:"uuid" json:"-"`
+	// An object containing the customer's address. **This is optional.** If used, all
+	// required fields must be present.
+	Address CustomerAddressV1Param `json:"address,omitzero"`
+	// An object containing the customer's compliance profile. **This is optional.** If
+	// all required fields must be present for the appropriate customer type.
+	ComplianceProfile CustomerNewParamsComplianceProfileUnion `json:"compliance_profile,omitzero"`
 	// Up to 20 additional user-defined key-value pairs. Useful for storing additional
 	// information about the customer in a structured format.
-	Metadata          param.Field[map[string]string] `json:"metadata"`
-	CorrelationID     param.Field[string]            `header:"Correlation-Id"`
-	RequestID         param.Field[string]            `header:"Request-Id"`
-	StraddleAccountID param.Field[string]            `header:"Straddle-Account-Id" format:"uuid"`
+	Metadata map[string]string       `json:"metadata,omitzero"`
+	Config   CustomerNewParamsConfig `json:"config,omitzero"`
+	paramObj
 }
 
 func (r CustomerNewParams) MarshalJSON() (data []byte, err error) {
-	return apijson.MarshalRoot(r)
+	type shadow CustomerNewParams
+	return param.MarshalObject(r, (*shadow)(&r))
+}
+func (r *CustomerNewParams) UnmarshalJSON(data []byte) error {
+	return apijson.UnmarshalRoot(data, r)
 }
 
 type CustomerNewParamsType string
@@ -1135,111 +1019,144 @@ const (
 	CustomerNewParamsTypeBusiness   CustomerNewParamsType = "business"
 )
 
-func (r CustomerNewParamsType) IsKnown() bool {
-	switch r {
-	case CustomerNewParamsTypeIndividual, CustomerNewParamsTypeBusiness:
-		return true
-	}
-	return false
-}
-
-// An object containing the customer's compliance profile. **This is optional.** If
-// all required fields must be present for the appropriate customer type.
-type CustomerNewParamsComplianceProfile struct {
-	// Date of birth (YYYY-MM-DD). Required for Patriot Act-compliant KYC verification.
-	Dob param.Field[time.Time] `json:"dob" format:"date"`
-	// Employer Identification Number (format XX-XXXXXXX). Required for Patriot
-	// Act-compliant KYB verification.
-	Ein param.Field[string] `json:"ein"`
-	// Official registered business name as listed with the IRS. This value will be
-	// matched against the 'legal_business name'.
-	LegalBusinessName param.Field[string] `json:"legal_business_name"`
-	// Social Security Number (format XXX-XX-XXXX). Required for Patriot Act-compliant
-	// KYC verification.
-	Ssn param.Field[string] `json:"ssn"`
-	// Official business website URL. Optional but recommended for enhanced KYB.
-	Website param.Field[string] `json:"website" format:"uri"`
-}
-
-func (r CustomerNewParamsComplianceProfile) MarshalJSON() (data []byte, err error) {
-	return apijson.MarshalRoot(r)
-}
-
-func (r CustomerNewParamsComplianceProfile) implementsCustomerNewParamsComplianceProfileUnion() {}
-
-// An object containing the customer's compliance profile. **This is optional.** If
-// all required fields must be present for the appropriate customer type.
+// Only one field can be non-zero.
 //
-// Satisfied by [CustomerNewParamsComplianceProfileIndividualComplianceProfile],
-// [CustomerNewParamsComplianceProfileBusinessComplianceProfile],
-// [CustomerNewParamsComplianceProfile].
-type CustomerNewParamsComplianceProfileUnion interface {
-	implementsCustomerNewParamsComplianceProfileUnion()
+// Use [param.IsOmitted] to confirm if a field is set.
+type CustomerNewParamsComplianceProfileUnion struct {
+	OfIndividualComplianceProfile *CustomerNewParamsComplianceProfileIndividualComplianceProfile `json:",omitzero,inline"`
+	OfBusinessComplianceProfile   *CustomerNewParamsComplianceProfileBusinessComplianceProfile   `json:",omitzero,inline"`
+	paramUnion
+}
+
+func (u CustomerNewParamsComplianceProfileUnion) MarshalJSON() ([]byte, error) {
+	return param.MarshalUnion(u, u.OfIndividualComplianceProfile, u.OfBusinessComplianceProfile)
+}
+func (u *CustomerNewParamsComplianceProfileUnion) UnmarshalJSON(data []byte) error {
+	return apijson.UnmarshalRoot(data, u)
 }
 
 // Individual PII data required to trigger Patriot Act compliant KYC verification.
+//
+// The properties Dob, Ssn are required.
 type CustomerNewParamsComplianceProfileIndividualComplianceProfile struct {
 	// Date of birth (YYYY-MM-DD). Required for Patriot Act-compliant KYC verification.
-	Dob param.Field[time.Time] `json:"dob,required" format:"date"`
+	Dob param.Opt[time.Time] `json:"dob,omitzero" api:"required" format:"date"`
 	// Social Security Number (format XXX-XX-XXXX). Required for Patriot Act-compliant
 	// KYC verification.
-	Ssn param.Field[string] `json:"ssn,required"`
+	Ssn param.Opt[string] `json:"ssn,omitzero" api:"required"`
+	paramObj
 }
 
 func (r CustomerNewParamsComplianceProfileIndividualComplianceProfile) MarshalJSON() (data []byte, err error) {
-	return apijson.MarshalRoot(r)
+	type shadow CustomerNewParamsComplianceProfileIndividualComplianceProfile
+	return param.MarshalObject(r, (*shadow)(&r))
 }
-
-func (r CustomerNewParamsComplianceProfileIndividualComplianceProfile) implementsCustomerNewParamsComplianceProfileUnion() {
+func (r *CustomerNewParamsComplianceProfileIndividualComplianceProfile) UnmarshalJSON(data []byte) error {
+	return apijson.UnmarshalRoot(data, r)
 }
 
 // Business registration data required to trigger Patriot Act compliant KYB
 // verification.
+//
+// The properties Ein, LegalBusinessName are required.
 type CustomerNewParamsComplianceProfileBusinessComplianceProfile struct {
 	// Employer Identification Number (format XX-XXXXXXX). Required for Patriot
 	// Act-compliant KYB verification.
-	Ein param.Field[string] `json:"ein,required"`
+	Ein param.Opt[string] `json:"ein,omitzero" api:"required"`
 	// Official registered business name as listed with the IRS. This value will be
 	// matched against the 'legal_business name'.
-	LegalBusinessName param.Field[string] `json:"legal_business_name,required"`
+	LegalBusinessName param.Opt[string] `json:"legal_business_name,omitzero" api:"required"`
 	// Official business website URL. Optional but recommended for enhanced KYB.
-	Website param.Field[string] `json:"website" format:"uri"`
+	Website param.Opt[string] `json:"website,omitzero" format:"uri"`
+	// A list of people related to the company. Only valid where customer type is
+	// 'business'.
+	Representatives []CustomerNewParamsComplianceProfileBusinessComplianceProfileRepresentative `json:"representatives,omitzero"`
+	paramObj
 }
 
 func (r CustomerNewParamsComplianceProfileBusinessComplianceProfile) MarshalJSON() (data []byte, err error) {
-	return apijson.MarshalRoot(r)
+	type shadow CustomerNewParamsComplianceProfileBusinessComplianceProfile
+	return param.MarshalObject(r, (*shadow)(&r))
+}
+func (r *CustomerNewParamsComplianceProfileBusinessComplianceProfile) UnmarshalJSON(data []byte) error {
+	return apijson.UnmarshalRoot(data, r)
 }
 
-func (r CustomerNewParamsComplianceProfileBusinessComplianceProfile) implementsCustomerNewParamsComplianceProfileUnion() {
+// The property Name is required.
+type CustomerNewParamsComplianceProfileBusinessComplianceProfileRepresentative struct {
+	Name  string            `json:"name" api:"required"`
+	Email param.Opt[string] `json:"email,omitzero"`
+	Phone param.Opt[string] `json:"phone,omitzero"`
+	paramObj
+}
+
+func (r CustomerNewParamsComplianceProfileBusinessComplianceProfileRepresentative) MarshalJSON() (data []byte, err error) {
+	type shadow CustomerNewParamsComplianceProfileBusinessComplianceProfileRepresentative
+	return param.MarshalObject(r, (*shadow)(&r))
+}
+func (r *CustomerNewParamsComplianceProfileBusinessComplianceProfileRepresentative) UnmarshalJSON(data []byte) error {
+	return apijson.UnmarshalRoot(data, r)
+}
+
+type CustomerNewParamsConfig struct {
+	// Any of "inline", "background", "skip".
+	ProcessingMethod string `json:"processing_method,omitzero"`
+	// Any of "standard", "verified", "rejected", "review".
+	SandboxOutcome string `json:"sandbox_outcome,omitzero"`
+	paramObj
+}
+
+func (r CustomerNewParamsConfig) MarshalJSON() (data []byte, err error) {
+	type shadow CustomerNewParamsConfig
+	return param.MarshalObject(r, (*shadow)(&r))
+}
+func (r *CustomerNewParamsConfig) UnmarshalJSON(data []byte) error {
+	return apijson.UnmarshalRoot(data, r)
+}
+
+func init() {
+	apijson.RegisterFieldValidator[CustomerNewParamsConfig](
+		"processing_method", "inline", "background", "skip",
+	)
+	apijson.RegisterFieldValidator[CustomerNewParamsConfig](
+		"sandbox_outcome", "standard", "verified", "rejected", "review",
+	)
 }
 
 type CustomerUpdateParams struct {
-	Device param.Field[DeviceUnmaskedV1Param] `json:"device,required"`
+	Device DeviceUnmaskedV1Param `json:"device,omitzero" api:"required"`
 	// The customer's email address.
-	Email param.Field[string] `json:"email,required" format:"email"`
+	Email string `json:"email" api:"required" format:"email"`
 	// The customer's full name or business name.
-	Name param.Field[string] `json:"name,required"`
+	Name string `json:"name" api:"required"`
 	// The customer's phone number in E.164 format.
-	Phone  param.Field[string]                     `json:"phone,required"`
-	Status param.Field[CustomerUpdateParamsStatus] `json:"status,required"`
-	// An object containing the customer's address. This is optional, but if provided,
-	// all required fields must be present.
-	Address param.Field[CustomerAddressV1Param] `json:"address"`
-	// Individual PII data required to trigger Patriot Act compliant KYC verification.
-	ComplianceProfile param.Field[CustomerUpdateParamsComplianceProfileUnion] `json:"compliance_profile"`
+	Phone string `json:"phone" api:"required"`
+	// Any of "pending", "review", "verified", "inactive", "rejected".
+	Status CustomerUpdateParamsStatus `json:"status,omitzero" api:"required"`
 	// Unique identifier for the customer in your database, used for cross-referencing
 	// between Straddle and your systems.
-	ExternalID param.Field[string] `json:"external_id"`
+	ExternalID        param.Opt[string] `json:"external_id,omitzero"`
+	CorrelationID     param.Opt[string] `header:"Correlation-Id,omitzero" json:"-"`
+	IdempotencyKey    param.Opt[string] `header:"Idempotency-Key,omitzero" json:"-"`
+	RequestID         param.Opt[string] `header:"Request-Id,omitzero" json:"-"`
+	StraddleAccountID param.Opt[string] `header:"Straddle-Account-Id,omitzero" format:"uuid" json:"-"`
+	// An object containing the customer's address. This is optional, but if provided,
+	// all required fields must be present.
+	Address CustomerAddressV1Param `json:"address,omitzero"`
+	// Individual PII data required to trigger Patriot Act compliant KYC verification.
+	ComplianceProfile CustomerUpdateParamsComplianceProfileUnion `json:"compliance_profile,omitzero"`
 	// Up to 20 additional user-defined key-value pairs. Useful for storing additional
 	// information about the customer in a structured format.
-	Metadata          param.Field[map[string]string] `json:"metadata"`
-	CorrelationID     param.Field[string]            `header:"Correlation-Id"`
-	RequestID         param.Field[string]            `header:"Request-Id"`
-	StraddleAccountID param.Field[string]            `header:"Straddle-Account-Id" format:"uuid"`
+	Metadata map[string]string `json:"metadata,omitzero"`
+	paramObj
 }
 
 func (r CustomerUpdateParams) MarshalJSON() (data []byte, err error) {
-	return apijson.MarshalRoot(r)
+	type shadow CustomerUpdateParams
+	return param.MarshalObject(r, (*shadow)(&r))
+}
+func (r *CustomerUpdateParams) UnmarshalJSON(data []byte) error {
+	return apijson.UnmarshalRoot(data, r)
 }
 
 type CustomerUpdateParamsStatus string
@@ -1252,113 +1169,122 @@ const (
 	CustomerUpdateParamsStatusRejected CustomerUpdateParamsStatus = "rejected"
 )
 
-func (r CustomerUpdateParamsStatus) IsKnown() bool {
-	switch r {
-	case CustomerUpdateParamsStatusPending, CustomerUpdateParamsStatusReview, CustomerUpdateParamsStatusVerified, CustomerUpdateParamsStatusInactive, CustomerUpdateParamsStatusRejected:
-		return true
-	}
-	return false
+// Only one field can be non-zero.
+//
+// Use [param.IsOmitted] to confirm if a field is set.
+type CustomerUpdateParamsComplianceProfileUnion struct {
+	OfIndividualComplianceProfile *CustomerUpdateParamsComplianceProfileIndividualComplianceProfile `json:",omitzero,inline"`
+	OfBusinessComplianceProfile   *CustomerUpdateParamsComplianceProfileBusinessComplianceProfile   `json:",omitzero,inline"`
+	paramUnion
 }
 
-// Individual PII data required to trigger Patriot Act compliant KYC verification.
-type CustomerUpdateParamsComplianceProfile struct {
-	// Date of birth (YYYY-MM-DD). Required for Patriot Act-compliant KYC verification.
-	Dob param.Field[time.Time] `json:"dob" format:"date"`
-	// Employer Identification Number (format XX-XXXXXXX). Required for Patriot
-	// Act-compliant KYB verification.
-	Ein param.Field[string] `json:"ein"`
-	// Official registered business name as listed with the IRS. This value will be
-	// matched against the 'legal_business name'.
-	LegalBusinessName param.Field[string] `json:"legal_business_name"`
-	// Social Security Number (format XXX-XX-XXXX). Required for Patriot Act-compliant
-	// KYC verification.
-	Ssn param.Field[string] `json:"ssn"`
-	// Official business website URL. Optional but recommended for enhanced KYB.
-	Website param.Field[string] `json:"website" format:"uri"`
+func (u CustomerUpdateParamsComplianceProfileUnion) MarshalJSON() ([]byte, error) {
+	return param.MarshalUnion(u, u.OfIndividualComplianceProfile, u.OfBusinessComplianceProfile)
 }
-
-func (r CustomerUpdateParamsComplianceProfile) MarshalJSON() (data []byte, err error) {
-	return apijson.MarshalRoot(r)
-}
-
-func (r CustomerUpdateParamsComplianceProfile) implementsCustomerUpdateParamsComplianceProfileUnion() {
+func (u *CustomerUpdateParamsComplianceProfileUnion) UnmarshalJSON(data []byte) error {
+	return apijson.UnmarshalRoot(data, u)
 }
 
 // Individual PII data required to trigger Patriot Act compliant KYC verification.
 //
-// Satisfied by [CustomerUpdateParamsComplianceProfileIndividualComplianceProfile],
-// [CustomerUpdateParamsComplianceProfileBusinessComplianceProfile],
-// [CustomerUpdateParamsComplianceProfile].
-type CustomerUpdateParamsComplianceProfileUnion interface {
-	implementsCustomerUpdateParamsComplianceProfileUnion()
-}
-
-// Individual PII data required to trigger Patriot Act compliant KYC verification.
+// The properties Dob, Ssn are required.
 type CustomerUpdateParamsComplianceProfileIndividualComplianceProfile struct {
 	// Date of birth (YYYY-MM-DD). Required for Patriot Act-compliant KYC verification.
-	Dob param.Field[time.Time] `json:"dob,required" format:"date"`
+	Dob param.Opt[time.Time] `json:"dob,omitzero" api:"required" format:"date"`
 	// Social Security Number (format XXX-XX-XXXX). Required for Patriot Act-compliant
 	// KYC verification.
-	Ssn param.Field[string] `json:"ssn,required"`
+	Ssn param.Opt[string] `json:"ssn,omitzero" api:"required"`
+	paramObj
 }
 
 func (r CustomerUpdateParamsComplianceProfileIndividualComplianceProfile) MarshalJSON() (data []byte, err error) {
-	return apijson.MarshalRoot(r)
+	type shadow CustomerUpdateParamsComplianceProfileIndividualComplianceProfile
+	return param.MarshalObject(r, (*shadow)(&r))
 }
-
-func (r CustomerUpdateParamsComplianceProfileIndividualComplianceProfile) implementsCustomerUpdateParamsComplianceProfileUnion() {
+func (r *CustomerUpdateParamsComplianceProfileIndividualComplianceProfile) UnmarshalJSON(data []byte) error {
+	return apijson.UnmarshalRoot(data, r)
 }
 
 // Business registration data required to trigger Patriot Act compliant KYB
 // verification.
+//
+// The properties Ein, LegalBusinessName are required.
 type CustomerUpdateParamsComplianceProfileBusinessComplianceProfile struct {
 	// Employer Identification Number (format XX-XXXXXXX). Required for Patriot
 	// Act-compliant KYB verification.
-	Ein param.Field[string] `json:"ein,required"`
+	Ein param.Opt[string] `json:"ein,omitzero" api:"required"`
 	// Official registered business name as listed with the IRS. This value will be
 	// matched against the 'legal_business name'.
-	LegalBusinessName param.Field[string] `json:"legal_business_name,required"`
+	LegalBusinessName param.Opt[string] `json:"legal_business_name,omitzero" api:"required"`
 	// Official business website URL. Optional but recommended for enhanced KYB.
-	Website param.Field[string] `json:"website" format:"uri"`
+	Website param.Opt[string] `json:"website,omitzero" format:"uri"`
+	// A list of people related to the company. Only valid where customer type is
+	// 'business'.
+	Representatives []CustomerUpdateParamsComplianceProfileBusinessComplianceProfileRepresentative `json:"representatives,omitzero"`
+	paramObj
 }
 
 func (r CustomerUpdateParamsComplianceProfileBusinessComplianceProfile) MarshalJSON() (data []byte, err error) {
-	return apijson.MarshalRoot(r)
+	type shadow CustomerUpdateParamsComplianceProfileBusinessComplianceProfile
+	return param.MarshalObject(r, (*shadow)(&r))
+}
+func (r *CustomerUpdateParamsComplianceProfileBusinessComplianceProfile) UnmarshalJSON(data []byte) error {
+	return apijson.UnmarshalRoot(data, r)
 }
 
-func (r CustomerUpdateParamsComplianceProfileBusinessComplianceProfile) implementsCustomerUpdateParamsComplianceProfileUnion() {
+// The property Name is required.
+type CustomerUpdateParamsComplianceProfileBusinessComplianceProfileRepresentative struct {
+	Name  string            `json:"name" api:"required"`
+	Email param.Opt[string] `json:"email,omitzero"`
+	Phone param.Opt[string] `json:"phone,omitzero"`
+	paramObj
+}
+
+func (r CustomerUpdateParamsComplianceProfileBusinessComplianceProfileRepresentative) MarshalJSON() (data []byte, err error) {
+	type shadow CustomerUpdateParamsComplianceProfileBusinessComplianceProfileRepresentative
+	return param.MarshalObject(r, (*shadow)(&r))
+}
+func (r *CustomerUpdateParamsComplianceProfileBusinessComplianceProfileRepresentative) UnmarshalJSON(data []byte) error {
+	return apijson.UnmarshalRoot(data, r)
 }
 
 type CustomerListParams struct {
 	// Start date for filtering by `created_at` date.
-	CreatedFrom param.Field[time.Time] `query:"created_from" format:"date-time"`
+	CreatedFrom param.Opt[time.Time] `query:"created_from,omitzero" format:"date-time" json:"-"`
 	// End date for filtering by `created_at` date.
-	CreatedTo param.Field[time.Time] `query:"created_to" format:"date-time"`
+	CreatedTo param.Opt[time.Time] `query:"created_to,omitzero" format:"date-time" json:"-"`
 	// Filter customers by `email` address.
-	Email param.Field[string] `query:"email"`
+	Email param.Opt[string] `query:"email,omitzero" json:"-"`
 	// Filter by your system's `external_id`.
-	ExternalID param.Field[string] `query:"external_id"`
+	ExternalID param.Opt[string] `query:"external_id,omitzero" json:"-"`
 	// Filter customers by `name` (partial match).
-	Name param.Field[string] `query:"name"`
+	Name param.Opt[string] `query:"name,omitzero" json:"-"`
 	// Page number for paginated results. Starts at 1.
-	PageNumber param.Field[int64] `query:"page_number"`
+	PageNumber param.Opt[int64] `query:"page_number,omitzero" json:"-"`
 	// Number of results per page. Maximum: 1000.
-	PageSize param.Field[int64] `query:"page_size"`
+	PageSize param.Opt[int64] `query:"page_size,omitzero" json:"-"`
 	// General search term to filter customers.
-	SearchText param.Field[string]                      `query:"search_text"`
-	SortBy     param.Field[CustomerListParamsSortBy]    `query:"sort_by"`
-	SortOrder  param.Field[CustomerListParamsSortOrder] `query:"sort_order"`
+	SearchText        param.Opt[string] `query:"search_text,omitzero" json:"-"`
+	CorrelationID     param.Opt[string] `header:"Correlation-Id,omitzero" json:"-"`
+	RequestID         param.Opt[string] `header:"Request-Id,omitzero" json:"-"`
+	StraddleAccountID param.Opt[string] `header:"Straddle-Account-Id,omitzero" format:"uuid" json:"-"`
+	// Any of "name", "created_at".
+	SortBy CustomerListParamsSortBy `query:"sort_by,omitzero" json:"-"`
+	// Any of "asc", "desc".
+	SortOrder CustomerListParamsSortOrder `query:"sort_order,omitzero" json:"-"`
 	// Filter customers by their current `status`.
-	Status param.Field[[]CustomerListParamsStatus] `query:"status"`
+	//
+	// Any of "pending", "review", "verified", "inactive", "rejected".
+	Status []string `query:"status,omitzero" json:"-"`
 	// Filter by customer type `individual` or `business`.
-	Types             param.Field[[]CustomerListParamsType] `query:"types"`
-	CorrelationID     param.Field[string]                   `header:"Correlation-Id"`
-	RequestID         param.Field[string]                   `header:"Request-Id"`
-	StraddleAccountID param.Field[string]                   `header:"Straddle-Account-Id" format:"uuid"`
+	//
+	// Any of "individual", "business".
+	Types []string `query:"types,omitzero" json:"-"`
+	paramObj
 }
 
 // URLQuery serializes [CustomerListParams]'s query parameters as `url.Values`.
-func (r CustomerListParams) URLQuery() (v url.Values) {
+func (r CustomerListParams) URLQuery() (v url.Values, err error) {
 	return apiquery.MarshalWithSettings(r, apiquery.QuerySettings{
 		ArrayFormat:  apiquery.ArrayQueryFormatComma,
 		NestedFormat: apiquery.NestedQueryFormatBrackets,
@@ -1372,14 +1298,6 @@ const (
 	CustomerListParamsSortByCreatedAt CustomerListParamsSortBy = "created_at"
 )
 
-func (r CustomerListParamsSortBy) IsKnown() bool {
-	switch r {
-	case CustomerListParamsSortByName, CustomerListParamsSortByCreatedAt:
-		return true
-	}
-	return false
-}
-
 type CustomerListParamsSortOrder string
 
 const (
@@ -1387,67 +1305,24 @@ const (
 	CustomerListParamsSortOrderDesc CustomerListParamsSortOrder = "desc"
 )
 
-func (r CustomerListParamsSortOrder) IsKnown() bool {
-	switch r {
-	case CustomerListParamsSortOrderAsc, CustomerListParamsSortOrderDesc:
-		return true
-	}
-	return false
-}
-
-type CustomerListParamsStatus string
-
-const (
-	CustomerListParamsStatusPending  CustomerListParamsStatus = "pending"
-	CustomerListParamsStatusReview   CustomerListParamsStatus = "review"
-	CustomerListParamsStatusVerified CustomerListParamsStatus = "verified"
-	CustomerListParamsStatusInactive CustomerListParamsStatus = "inactive"
-	CustomerListParamsStatusRejected CustomerListParamsStatus = "rejected"
-)
-
-func (r CustomerListParamsStatus) IsKnown() bool {
-	switch r {
-	case CustomerListParamsStatusPending, CustomerListParamsStatusReview, CustomerListParamsStatusVerified, CustomerListParamsStatusInactive, CustomerListParamsStatusRejected:
-		return true
-	}
-	return false
-}
-
-type CustomerListParamsType string
-
-const (
-	CustomerListParamsTypeIndividual CustomerListParamsType = "individual"
-	CustomerListParamsTypeBusiness   CustomerListParamsType = "business"
-)
-
-func (r CustomerListParamsType) IsKnown() bool {
-	switch r {
-	case CustomerListParamsTypeIndividual, CustomerListParamsTypeBusiness:
-		return true
-	}
-	return false
-}
-
 type CustomerDeleteParams struct {
-	CorrelationID     param.Field[string] `header:"Correlation-Id"`
-	RequestID         param.Field[string] `header:"Request-Id"`
-	StraddleAccountID param.Field[string] `header:"Straddle-Account-Id" format:"uuid"`
+	CorrelationID     param.Opt[string] `header:"Correlation-Id,omitzero" json:"-"`
+	IdempotencyKey    param.Opt[string] `header:"Idempotency-Key,omitzero" json:"-"`
+	RequestID         param.Opt[string] `header:"Request-Id,omitzero" json:"-"`
+	StraddleAccountID param.Opt[string] `header:"Straddle-Account-Id,omitzero" format:"uuid" json:"-"`
+	paramObj
 }
 
 type CustomerGetParams struct {
-	CorrelationID     param.Field[string] `header:"Correlation-Id"`
-	RequestID         param.Field[string] `header:"Request-Id"`
-	StraddleAccountID param.Field[string] `header:"Straddle-Account-Id" format:"uuid"`
-}
-
-type CustomerRefreshReviewParams struct {
-	CorrelationID     param.Field[string] `header:"Correlation-Id"`
-	RequestID         param.Field[string] `header:"Request-Id"`
-	StraddleAccountID param.Field[string] `header:"Straddle-Account-Id" format:"uuid"`
+	CorrelationID     param.Opt[string] `header:"Correlation-Id,omitzero" json:"-"`
+	RequestID         param.Opt[string] `header:"Request-Id,omitzero" json:"-"`
+	StraddleAccountID param.Opt[string] `header:"Straddle-Account-Id,omitzero" format:"uuid" json:"-"`
+	paramObj
 }
 
 type CustomerUnmaskedParams struct {
-	CorrelationID     param.Field[string] `header:"Correlation-Id"`
-	RequestID         param.Field[string] `header:"Request-Id"`
-	StraddleAccountID param.Field[string] `header:"Straddle-Account-Id" format:"uuid"`
+	CorrelationID     param.Opt[string] `header:"Correlation-Id,omitzero" json:"-"`
+	RequestID         param.Opt[string] `header:"Request-Id,omitzero" json:"-"`
+	StraddleAccountID param.Opt[string] `header:"Straddle-Account-Id,omitzero" format:"uuid" json:"-"`
+	paramObj
 }

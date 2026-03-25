@@ -26,16 +26,51 @@ func TestPaykeyListWithOptionalParams(t *testing.T) {
 		option.WithAPIKey("My API Key"),
 	)
 	_, err := client.Paykeys.List(context.TODO(), straddle.PaykeyListParams{
-		CustomerID:        straddle.F("182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e"),
-		PageNumber:        straddle.F(int64(0)),
-		PageSize:          straddle.F(int64(0)),
-		SortBy:            straddle.F(straddle.PaykeyListParamsSortByInstitutionName),
-		SortOrder:         straddle.F(straddle.PaykeyListParamsSortOrderAsc),
-		Status:            straddle.F([]straddle.PaykeyListParamsStatus{straddle.PaykeyListParamsStatusPending}),
-		CorrelationID:     straddle.F("Correlation-Id"),
-		RequestID:         straddle.F("Request-Id"),
-		StraddleAccountID: straddle.F("182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e"),
+		CustomerID:        straddle.String("182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e"),
+		PageNumber:        straddle.Int(0),
+		PageSize:          straddle.Int(0),
+		SearchText:        straddle.String("search_text"),
+		SortBy:            straddle.PaykeyListParamsSortByInstitutionName,
+		SortOrder:         straddle.PaykeyListParamsSortOrderAsc,
+		Source:            []string{"bank_account"},
+		Status:            []string{"pending"},
+		UnblockEligible:   straddle.Bool(true),
+		CorrelationID:     straddle.String("Correlation-Id"),
+		RequestID:         straddle.String("Request-Id"),
+		StraddleAccountID: straddle.String("182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e"),
 	})
+	if err != nil {
+		var apierr *straddle.Error
+		if errors.As(err, &apierr) {
+			t.Log(string(apierr.DumpRequest(true)))
+		}
+		t.Fatalf("err should be nil: %s", err.Error())
+	}
+}
+
+func TestPaykeyCancelWithOptionalParams(t *testing.T) {
+	baseURL := "http://localhost:4010"
+	if envURL, ok := os.LookupEnv("TEST_API_BASE_URL"); ok {
+		baseURL = envURL
+	}
+	if !testutil.CheckTestServer(t, baseURL) {
+		return
+	}
+	client := straddle.NewClient(
+		option.WithBaseURL(baseURL),
+		option.WithAPIKey("My API Key"),
+	)
+	_, err := client.Paykeys.Cancel(
+		context.TODO(),
+		"182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e",
+		straddle.PaykeyCancelParams{
+			Reason:            straddle.String("reason"),
+			CorrelationID:     straddle.String("Correlation-Id"),
+			IdempotencyKey:    straddle.String("xxxxxxxxxx"),
+			RequestID:         straddle.String("Request-Id"),
+			StraddleAccountID: straddle.String("182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e"),
+		},
+	)
 	if err != nil {
 		var apierr *straddle.Error
 		if errors.As(err, &apierr) {
@@ -61,9 +96,9 @@ func TestPaykeyGetWithOptionalParams(t *testing.T) {
 		context.TODO(),
 		"182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e",
 		straddle.PaykeyGetParams{
-			CorrelationID:     straddle.F("Correlation-Id"),
-			RequestID:         straddle.F("Request-Id"),
-			StraddleAccountID: straddle.F("182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e"),
+			CorrelationID:     straddle.String("Correlation-Id"),
+			RequestID:         straddle.String("Request-Id"),
+			StraddleAccountID: straddle.String("182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e"),
 		},
 	)
 	if err != nil {
@@ -91,9 +126,9 @@ func TestPaykeyRevealWithOptionalParams(t *testing.T) {
 		context.TODO(),
 		"182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e",
 		straddle.PaykeyRevealParams{
-			CorrelationID:     straddle.F("Correlation-Id"),
-			RequestID:         straddle.F("Request-Id"),
-			StraddleAccountID: straddle.F("182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e"),
+			CorrelationID:     straddle.String("Correlation-Id"),
+			RequestID:         straddle.String("Request-Id"),
+			StraddleAccountID: straddle.String("182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e"),
 		},
 	)
 	if err != nil {
@@ -121,9 +156,40 @@ func TestPaykeyUnmaskedWithOptionalParams(t *testing.T) {
 		context.TODO(),
 		"182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e",
 		straddle.PaykeyUnmaskedParams{
-			CorrelationID:     straddle.F("Correlation-Id"),
-			RequestID:         straddle.F("Request-Id"),
-			StraddleAccountID: straddle.F("182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e"),
+			CorrelationID:     straddle.String("Correlation-Id"),
+			RequestID:         straddle.String("Request-Id"),
+			StraddleAccountID: straddle.String("182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e"),
+		},
+	)
+	if err != nil {
+		var apierr *straddle.Error
+		if errors.As(err, &apierr) {
+			t.Log(string(apierr.DumpRequest(true)))
+		}
+		t.Fatalf("err should be nil: %s", err.Error())
+	}
+}
+
+func TestPaykeyUpdateBalanceWithOptionalParams(t *testing.T) {
+	baseURL := "http://localhost:4010"
+	if envURL, ok := os.LookupEnv("TEST_API_BASE_URL"); ok {
+		baseURL = envURL
+	}
+	if !testutil.CheckTestServer(t, baseURL) {
+		return
+	}
+	client := straddle.NewClient(
+		option.WithBaseURL(baseURL),
+		option.WithAPIKey("My API Key"),
+	)
+	_, err := client.Paykeys.UpdateBalance(
+		context.TODO(),
+		"182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e",
+		straddle.PaykeyUpdateBalanceParams{
+			CorrelationID:     straddle.String("Correlation-Id"),
+			IdempotencyKey:    straddle.String("xxxxxxxxxx"),
+			RequestID:         straddle.String("Request-Id"),
+			StraddleAccountID: straddle.String("182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e"),
 		},
 	)
 	if err != nil {

@@ -10,64 +10,65 @@ import (
 
 	"github.com/stainless-sdks/straddle-go/internal/apijson"
 	"github.com/stainless-sdks/straddle-go/internal/requestconfig"
+	"github.com/stainless-sdks/straddle-go/packages/param"
+	"github.com/stainless-sdks/straddle-go/packages/respjson"
 )
 
+// aliased to make [param.APIUnion] private when embedding
+type paramUnion = param.APIUnion
+
+// aliased to make [param.APIObject] private when embedding
+type paramObj = param.APIObject
+
 type PageNumberSchemaMeta struct {
-	MaxPageSize int64                    `json:"max_page_size"`
-	PageNumber  int64                    `json:"page_number"`
-	PageSize    int64                    `json:"page_size"`
-	TotalItems  int64                    `json:"total_items"`
-	JSON        pageNumberSchemaMetaJSON `json:"-"`
+	MaxPageSize int64 `json:"max_page_size"`
+	PageNumber  int64 `json:"page_number"`
+	PageSize    int64 `json:"page_size"`
+	TotalItems  int64 `json:"total_items"`
+	// JSON contains metadata for fields, check presence with [respjson.Field.Valid].
+	JSON struct {
+		MaxPageSize respjson.Field
+		PageNumber  respjson.Field
+		PageSize    respjson.Field
+		TotalItems  respjson.Field
+		ExtraFields map[string]respjson.Field
+		raw         string
+	} `json:"-"`
 }
 
-// pageNumberSchemaMetaJSON contains the JSON metadata for the struct
-// [PageNumberSchemaMeta]
-type pageNumberSchemaMetaJSON struct {
-	MaxPageSize apijson.Field
-	PageNumber  apijson.Field
-	PageSize    apijson.Field
-	TotalItems  apijson.Field
-	raw         string
-	ExtraFields map[string]apijson.Field
-}
-
-func (r *PageNumberSchemaMeta) UnmarshalJSON(data []byte) (err error) {
+// Returns the unmodified JSON received from the API
+func (r PageNumberSchemaMeta) RawJSON() string { return r.JSON.raw }
+func (r *PageNumberSchemaMeta) UnmarshalJSON(data []byte) error {
 	return apijson.UnmarshalRoot(data, r)
-}
-
-func (r pageNumberSchemaMetaJSON) RawJSON() string {
-	return r.raw
 }
 
 type PageNumberSchema[T any] struct {
 	Data []T                  `json:"data"`
 	Meta PageNumberSchemaMeta `json:"meta"`
-	JSON pageNumberSchemaJSON `json:"-"`
-	cfg  *requestconfig.RequestConfig
-	res  *http.Response
+	// JSON contains metadata for fields, check presence with [respjson.Field.Valid].
+	JSON struct {
+		Data        respjson.Field
+		Meta        respjson.Field
+		ExtraFields map[string]respjson.Field
+		raw         string
+	} `json:"-"`
+	cfg *requestconfig.RequestConfig
+	res *http.Response
 }
 
-// pageNumberSchemaJSON contains the JSON metadata for the struct
-// [PageNumberSchema[T]]
-type pageNumberSchemaJSON struct {
-	Data        apijson.Field
-	Meta        apijson.Field
-	raw         string
-	ExtraFields map[string]apijson.Field
-}
-
-func (r *PageNumberSchema[T]) UnmarshalJSON(data []byte) (err error) {
+// Returns the unmodified JSON received from the API
+func (r PageNumberSchema[T]) RawJSON() string { return r.JSON.raw }
+func (r *PageNumberSchema[T]) UnmarshalJSON(data []byte) error {
 	return apijson.UnmarshalRoot(data, r)
-}
-
-func (r pageNumberSchemaJSON) RawJSON() string {
-	return r.raw
 }
 
 // GetNextPage returns the next page as defined by this pagination style. When
 // there is no next page, this function will return a 'nil' for the page value, but
 // will not return an error
 func (r *PageNumberSchema[T]) GetNextPage() (res *PageNumberSchema[T], err error) {
+	if len(r.Data) == 0 {
+		return nil, nil
+	}
 	u := r.cfg.Request.URL
 	currentPage, err := strconv.ParseInt(u.Query().Get("page_number"), 10, 64)
 	if err != nil {
@@ -102,6 +103,7 @@ type PageNumberSchemaAutoPager[T any] struct {
 	idx  int
 	run  int
 	err  error
+	paramObj
 }
 
 func NewPageNumberSchemaAutoPager[T any](page *PageNumberSchema[T], err error) *PageNumberSchemaAutoPager[T] {

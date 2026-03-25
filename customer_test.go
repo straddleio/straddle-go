@@ -27,29 +27,38 @@ func TestCustomerNewWithOptionalParams(t *testing.T) {
 		option.WithAPIKey("My API Key"),
 	)
 	_, err := client.Customers.New(context.TODO(), straddle.CustomerNewParams{
-		Device: straddle.F(straddle.DeviceUnmaskedV1Param{
-			IPAddress: straddle.F("192.168.1.1"),
-		}),
-		Email: straddle.F("ron.swanson@pawnee.com"),
-		Name:  straddle.F("Ron Swanson"),
-		Phone: straddle.F("+12128675309"),
-		Type:  straddle.F(straddle.CustomerNewParamsTypeIndividual),
-		Address: straddle.F(straddle.CustomerAddressV1Param{
-			Address1: straddle.F("123 Main St"),
-			City:     straddle.F("Anytown"),
-			State:    straddle.F("CA"),
-			Zip:      straddle.F("94105"),
-			Address2: straddle.F("Apt 1"),
-		}),
-		ComplianceProfile: straddle.F[straddle.CustomerNewParamsComplianceProfileUnion](straddle.CustomerNewParamsComplianceProfileIndividualComplianceProfile{
-			Dob: straddle.F(time.Now()),
-			Ssn: straddle.F("123-45-6789"),
-		}),
-		ExternalID:        straddle.F("customer_123"),
-		Metadata:          straddle.F(map[string]string{}),
-		CorrelationID:     straddle.F("Correlation-Id"),
-		RequestID:         straddle.F("Request-Id"),
-		StraddleAccountID: straddle.F("182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e"),
+		Device: straddle.DeviceUnmaskedV1Param{
+			IPAddress: "192.168.1.1",
+		},
+		Email: "ron.swanson@pawnee.com",
+		Name:  "Ron Swanson",
+		Phone: "+12128675309",
+		Type:  straddle.CustomerNewParamsTypeIndividual,
+		Address: straddle.CustomerAddressV1Param{
+			Address1: "123 Main St",
+			City:     "Anytown",
+			State:    "CA",
+			Zip:      "12345",
+			Address2: straddle.String("Apt 1"),
+		},
+		ComplianceProfile: straddle.CustomerNewParamsComplianceProfileUnion{
+			OfIndividualComplianceProfile: &straddle.CustomerNewParamsComplianceProfileIndividualComplianceProfile{
+				Dob: straddle.Time(time.Now()),
+				Ssn: straddle.String("123-45-6789"),
+			},
+		},
+		Config: straddle.CustomerNewParamsConfig{
+			ProcessingMethod: "inline",
+			SandboxOutcome:   "standard",
+		},
+		ExternalID: straddle.String("customer_123"),
+		Metadata: map[string]string{
+			"foo": "string",
+		},
+		CorrelationID:     straddle.String("Correlation-Id"),
+		IdempotencyKey:    straddle.String("xxxxxxxxxx"),
+		RequestID:         straddle.String("Request-Id"),
+		StraddleAccountID: straddle.String("182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e"),
 	})
 	if err != nil {
 		var apierr *straddle.Error
@@ -76,31 +85,34 @@ func TestCustomerUpdateWithOptionalParams(t *testing.T) {
 		context.TODO(),
 		"182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e",
 		straddle.CustomerUpdateParams{
-			Device: straddle.F(straddle.DeviceUnmaskedV1Param{
-				IPAddress: straddle.F("192.168.1.1"),
-			}),
-			Email:  straddle.F("dev@stainless.com"),
-			Name:   straddle.F("name"),
-			Phone:  straddle.F("+46991022"),
-			Status: straddle.F(straddle.CustomerUpdateParamsStatusPending),
-			Address: straddle.F(straddle.CustomerAddressV1Param{
-				Address1: straddle.F("123 Main St"),
-				City:     straddle.F("Anytown"),
-				State:    straddle.F("CA"),
-				Zip:      straddle.F("12345"),
-				Address2: straddle.F("Apt 1"),
-			}),
-			ComplianceProfile: straddle.F[straddle.CustomerUpdateParamsComplianceProfileUnion](straddle.CustomerUpdateParamsComplianceProfileIndividualComplianceProfile{
-				Dob: straddle.F(time.Now()),
-				Ssn: straddle.F("123-45-6789"),
-			}),
-			ExternalID: straddle.F("external_id"),
-			Metadata: straddle.F(map[string]string{
+			Device: straddle.DeviceUnmaskedV1Param{
+				IPAddress: "192.168.1.1",
+			},
+			Email:  "dev@stainless.com",
+			Name:   "name",
+			Phone:  "+46991022",
+			Status: straddle.CustomerUpdateParamsStatusPending,
+			Address: straddle.CustomerAddressV1Param{
+				Address1: "123 Main St",
+				City:     "Anytown",
+				State:    "CA",
+				Zip:      "12345",
+				Address2: straddle.String("Apt 1"),
+			},
+			ComplianceProfile: straddle.CustomerUpdateParamsComplianceProfileUnion{
+				OfIndividualComplianceProfile: &straddle.CustomerUpdateParamsComplianceProfileIndividualComplianceProfile{
+					Dob: straddle.Time(time.Now()),
+					Ssn: straddle.String("123-45-6789"),
+				},
+			},
+			ExternalID: straddle.String("external_id"),
+			Metadata: map[string]string{
 				"foo": "string",
-			}),
-			CorrelationID:     straddle.F("Correlation-Id"),
-			RequestID:         straddle.F("Request-Id"),
-			StraddleAccountID: straddle.F("182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e"),
+			},
+			CorrelationID:     straddle.String("Correlation-Id"),
+			IdempotencyKey:    straddle.String("xxxxxxxxxx"),
+			RequestID:         straddle.String("Request-Id"),
+			StraddleAccountID: straddle.String("182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e"),
 		},
 	)
 	if err != nil {
@@ -125,21 +137,21 @@ func TestCustomerListWithOptionalParams(t *testing.T) {
 		option.WithAPIKey("My API Key"),
 	)
 	_, err := client.Customers.List(context.TODO(), straddle.CustomerListParams{
-		CreatedFrom:       straddle.F(time.Now()),
-		CreatedTo:         straddle.F(time.Now()),
-		Email:             straddle.F("email"),
-		ExternalID:        straddle.F("external_id"),
-		Name:              straddle.F("name"),
-		PageNumber:        straddle.F(int64(0)),
-		PageSize:          straddle.F(int64(0)),
-		SearchText:        straddle.F("search_text"),
-		SortBy:            straddle.F(straddle.CustomerListParamsSortByName),
-		SortOrder:         straddle.F(straddle.CustomerListParamsSortOrderAsc),
-		Status:            straddle.F([]straddle.CustomerListParamsStatus{straddle.CustomerListParamsStatusPending}),
-		Types:             straddle.F([]straddle.CustomerListParamsType{straddle.CustomerListParamsTypeIndividual}),
-		CorrelationID:     straddle.F("Correlation-Id"),
-		RequestID:         straddle.F("Request-Id"),
-		StraddleAccountID: straddle.F("182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e"),
+		CreatedFrom:       straddle.Time(time.Now()),
+		CreatedTo:         straddle.Time(time.Now()),
+		Email:             straddle.String("email"),
+		ExternalID:        straddle.String("external_id"),
+		Name:              straddle.String("name"),
+		PageNumber:        straddle.Int(0),
+		PageSize:          straddle.Int(0),
+		SearchText:        straddle.String("search_text"),
+		SortBy:            straddle.CustomerListParamsSortByName,
+		SortOrder:         straddle.CustomerListParamsSortOrderAsc,
+		Status:            []string{"pending"},
+		Types:             []string{"individual"},
+		CorrelationID:     straddle.String("Correlation-Id"),
+		RequestID:         straddle.String("Request-Id"),
+		StraddleAccountID: straddle.String("182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e"),
 	})
 	if err != nil {
 		var apierr *straddle.Error
@@ -166,9 +178,10 @@ func TestCustomerDeleteWithOptionalParams(t *testing.T) {
 		context.TODO(),
 		"182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e",
 		straddle.CustomerDeleteParams{
-			CorrelationID:     straddle.F("Correlation-Id"),
-			RequestID:         straddle.F("Request-Id"),
-			StraddleAccountID: straddle.F("182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e"),
+			CorrelationID:     straddle.String("Correlation-Id"),
+			IdempotencyKey:    straddle.String("xxxxxxxxxx"),
+			RequestID:         straddle.String("Request-Id"),
+			StraddleAccountID: straddle.String("182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e"),
 		},
 	)
 	if err != nil {
@@ -196,39 +209,9 @@ func TestCustomerGetWithOptionalParams(t *testing.T) {
 		context.TODO(),
 		"182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e",
 		straddle.CustomerGetParams{
-			CorrelationID:     straddle.F("Correlation-Id"),
-			RequestID:         straddle.F("Request-Id"),
-			StraddleAccountID: straddle.F("182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e"),
-		},
-	)
-	if err != nil {
-		var apierr *straddle.Error
-		if errors.As(err, &apierr) {
-			t.Log(string(apierr.DumpRequest(true)))
-		}
-		t.Fatalf("err should be nil: %s", err.Error())
-	}
-}
-
-func TestCustomerRefreshReviewWithOptionalParams(t *testing.T) {
-	baseURL := "http://localhost:4010"
-	if envURL, ok := os.LookupEnv("TEST_API_BASE_URL"); ok {
-		baseURL = envURL
-	}
-	if !testutil.CheckTestServer(t, baseURL) {
-		return
-	}
-	client := straddle.NewClient(
-		option.WithBaseURL(baseURL),
-		option.WithAPIKey("My API Key"),
-	)
-	_, err := client.Customers.RefreshReview(
-		context.TODO(),
-		"182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e",
-		straddle.CustomerRefreshReviewParams{
-			CorrelationID:     straddle.F("Correlation-Id"),
-			RequestID:         straddle.F("Request-Id"),
-			StraddleAccountID: straddle.F("182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e"),
+			CorrelationID:     straddle.String("Correlation-Id"),
+			RequestID:         straddle.String("Request-Id"),
+			StraddleAccountID: straddle.String("182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e"),
 		},
 	)
 	if err != nil {
@@ -256,9 +239,9 @@ func TestCustomerUnmaskedWithOptionalParams(t *testing.T) {
 		context.TODO(),
 		"182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e",
 		straddle.CustomerUnmaskedParams{
-			CorrelationID:     straddle.F("Correlation-Id"),
-			RequestID:         straddle.F("Request-Id"),
-			StraddleAccountID: straddle.F("182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e"),
+			CorrelationID:     straddle.String("Correlation-Id"),
+			RequestID:         straddle.String("Request-Id"),
+			StraddleAccountID: straddle.String("182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e"),
 		},
 	)
 	if err != nil {

@@ -8,17 +8,24 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"slices"
 	"time"
 
 	"github.com/stainless-sdks/straddle-go/internal/apijson"
 	"github.com/stainless-sdks/straddle-go/internal/apiquery"
-	"github.com/stainless-sdks/straddle-go/internal/param"
 	"github.com/stainless-sdks/straddle-go/internal/requestconfig"
 	"github.com/stainless-sdks/straddle-go/option"
 	"github.com/stainless-sdks/straddle-go/packages/pagination"
+	"github.com/stainless-sdks/straddle-go/packages/param"
+	"github.com/stainless-sdks/straddle-go/packages/respjson"
 	"github.com/stainless-sdks/straddle-go/shared"
 )
 
+// Capabilities enable specific features and services for an Account. Use
+// capability requests to unlock higher processing limits, new payment types, or
+// additional platform features as your users' businesses grow. Track approval
+// status and manage documentation requirements through a single interface.
+//
 // EmbedAccountCapabilityRequestService contains methods and other services that
 // help with interacting with the straddle API.
 //
@@ -26,35 +33,38 @@ import (
 // automatically. You should not instantiate this service directly, and instead use
 // the [NewEmbedAccountCapabilityRequestService] method instead.
 type EmbedAccountCapabilityRequestService struct {
-	Options []option.RequestOption
+	options []option.RequestOption
 }
 
 // NewEmbedAccountCapabilityRequestService generates a new service that applies the
 // given options to each request. These options are applied after the parent
 // client's options (if there is one), and before any request-specific options.
-func NewEmbedAccountCapabilityRequestService(opts ...option.RequestOption) (r *EmbedAccountCapabilityRequestService) {
-	r = &EmbedAccountCapabilityRequestService{}
-	r.Options = opts
+func NewEmbedAccountCapabilityRequestService(opts ...option.RequestOption) (r EmbedAccountCapabilityRequestService) {
+	r = EmbedAccountCapabilityRequestService{}
+	r.options = opts
 	return
 }
 
 // Submits a request to enable a specific capability for an account. Use this
 // endpoint to request additional features or services for an account.
 func (r *EmbedAccountCapabilityRequestService) New(ctx context.Context, accountID string, params EmbedAccountCapabilityRequestNewParams, opts ...option.RequestOption) (res *CapabilityRequestPagedV1, err error) {
-	if params.CorrelationID.Present {
-		opts = append(opts, option.WithHeader("correlation-id", fmt.Sprintf("%s", params.CorrelationID)))
+	if !param.IsOmitted(params.CorrelationID) {
+		opts = append(opts, option.WithHeader("correlation-id", fmt.Sprintf("%v", params.CorrelationID.Value)))
 	}
-	if params.RequestID.Present {
-		opts = append(opts, option.WithHeader("request-id", fmt.Sprintf("%s", params.RequestID)))
+	if !param.IsOmitted(params.IdempotencyKey) {
+		opts = append(opts, option.WithHeader("idempotency-key", fmt.Sprintf("%v", params.IdempotencyKey.Value)))
 	}
-	opts = append(r.Options[:], opts...)
+	if !param.IsOmitted(params.RequestID) {
+		opts = append(opts, option.WithHeader("request-id", fmt.Sprintf("%v", params.RequestID.Value)))
+	}
+	opts = slices.Concat(r.options, opts)
 	if accountID == "" {
 		err = errors.New("missing required account_id parameter")
-		return
+		return nil, err
 	}
 	path := fmt.Sprintf("v1/accounts/%s/capability_requests", accountID)
 	err = requestconfig.ExecuteNewRequest(ctx, http.MethodPost, path, params, &res, opts...)
-	return
+	return res, err
 }
 
 // Retrieves a list of capability requests associated with an account. The requests
@@ -62,17 +72,17 @@ func (r *EmbedAccountCapabilityRequestService) New(ctx context.Context, accountI
 // first. This endpoint supports advanced sorting and filtering options.
 func (r *EmbedAccountCapabilityRequestService) List(ctx context.Context, accountID string, params EmbedAccountCapabilityRequestListParams, opts ...option.RequestOption) (res *pagination.PageNumberSchema[CapabilityRequestPagedV1Data], err error) {
 	var raw *http.Response
-	if params.CorrelationID.Present {
-		opts = append(opts, option.WithHeader("correlation-id", fmt.Sprintf("%s", params.CorrelationID)))
+	if !param.IsOmitted(params.CorrelationID) {
+		opts = append(opts, option.WithHeader("correlation-id", fmt.Sprintf("%v", params.CorrelationID.Value)))
 	}
-	if params.RequestID.Present {
-		opts = append(opts, option.WithHeader("request-id", fmt.Sprintf("%s", params.RequestID)))
+	if !param.IsOmitted(params.RequestID) {
+		opts = append(opts, option.WithHeader("request-id", fmt.Sprintf("%v", params.RequestID.Value)))
 	}
-	opts = append(r.Options[:], opts...)
+	opts = slices.Concat(r.options, opts)
 	opts = append([]option.RequestOption{option.WithResponseInto(&raw)}, opts...)
 	if accountID == "" {
 		err = errors.New("missing required account_id parameter")
-		return
+		return nil, err
 	}
 	path := fmt.Sprintf("v1/accounts/%s/capability_requests", accountID)
 	cfg, err := requestconfig.NewRequestConfig(ctx, http.MethodGet, path, params, &res, opts...)
@@ -95,10 +105,10 @@ func (r *EmbedAccountCapabilityRequestService) ListAutoPaging(ctx context.Contex
 }
 
 type CapabilityRequestPagedV1 struct {
-	Data []CapabilityRequestPagedV1Data `json:"data,required"`
+	Data []CapabilityRequestPagedV1Data `json:"data" api:"required"`
 	// Metadata about the API request, including an identifier, timestamp, and
 	// pagination details.
-	Meta shared.PagedResponseMetadata `json:"meta,required"`
+	Meta shared.PagedResponseMetadata `json:"meta" api:"required"`
 	// Indicates the structure of the returned content.
 	//
 	//   - "object" means the `data` field contains a single JSON object.
@@ -106,130 +116,73 @@ type CapabilityRequestPagedV1 struct {
 	//   - "error" means the `data` field contains an error object with details of the
 	//     issue.
 	//   - "none" means no data is returned.
-	ResponseType CapabilityRequestPagedV1ResponseType `json:"response_type,required"`
-	JSON         capabilityRequestPagedV1JSON         `json:"-"`
+	//
+	// Any of "object", "array", "error", "none".
+	ResponseType CapabilityRequestPagedV1ResponseType `json:"response_type" api:"required"`
+	// JSON contains metadata for fields, check presence with [respjson.Field.Valid].
+	JSON struct {
+		Data         respjson.Field
+		Meta         respjson.Field
+		ResponseType respjson.Field
+		ExtraFields  map[string]respjson.Field
+		raw          string
+	} `json:"-"`
 }
 
-// capabilityRequestPagedV1JSON contains the JSON metadata for the struct
-// [CapabilityRequestPagedV1]
-type capabilityRequestPagedV1JSON struct {
-	Data         apijson.Field
-	Meta         apijson.Field
-	ResponseType apijson.Field
-	raw          string
-	ExtraFields  map[string]apijson.Field
-}
-
-func (r *CapabilityRequestPagedV1) UnmarshalJSON(data []byte) (err error) {
+// Returns the unmodified JSON received from the API
+func (r CapabilityRequestPagedV1) RawJSON() string { return r.JSON.raw }
+func (r *CapabilityRequestPagedV1) UnmarshalJSON(data []byte) error {
 	return apijson.UnmarshalRoot(data, r)
-}
-
-func (r capabilityRequestPagedV1JSON) RawJSON() string {
-	return r.raw
 }
 
 type CapabilityRequestPagedV1Data struct {
 	// Unique identifier for the capability request.
-	ID string `json:"id,required" format:"uuid"`
+	ID string `json:"id" api:"required" format:"uuid"`
 	// The unique identifier of the account associated with this capability request.
-	AccountID string `json:"account_id,required" format:"uuid"`
+	AccountID string `json:"account_id" api:"required" format:"uuid"`
 	// The category of the requested capability. Use `payment_type` for charges and
 	// payouts, `customer_type` to define `individuals` or `businesses`, and
 	// `consent_type` for `signed_agreement` or `internet` payment authorization.
-	Category CapabilityRequestPagedV1DataCategory `json:"category,required"`
+	//
+	// Any of "payment_type", "customer_type", "consent_type".
+	Category string `json:"category" api:"required"`
 	// Timestamp of when the capability request was created.
-	CreatedAt time.Time `json:"created_at,required" format:"date-time"`
+	CreatedAt time.Time `json:"created_at" api:"required" format:"date-time"`
+	// Whether this capability request is to enable or disable the capability.
+	Enable bool `json:"enable" api:"required"`
 	// The current status of the capability request.
-	Status CapabilityRequestPagedV1DataStatus `json:"status,required"`
+	//
+	// Any of "active", "inactive", "in_review", "rejected", "approved", "reviewing".
+	Status string `json:"status" api:"required"`
 	// The specific type of capability being requested within the category.
-	Type CapabilityRequestPagedV1DataType `json:"type,required"`
+	//
+	// Any of "charges", "payouts", "individuals", "businesses", "signed_agreement",
+	// "internet".
+	Type string `json:"type" api:"required"`
 	// Timestamp of the most recent update to the capability request.
-	UpdatedAt time.Time `json:"updated_at,required" format:"date-time"`
+	UpdatedAt time.Time `json:"updated_at" api:"required" format:"date-time"`
 	// Any specific settings or configurations related to the requested capability.
-	Settings map[string]interface{}           `json:"settings,nullable"`
-	JSON     capabilityRequestPagedV1DataJSON `json:"-"`
+	Settings map[string]any `json:"settings" api:"nullable"`
+	// JSON contains metadata for fields, check presence with [respjson.Field.Valid].
+	JSON struct {
+		ID          respjson.Field
+		AccountID   respjson.Field
+		Category    respjson.Field
+		CreatedAt   respjson.Field
+		Enable      respjson.Field
+		Status      respjson.Field
+		Type        respjson.Field
+		UpdatedAt   respjson.Field
+		Settings    respjson.Field
+		ExtraFields map[string]respjson.Field
+		raw         string
+	} `json:"-"`
 }
 
-// capabilityRequestPagedV1DataJSON contains the JSON metadata for the struct
-// [CapabilityRequestPagedV1Data]
-type capabilityRequestPagedV1DataJSON struct {
-	ID          apijson.Field
-	AccountID   apijson.Field
-	Category    apijson.Field
-	CreatedAt   apijson.Field
-	Status      apijson.Field
-	Type        apijson.Field
-	UpdatedAt   apijson.Field
-	Settings    apijson.Field
-	raw         string
-	ExtraFields map[string]apijson.Field
-}
-
-func (r *CapabilityRequestPagedV1Data) UnmarshalJSON(data []byte) (err error) {
+// Returns the unmodified JSON received from the API
+func (r CapabilityRequestPagedV1Data) RawJSON() string { return r.JSON.raw }
+func (r *CapabilityRequestPagedV1Data) UnmarshalJSON(data []byte) error {
 	return apijson.UnmarshalRoot(data, r)
-}
-
-func (r capabilityRequestPagedV1DataJSON) RawJSON() string {
-	return r.raw
-}
-
-// The category of the requested capability. Use `payment_type` for charges and
-// payouts, `customer_type` to define `individuals` or `businesses`, and
-// `consent_type` for `signed_agreement` or `internet` payment authorization.
-type CapabilityRequestPagedV1DataCategory string
-
-const (
-	CapabilityRequestPagedV1DataCategoryPaymentType  CapabilityRequestPagedV1DataCategory = "payment_type"
-	CapabilityRequestPagedV1DataCategoryCustomerType CapabilityRequestPagedV1DataCategory = "customer_type"
-	CapabilityRequestPagedV1DataCategoryConsentType  CapabilityRequestPagedV1DataCategory = "consent_type"
-)
-
-func (r CapabilityRequestPagedV1DataCategory) IsKnown() bool {
-	switch r {
-	case CapabilityRequestPagedV1DataCategoryPaymentType, CapabilityRequestPagedV1DataCategoryCustomerType, CapabilityRequestPagedV1DataCategoryConsentType:
-		return true
-	}
-	return false
-}
-
-// The current status of the capability request.
-type CapabilityRequestPagedV1DataStatus string
-
-const (
-	CapabilityRequestPagedV1DataStatusActive    CapabilityRequestPagedV1DataStatus = "active"
-	CapabilityRequestPagedV1DataStatusInactive  CapabilityRequestPagedV1DataStatus = "inactive"
-	CapabilityRequestPagedV1DataStatusInReview  CapabilityRequestPagedV1DataStatus = "in_review"
-	CapabilityRequestPagedV1DataStatusRejected  CapabilityRequestPagedV1DataStatus = "rejected"
-	CapabilityRequestPagedV1DataStatusApproved  CapabilityRequestPagedV1DataStatus = "approved"
-	CapabilityRequestPagedV1DataStatusReviewing CapabilityRequestPagedV1DataStatus = "reviewing"
-)
-
-func (r CapabilityRequestPagedV1DataStatus) IsKnown() bool {
-	switch r {
-	case CapabilityRequestPagedV1DataStatusActive, CapabilityRequestPagedV1DataStatusInactive, CapabilityRequestPagedV1DataStatusInReview, CapabilityRequestPagedV1DataStatusRejected, CapabilityRequestPagedV1DataStatusApproved, CapabilityRequestPagedV1DataStatusReviewing:
-		return true
-	}
-	return false
-}
-
-// The specific type of capability being requested within the category.
-type CapabilityRequestPagedV1DataType string
-
-const (
-	CapabilityRequestPagedV1DataTypeCharges         CapabilityRequestPagedV1DataType = "charges"
-	CapabilityRequestPagedV1DataTypePayouts         CapabilityRequestPagedV1DataType = "payouts"
-	CapabilityRequestPagedV1DataTypeIndividuals     CapabilityRequestPagedV1DataType = "individuals"
-	CapabilityRequestPagedV1DataTypeBusinesses      CapabilityRequestPagedV1DataType = "businesses"
-	CapabilityRequestPagedV1DataTypeSignedAgreement CapabilityRequestPagedV1DataType = "signed_agreement"
-	CapabilityRequestPagedV1DataTypeInternet        CapabilityRequestPagedV1DataType = "internet"
-)
-
-func (r CapabilityRequestPagedV1DataType) IsKnown() bool {
-	switch r {
-	case CapabilityRequestPagedV1DataTypeCharges, CapabilityRequestPagedV1DataTypePayouts, CapabilityRequestPagedV1DataTypeIndividuals, CapabilityRequestPagedV1DataTypeBusinesses, CapabilityRequestPagedV1DataTypeSignedAgreement, CapabilityRequestPagedV1DataTypeInternet:
-		return true
-	}
-	return false
 }
 
 // Indicates the structure of the returned content.
@@ -248,133 +201,185 @@ const (
 	CapabilityRequestPagedV1ResponseTypeNone   CapabilityRequestPagedV1ResponseType = "none"
 )
 
-func (r CapabilityRequestPagedV1ResponseType) IsKnown() bool {
-	switch r {
-	case CapabilityRequestPagedV1ResponseTypeObject, CapabilityRequestPagedV1ResponseTypeArray, CapabilityRequestPagedV1ResponseTypeError, CapabilityRequestPagedV1ResponseTypeNone:
-		return true
-	}
-	return false
-}
-
 type EmbedAccountCapabilityRequestNewParams struct {
+	CorrelationID  param.Opt[string] `header:"correlation-id,omitzero" json:"-"`
+	IdempotencyKey param.Opt[string] `header:"idempotency-key,omitzero" json:"-"`
+	RequestID      param.Opt[string] `header:"request-id,omitzero" json:"-"`
 	// Allows the account to accept payments from businesses.
-	Businesses param.Field[EmbedAccountCapabilityRequestNewParamsBusinesses] `json:"businesses"`
+	Businesses EmbedAccountCapabilityRequestNewParamsBusinesses `json:"businesses,omitzero"`
 	// The charges capability settings for the account.
-	Charges param.Field[EmbedAccountCapabilityRequestNewParamsCharges] `json:"charges"`
+	Charges EmbedAccountCapabilityRequestNewParamsCharges `json:"charges,omitzero"`
 	// Allows the account to accept payments from individuals.
-	Individuals param.Field[EmbedAccountCapabilityRequestNewParamsIndividuals] `json:"individuals"`
+	Individuals EmbedAccountCapabilityRequestNewParamsIndividuals `json:"individuals,omitzero"`
 	// Allows the account to accept payments authorized via the internet or mobile
 	// applications.
-	Internet param.Field[EmbedAccountCapabilityRequestNewParamsInternet] `json:"internet"`
+	Internet EmbedAccountCapabilityRequestNewParamsInternet `json:"internet,omitzero"`
 	// The payouts capability settings for the account.
-	Payouts param.Field[EmbedAccountCapabilityRequestNewParamsPayouts] `json:"payouts"`
+	Payouts EmbedAccountCapabilityRequestNewParamsPayouts `json:"payouts,omitzero"`
 	// Allows the account to accept payments authorized by signed agreements or
 	// contracts.
-	SignedAgreement param.Field[EmbedAccountCapabilityRequestNewParamsSignedAgreement] `json:"signed_agreement"`
-	CorrelationID   param.Field[string]                                                `header:"correlation-id"`
-	RequestID       param.Field[string]                                                `header:"request-id"`
+	SignedAgreement EmbedAccountCapabilityRequestNewParamsSignedAgreement `json:"signed_agreement,omitzero"`
+	paramObj
 }
 
 func (r EmbedAccountCapabilityRequestNewParams) MarshalJSON() (data []byte, err error) {
-	return apijson.MarshalRoot(r)
+	type shadow EmbedAccountCapabilityRequestNewParams
+	return param.MarshalObject(r, (*shadow)(&r))
+}
+func (r *EmbedAccountCapabilityRequestNewParams) UnmarshalJSON(data []byte) error {
+	return apijson.UnmarshalRoot(data, r)
 }
 
 // Allows the account to accept payments from businesses.
+//
+// The property Enable is required.
 type EmbedAccountCapabilityRequestNewParamsBusinesses struct {
-	Enable param.Field[bool] `json:"enable,required"`
+	Enable bool `json:"enable" api:"required"`
+	paramObj
 }
 
 func (r EmbedAccountCapabilityRequestNewParamsBusinesses) MarshalJSON() (data []byte, err error) {
-	return apijson.MarshalRoot(r)
+	type shadow EmbedAccountCapabilityRequestNewParamsBusinesses
+	return param.MarshalObject(r, (*shadow)(&r))
+}
+func (r *EmbedAccountCapabilityRequestNewParamsBusinesses) UnmarshalJSON(data []byte) error {
+	return apijson.UnmarshalRoot(data, r)
 }
 
 // The charges capability settings for the account.
+//
+// The properties DailyAmount, Enable, MaxAmount, MonthlyAmount, MonthlyCount are
+// required.
 type EmbedAccountCapabilityRequestNewParamsCharges struct {
 	// The maximum dollar amount of charges in a calendar day.
-	DailyAmount param.Field[float64] `json:"daily_amount,required"`
+	DailyAmount float64 `json:"daily_amount" api:"required"`
 	// Determines whether `charges` are enabled for the account.
-	Enable param.Field[bool] `json:"enable,required"`
+	Enable bool `json:"enable" api:"required"`
 	// The maximum amount of a single charge.
-	MaxAmount param.Field[float64] `json:"max_amount,required"`
+	MaxAmount float64 `json:"max_amount" api:"required"`
 	// The maximum dollar amount of charges in a calendar month.
-	MonthlyAmount param.Field[float64] `json:"monthly_amount,required"`
+	MonthlyAmount float64 `json:"monthly_amount" api:"required"`
 	// The maximum number of charges in a calendar month.
-	MonthlyCount param.Field[int64] `json:"monthly_count,required"`
+	MonthlyCount int64 `json:"monthly_count" api:"required"`
+	paramObj
 }
 
 func (r EmbedAccountCapabilityRequestNewParamsCharges) MarshalJSON() (data []byte, err error) {
-	return apijson.MarshalRoot(r)
+	type shadow EmbedAccountCapabilityRequestNewParamsCharges
+	return param.MarshalObject(r, (*shadow)(&r))
+}
+func (r *EmbedAccountCapabilityRequestNewParamsCharges) UnmarshalJSON(data []byte) error {
+	return apijson.UnmarshalRoot(data, r)
 }
 
 // Allows the account to accept payments from individuals.
+//
+// The property Enable is required.
 type EmbedAccountCapabilityRequestNewParamsIndividuals struct {
-	Enable param.Field[bool] `json:"enable,required"`
+	Enable bool `json:"enable" api:"required"`
+	paramObj
 }
 
 func (r EmbedAccountCapabilityRequestNewParamsIndividuals) MarshalJSON() (data []byte, err error) {
-	return apijson.MarshalRoot(r)
+	type shadow EmbedAccountCapabilityRequestNewParamsIndividuals
+	return param.MarshalObject(r, (*shadow)(&r))
+}
+func (r *EmbedAccountCapabilityRequestNewParamsIndividuals) UnmarshalJSON(data []byte) error {
+	return apijson.UnmarshalRoot(data, r)
 }
 
 // Allows the account to accept payments authorized via the internet or mobile
 // applications.
+//
+// The property Enable is required.
 type EmbedAccountCapabilityRequestNewParamsInternet struct {
-	Enable param.Field[bool] `json:"enable,required"`
+	Enable bool `json:"enable" api:"required"`
+	paramObj
 }
 
 func (r EmbedAccountCapabilityRequestNewParamsInternet) MarshalJSON() (data []byte, err error) {
-	return apijson.MarshalRoot(r)
+	type shadow EmbedAccountCapabilityRequestNewParamsInternet
+	return param.MarshalObject(r, (*shadow)(&r))
+}
+func (r *EmbedAccountCapabilityRequestNewParamsInternet) UnmarshalJSON(data []byte) error {
+	return apijson.UnmarshalRoot(data, r)
 }
 
 // The payouts capability settings for the account.
+//
+// The properties DailyAmount, Enable, MaxAmount, MonthlyAmount, MonthlyCount are
+// required.
 type EmbedAccountCapabilityRequestNewParamsPayouts struct {
 	// The maximum dollar amount of payouts in a day.
-	DailyAmount param.Field[float64] `json:"daily_amount,required"`
+	DailyAmount float64 `json:"daily_amount" api:"required"`
 	// Determines whether `payouts` are enabled for the account.
-	Enable param.Field[bool] `json:"enable,required"`
+	Enable bool `json:"enable" api:"required"`
 	// The maximum amount of a single payout.
-	MaxAmount param.Field[float64] `json:"max_amount,required"`
+	MaxAmount float64 `json:"max_amount" api:"required"`
 	// The maximum dollar amount of payouts in a month.
-	MonthlyAmount param.Field[float64] `json:"monthly_amount,required"`
+	MonthlyAmount float64 `json:"monthly_amount" api:"required"`
 	// The maximum number of payouts in a month.
-	MonthlyCount param.Field[int64] `json:"monthly_count,required"`
+	MonthlyCount int64 `json:"monthly_count" api:"required"`
+	paramObj
 }
 
 func (r EmbedAccountCapabilityRequestNewParamsPayouts) MarshalJSON() (data []byte, err error) {
-	return apijson.MarshalRoot(r)
+	type shadow EmbedAccountCapabilityRequestNewParamsPayouts
+	return param.MarshalObject(r, (*shadow)(&r))
+}
+func (r *EmbedAccountCapabilityRequestNewParamsPayouts) UnmarshalJSON(data []byte) error {
+	return apijson.UnmarshalRoot(data, r)
 }
 
 // Allows the account to accept payments authorized by signed agreements or
 // contracts.
+//
+// The property Enable is required.
 type EmbedAccountCapabilityRequestNewParamsSignedAgreement struct {
-	Enable param.Field[bool] `json:"enable,required"`
+	Enable bool `json:"enable" api:"required"`
+	paramObj
 }
 
 func (r EmbedAccountCapabilityRequestNewParamsSignedAgreement) MarshalJSON() (data []byte, err error) {
-	return apijson.MarshalRoot(r)
+	type shadow EmbedAccountCapabilityRequestNewParamsSignedAgreement
+	return param.MarshalObject(r, (*shadow)(&r))
+}
+func (r *EmbedAccountCapabilityRequestNewParamsSignedAgreement) UnmarshalJSON(data []byte) error {
+	return apijson.UnmarshalRoot(data, r)
 }
 
 type EmbedAccountCapabilityRequestListParams struct {
-	// Filter capability requests by category.
-	Category param.Field[EmbedAccountCapabilityRequestListParamsCategory] `query:"category"`
 	// Results page number. Starts at page 1.
-	PageNumber param.Field[int64] `query:"page_number"`
+	PageNumber param.Opt[int64] `query:"page_number,omitzero" json:"-"`
 	// Page size.Max value: 1000
-	PageSize param.Field[int64] `query:"page_size"`
+	PageSize param.Opt[int64] `query:"page_size,omitzero" json:"-"`
 	// Sort By.
-	SortBy param.Field[string] `query:"sort_by"`
+	SortBy        param.Opt[string] `query:"sort_by,omitzero" json:"-"`
+	CorrelationID param.Opt[string] `header:"correlation-id,omitzero" json:"-"`
+	RequestID     param.Opt[string] `header:"request-id,omitzero" json:"-"`
+	// Filter capability requests by category.
+	//
+	// Any of "payment_type", "customer_type", "consent_type".
+	Category EmbedAccountCapabilityRequestListParamsCategory `query:"category,omitzero" json:"-"`
 	// Sort Order.
-	SortOrder param.Field[EmbedAccountCapabilityRequestListParamsSortOrder] `query:"sort_order"`
+	//
+	// Any of "asc", "desc".
+	SortOrder EmbedAccountCapabilityRequestListParamsSortOrder `query:"sort_order,omitzero" json:"-"`
 	// Filter capability requests by their current status.
-	Status param.Field[EmbedAccountCapabilityRequestListParamsStatus] `query:"status"`
+	//
+	// Any of "active", "inactive", "in_review", "rejected".
+	Status EmbedAccountCapabilityRequestListParamsStatus `query:"status,omitzero" json:"-"`
 	// Filter capability requests by the specific type of capability.
-	Type          param.Field[EmbedAccountCapabilityRequestListParamsType] `query:"type"`
-	CorrelationID param.Field[string]                                      `header:"correlation-id"`
-	RequestID     param.Field[string]                                      `header:"request-id"`
+	//
+	// Any of "charges", "payouts", "individuals", "businesses", "signed_agreement",
+	// "internet".
+	Type EmbedAccountCapabilityRequestListParamsType `query:"type,omitzero" json:"-"`
+	paramObj
 }
 
 // URLQuery serializes [EmbedAccountCapabilityRequestListParams]'s query parameters
 // as `url.Values`.
-func (r EmbedAccountCapabilityRequestListParams) URLQuery() (v url.Values) {
+func (r EmbedAccountCapabilityRequestListParams) URLQuery() (v url.Values, err error) {
 	return apiquery.MarshalWithSettings(r, apiquery.QuerySettings{
 		ArrayFormat:  apiquery.ArrayQueryFormatComma,
 		NestedFormat: apiquery.NestedQueryFormatBrackets,
@@ -390,14 +395,6 @@ const (
 	EmbedAccountCapabilityRequestListParamsCategoryConsentType  EmbedAccountCapabilityRequestListParamsCategory = "consent_type"
 )
 
-func (r EmbedAccountCapabilityRequestListParamsCategory) IsKnown() bool {
-	switch r {
-	case EmbedAccountCapabilityRequestListParamsCategoryPaymentType, EmbedAccountCapabilityRequestListParamsCategoryCustomerType, EmbedAccountCapabilityRequestListParamsCategoryConsentType:
-		return true
-	}
-	return false
-}
-
 // Sort Order.
 type EmbedAccountCapabilityRequestListParamsSortOrder string
 
@@ -405,14 +402,6 @@ const (
 	EmbedAccountCapabilityRequestListParamsSortOrderAsc  EmbedAccountCapabilityRequestListParamsSortOrder = "asc"
 	EmbedAccountCapabilityRequestListParamsSortOrderDesc EmbedAccountCapabilityRequestListParamsSortOrder = "desc"
 )
-
-func (r EmbedAccountCapabilityRequestListParamsSortOrder) IsKnown() bool {
-	switch r {
-	case EmbedAccountCapabilityRequestListParamsSortOrderAsc, EmbedAccountCapabilityRequestListParamsSortOrderDesc:
-		return true
-	}
-	return false
-}
 
 // Filter capability requests by their current status.
 type EmbedAccountCapabilityRequestListParamsStatus string
@@ -423,14 +412,6 @@ const (
 	EmbedAccountCapabilityRequestListParamsStatusInReview EmbedAccountCapabilityRequestListParamsStatus = "in_review"
 	EmbedAccountCapabilityRequestListParamsStatusRejected EmbedAccountCapabilityRequestListParamsStatus = "rejected"
 )
-
-func (r EmbedAccountCapabilityRequestListParamsStatus) IsKnown() bool {
-	switch r {
-	case EmbedAccountCapabilityRequestListParamsStatusActive, EmbedAccountCapabilityRequestListParamsStatusInactive, EmbedAccountCapabilityRequestListParamsStatusInReview, EmbedAccountCapabilityRequestListParamsStatusRejected:
-		return true
-	}
-	return false
-}
 
 // Filter capability requests by the specific type of capability.
 type EmbedAccountCapabilityRequestListParamsType string
@@ -443,11 +424,3 @@ const (
 	EmbedAccountCapabilityRequestListParamsTypeSignedAgreement EmbedAccountCapabilityRequestListParamsType = "signed_agreement"
 	EmbedAccountCapabilityRequestListParamsTypeInternet        EmbedAccountCapabilityRequestListParamsType = "internet"
 )
-
-func (r EmbedAccountCapabilityRequestListParamsType) IsKnown() bool {
-	switch r {
-	case EmbedAccountCapabilityRequestListParamsTypeCharges, EmbedAccountCapabilityRequestListParamsTypePayouts, EmbedAccountCapabilityRequestListParamsTypeIndividuals, EmbedAccountCapabilityRequestListParamsTypeBusinesses, EmbedAccountCapabilityRequestListParamsTypeSignedAgreement, EmbedAccountCapabilityRequestListParamsTypeInternet:
-		return true
-	}
-	return false
-}

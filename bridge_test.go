@@ -26,10 +26,16 @@ func TestBridgeInitializeWithOptionalParams(t *testing.T) {
 		option.WithAPIKey("My API Key"),
 	)
 	_, err := client.Bridge.Initialize(context.TODO(), straddle.BridgeInitializeParams{
-		CustomerID:        straddle.F("182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e"),
-		CorrelationID:     straddle.F("Correlation-Id"),
-		RequestID:         straddle.F("Request-Id"),
-		StraddleAccountID: straddle.F("182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e"),
+		CustomerID: "182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e",
+		Config: straddle.BridgeInitializeParamsConfig{
+			ProcessingMethod: "inline",
+			SandboxOutcome:   "standard",
+		},
+		ExternalID:        straddle.String("external_id"),
+		CorrelationID:     straddle.String("Correlation-Id"),
+		IdempotencyKey:    straddle.String("xxxxxxxxxx"),
+		RequestID:         straddle.String("Request-Id"),
+		StraddleAccountID: straddle.String("182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e"),
 	})
 	if err != nil {
 		var apierr *straddle.Error

@@ -39,20 +39,20 @@ func TestUserAgentHeader(t *testing.T) {
 			},
 		}),
 	)
-	client.Charges.New(context.Background(), straddle.ChargeNewParams{
-		Amount: straddle.F(int64(0)),
-		Config: straddle.F(straddle.ChargeNewParamsConfig{
-			BalanceCheck: straddle.F(straddle.ChargeNewParamsConfigBalanceCheckRequired),
-		}),
-		ConsentType: straddle.F(straddle.ChargeNewParamsConsentTypeInternet),
-		Currency:    straddle.F("currency"),
-		Description: straddle.F("Monthly subscription fee"),
-		Device: straddle.F(shared.DeviceInfoV1Param{
-			IPAddress: straddle.F("192.168.1.1"),
-		}),
-		ExternalID:  straddle.F("external_id"),
-		Paykey:      straddle.F("paykey"),
-		PaymentDate: straddle.F(time.Now()),
+	_, _ = client.Charges.New(context.Background(), straddle.ChargeNewParams{
+		Amount: 10000,
+		Config: straddle.ChargeNewParamsConfig{
+			BalanceCheck: "required",
+		},
+		ConsentType: straddle.ChargeNewParamsConsentTypeInternet,
+		Currency:    "currency",
+		Description: straddle.String("Monthly subscription fee"),
+		Device: shared.DeviceInfoV1Param{
+			IPAddress: "192.168.1.1",
+		},
+		ExternalID:  "external_id",
+		Paykey:      "paykey",
+		PaymentDate: time.Now(),
 	})
 	if userAgent != fmt.Sprintf("Straddle/Go %s", internal.PackageVersion) {
 		t.Errorf("Expected User-Agent to be correct, but got: %#v", userAgent)
@@ -78,19 +78,19 @@ func TestRetryAfter(t *testing.T) {
 		}),
 	)
 	_, err := client.Charges.New(context.Background(), straddle.ChargeNewParams{
-		Amount: straddle.F(int64(0)),
-		Config: straddle.F(straddle.ChargeNewParamsConfig{
-			BalanceCheck: straddle.F(straddle.ChargeNewParamsConfigBalanceCheckRequired),
-		}),
-		ConsentType: straddle.F(straddle.ChargeNewParamsConsentTypeInternet),
-		Currency:    straddle.F("currency"),
-		Description: straddle.F("Monthly subscription fee"),
-		Device: straddle.F(shared.DeviceInfoV1Param{
-			IPAddress: straddle.F("192.168.1.1"),
-		}),
-		ExternalID:  straddle.F("external_id"),
-		Paykey:      straddle.F("paykey"),
-		PaymentDate: straddle.F(time.Now()),
+		Amount: 10000,
+		Config: straddle.ChargeNewParamsConfig{
+			BalanceCheck: "required",
+		},
+		ConsentType: straddle.ChargeNewParamsConsentTypeInternet,
+		Currency:    "currency",
+		Description: straddle.String("Monthly subscription fee"),
+		Device: shared.DeviceInfoV1Param{
+			IPAddress: "192.168.1.1",
+		},
+		ExternalID:  "external_id",
+		Paykey:      "paykey",
+		PaymentDate: time.Now(),
 	})
 	if err == nil {
 		t.Error("Expected there to be a cancel error")
@@ -127,19 +127,19 @@ func TestDeleteRetryCountHeader(t *testing.T) {
 		option.WithHeaderDel("X-Stainless-Retry-Count"),
 	)
 	_, err := client.Charges.New(context.Background(), straddle.ChargeNewParams{
-		Amount: straddle.F(int64(0)),
-		Config: straddle.F(straddle.ChargeNewParamsConfig{
-			BalanceCheck: straddle.F(straddle.ChargeNewParamsConfigBalanceCheckRequired),
-		}),
-		ConsentType: straddle.F(straddle.ChargeNewParamsConsentTypeInternet),
-		Currency:    straddle.F("currency"),
-		Description: straddle.F("Monthly subscription fee"),
-		Device: straddle.F(shared.DeviceInfoV1Param{
-			IPAddress: straddle.F("192.168.1.1"),
-		}),
-		ExternalID:  straddle.F("external_id"),
-		Paykey:      straddle.F("paykey"),
-		PaymentDate: straddle.F(time.Now()),
+		Amount: 10000,
+		Config: straddle.ChargeNewParamsConfig{
+			BalanceCheck: "required",
+		},
+		ConsentType: straddle.ChargeNewParamsConsentTypeInternet,
+		Currency:    "currency",
+		Description: straddle.String("Monthly subscription fee"),
+		Device: shared.DeviceInfoV1Param{
+			IPAddress: "192.168.1.1",
+		},
+		ExternalID:  "external_id",
+		Paykey:      "paykey",
+		PaymentDate: time.Now(),
 	})
 	if err == nil {
 		t.Error("Expected there to be a cancel error")
@@ -171,19 +171,19 @@ func TestOverwriteRetryCountHeader(t *testing.T) {
 		option.WithHeader("X-Stainless-Retry-Count", "42"),
 	)
 	_, err := client.Charges.New(context.Background(), straddle.ChargeNewParams{
-		Amount: straddle.F(int64(0)),
-		Config: straddle.F(straddle.ChargeNewParamsConfig{
-			BalanceCheck: straddle.F(straddle.ChargeNewParamsConfigBalanceCheckRequired),
-		}),
-		ConsentType: straddle.F(straddle.ChargeNewParamsConsentTypeInternet),
-		Currency:    straddle.F("currency"),
-		Description: straddle.F("Monthly subscription fee"),
-		Device: straddle.F(shared.DeviceInfoV1Param{
-			IPAddress: straddle.F("192.168.1.1"),
-		}),
-		ExternalID:  straddle.F("external_id"),
-		Paykey:      straddle.F("paykey"),
-		PaymentDate: straddle.F(time.Now()),
+		Amount: 10000,
+		Config: straddle.ChargeNewParamsConfig{
+			BalanceCheck: "required",
+		},
+		ConsentType: straddle.ChargeNewParamsConsentTypeInternet,
+		Currency:    "currency",
+		Description: straddle.String("Monthly subscription fee"),
+		Device: shared.DeviceInfoV1Param{
+			IPAddress: "192.168.1.1",
+		},
+		ExternalID:  "external_id",
+		Paykey:      "paykey",
+		PaymentDate: time.Now(),
 	})
 	if err == nil {
 		t.Error("Expected there to be a cancel error")
@@ -214,19 +214,19 @@ func TestRetryAfterMs(t *testing.T) {
 		}),
 	)
 	_, err := client.Charges.New(context.Background(), straddle.ChargeNewParams{
-		Amount: straddle.F(int64(0)),
-		Config: straddle.F(straddle.ChargeNewParamsConfig{
-			BalanceCheck: straddle.F(straddle.ChargeNewParamsConfigBalanceCheckRequired),
-		}),
-		ConsentType: straddle.F(straddle.ChargeNewParamsConsentTypeInternet),
-		Currency:    straddle.F("currency"),
-		Description: straddle.F("Monthly subscription fee"),
-		Device: straddle.F(shared.DeviceInfoV1Param{
-			IPAddress: straddle.F("192.168.1.1"),
-		}),
-		ExternalID:  straddle.F("external_id"),
-		Paykey:      straddle.F("paykey"),
-		PaymentDate: straddle.F(time.Now()),
+		Amount: 10000,
+		Config: straddle.ChargeNewParamsConfig{
+			BalanceCheck: "required",
+		},
+		ConsentType: straddle.ChargeNewParamsConsentTypeInternet,
+		Currency:    "currency",
+		Description: straddle.String("Monthly subscription fee"),
+		Device: shared.DeviceInfoV1Param{
+			IPAddress: "192.168.1.1",
+		},
+		ExternalID:  "external_id",
+		Paykey:      "paykey",
+		PaymentDate: time.Now(),
 	})
 	if err == nil {
 		t.Error("Expected there to be a cancel error")
@@ -251,19 +251,19 @@ func TestContextCancel(t *testing.T) {
 	cancelCtx, cancel := context.WithCancel(context.Background())
 	cancel()
 	_, err := client.Charges.New(cancelCtx, straddle.ChargeNewParams{
-		Amount: straddle.F(int64(0)),
-		Config: straddle.F(straddle.ChargeNewParamsConfig{
-			BalanceCheck: straddle.F(straddle.ChargeNewParamsConfigBalanceCheckRequired),
-		}),
-		ConsentType: straddle.F(straddle.ChargeNewParamsConsentTypeInternet),
-		Currency:    straddle.F("currency"),
-		Description: straddle.F("Monthly subscription fee"),
-		Device: straddle.F(shared.DeviceInfoV1Param{
-			IPAddress: straddle.F("192.168.1.1"),
-		}),
-		ExternalID:  straddle.F("external_id"),
-		Paykey:      straddle.F("paykey"),
-		PaymentDate: straddle.F(time.Now()),
+		Amount: 10000,
+		Config: straddle.ChargeNewParamsConfig{
+			BalanceCheck: "required",
+		},
+		ConsentType: straddle.ChargeNewParamsConsentTypeInternet,
+		Currency:    "currency",
+		Description: straddle.String("Monthly subscription fee"),
+		Device: shared.DeviceInfoV1Param{
+			IPAddress: "192.168.1.1",
+		},
+		ExternalID:  "external_id",
+		Paykey:      "paykey",
+		PaymentDate: time.Now(),
 	})
 	if err == nil {
 		t.Error("Expected there to be a cancel error")
@@ -285,19 +285,19 @@ func TestContextCancelDelay(t *testing.T) {
 	cancelCtx, cancel := context.WithTimeout(context.Background(), 2*time.Millisecond)
 	defer cancel()
 	_, err := client.Charges.New(cancelCtx, straddle.ChargeNewParams{
-		Amount: straddle.F(int64(0)),
-		Config: straddle.F(straddle.ChargeNewParamsConfig{
-			BalanceCheck: straddle.F(straddle.ChargeNewParamsConfigBalanceCheckRequired),
-		}),
-		ConsentType: straddle.F(straddle.ChargeNewParamsConsentTypeInternet),
-		Currency:    straddle.F("currency"),
-		Description: straddle.F("Monthly subscription fee"),
-		Device: straddle.F(shared.DeviceInfoV1Param{
-			IPAddress: straddle.F("192.168.1.1"),
-		}),
-		ExternalID:  straddle.F("external_id"),
-		Paykey:      straddle.F("paykey"),
-		PaymentDate: straddle.F(time.Now()),
+		Amount: 10000,
+		Config: straddle.ChargeNewParamsConfig{
+			BalanceCheck: "required",
+		},
+		ConsentType: straddle.ChargeNewParamsConsentTypeInternet,
+		Currency:    "currency",
+		Description: straddle.String("Monthly subscription fee"),
+		Device: shared.DeviceInfoV1Param{
+			IPAddress: "192.168.1.1",
+		},
+		ExternalID:  "external_id",
+		Paykey:      "paykey",
+		PaymentDate: time.Now(),
 	})
 	if err == nil {
 		t.Error("expected there to be a cancel error")
@@ -325,19 +325,19 @@ func TestContextDeadline(t *testing.T) {
 			}),
 		)
 		_, err := client.Charges.New(deadlineCtx, straddle.ChargeNewParams{
-			Amount: straddle.F(int64(0)),
-			Config: straddle.F(straddle.ChargeNewParamsConfig{
-				BalanceCheck: straddle.F(straddle.ChargeNewParamsConfigBalanceCheckRequired),
-			}),
-			ConsentType: straddle.F(straddle.ChargeNewParamsConsentTypeInternet),
-			Currency:    straddle.F("currency"),
-			Description: straddle.F("Monthly subscription fee"),
-			Device: straddle.F(shared.DeviceInfoV1Param{
-				IPAddress: straddle.F("192.168.1.1"),
-			}),
-			ExternalID:  straddle.F("external_id"),
-			Paykey:      straddle.F("paykey"),
-			PaymentDate: straddle.F(time.Now()),
+			Amount: 10000,
+			Config: straddle.ChargeNewParamsConfig{
+				BalanceCheck: "required",
+			},
+			ConsentType: straddle.ChargeNewParamsConsentTypeInternet,
+			Currency:    "currency",
+			Description: straddle.String("Monthly subscription fee"),
+			Device: shared.DeviceInfoV1Param{
+				IPAddress: "192.168.1.1",
+			},
+			ExternalID:  "external_id",
+			Paykey:      "paykey",
+			PaymentDate: time.Now(),
 		})
 		if err == nil {
 			t.Error("expected there to be a deadline error")

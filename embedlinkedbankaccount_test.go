@@ -26,17 +26,21 @@ func TestEmbedLinkedBankAccountNewWithOptionalParams(t *testing.T) {
 		option.WithAPIKey("My API Key"),
 	)
 	_, err := client.Embed.LinkedBankAccounts.New(context.TODO(), straddle.EmbedLinkedBankAccountNewParams{
-		AccountID: straddle.F("182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e"),
-		BankAccount: straddle.F(straddle.EmbedLinkedBankAccountNewParamsBankAccount{
-			AccountHolder: straddle.F("account_holder"),
-			AccountNumber: straddle.F("account_number"),
-			RoutingNumber: straddle.F("xxxxxxxxx"),
-		}),
-		Metadata: straddle.F(map[string]string{
+		AccountID: straddle.String("182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e"),
+		BankAccount: straddle.EmbedLinkedBankAccountNewParamsBankAccount{
+			AccountHolder: "account_holder",
+			AccountNumber: "account_number",
+			RoutingNumber: "xxxxxxxxx",
+		},
+		Description: straddle.String("description"),
+		Metadata: map[string]string{
 			"foo": "string",
-		}),
-		CorrelationID: straddle.F("correlation-id"),
-		RequestID:     straddle.F("request-id"),
+		},
+		PlatformID:     straddle.String("182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e"),
+		Purposes:       []string{"charges"},
+		CorrelationID:  straddle.String("correlation-id"),
+		IdempotencyKey: straddle.String("xxxxxxxxxx"),
+		RequestID:      straddle.String("request-id"),
 	})
 	if err != nil {
 		var apierr *straddle.Error
@@ -63,16 +67,17 @@ func TestEmbedLinkedBankAccountUpdateWithOptionalParams(t *testing.T) {
 		context.TODO(),
 		"182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e",
 		straddle.EmbedLinkedBankAccountUpdateParams{
-			BankAccount: straddle.F(straddle.EmbedLinkedBankAccountUpdateParamsBankAccount{
-				AccountHolder: straddle.F("account_holder"),
-				AccountNumber: straddle.F("account_number"),
-				RoutingNumber: straddle.F("xxxxxxxxx"),
-			}),
-			Metadata: straddle.F(map[string]string{
+			BankAccount: straddle.EmbedLinkedBankAccountUpdateParamsBankAccount{
+				AccountHolder: "account_holder",
+				AccountNumber: "account_number",
+				RoutingNumber: "xxxxxxxxx",
+			},
+			Metadata: map[string]string{
 				"foo": "string",
-			}),
-			CorrelationID: straddle.F("correlation-id"),
-			RequestID:     straddle.F("request-id"),
+			},
+			CorrelationID:  straddle.String("correlation-id"),
+			IdempotencyKey: straddle.String("xxxxxxxxxx"),
+			RequestID:      straddle.String("request-id"),
 		},
 	)
 	if err != nil {
@@ -97,14 +102,47 @@ func TestEmbedLinkedBankAccountListWithOptionalParams(t *testing.T) {
 		option.WithAPIKey("My API Key"),
 	)
 	_, err := client.Embed.LinkedBankAccounts.List(context.TODO(), straddle.EmbedLinkedBankAccountListParams{
-		AccountID:     straddle.F("182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e"),
-		PageNumber:    straddle.F(int64(0)),
-		PageSize:      straddle.F(int64(0)),
-		SortBy:        straddle.F("sort_by"),
-		SortOrder:     straddle.F(straddle.EmbedLinkedBankAccountListParamsSortOrderAsc),
-		CorrelationID: straddle.F("correlation-id"),
-		RequestID:     straddle.F("request-id"),
+		AccountID:     straddle.String("182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e"),
+		Level:         straddle.EmbedLinkedBankAccountListParamsLevelAccount,
+		PageNumber:    straddle.Int(0),
+		PageSize:      straddle.Int(0),
+		Purpose:       straddle.EmbedLinkedBankAccountListParamsPurposeCharges,
+		SortBy:        straddle.String("sort_by"),
+		SortOrder:     straddle.EmbedLinkedBankAccountListParamsSortOrderAsc,
+		Status:        straddle.EmbedLinkedBankAccountListParamsStatusCreated,
+		CorrelationID: straddle.String("correlation-id"),
+		RequestID:     straddle.String("request-id"),
 	})
+	if err != nil {
+		var apierr *straddle.Error
+		if errors.As(err, &apierr) {
+			t.Log(string(apierr.DumpRequest(true)))
+		}
+		t.Fatalf("err should be nil: %s", err.Error())
+	}
+}
+
+func TestEmbedLinkedBankAccountCancelWithOptionalParams(t *testing.T) {
+	baseURL := "http://localhost:4010"
+	if envURL, ok := os.LookupEnv("TEST_API_BASE_URL"); ok {
+		baseURL = envURL
+	}
+	if !testutil.CheckTestServer(t, baseURL) {
+		return
+	}
+	client := straddle.NewClient(
+		option.WithBaseURL(baseURL),
+		option.WithAPIKey("My API Key"),
+	)
+	_, err := client.Embed.LinkedBankAccounts.Cancel(
+		context.TODO(),
+		"182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e",
+		straddle.EmbedLinkedBankAccountCancelParams{
+			CorrelationID:  straddle.String("correlation-id"),
+			IdempotencyKey: straddle.String("xxxxxxxxxx"),
+			RequestID:      straddle.String("request-id"),
+		},
+	)
 	if err != nil {
 		var apierr *straddle.Error
 		if errors.As(err, &apierr) {
@@ -130,8 +168,8 @@ func TestEmbedLinkedBankAccountGetWithOptionalParams(t *testing.T) {
 		context.TODO(),
 		"182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e",
 		straddle.EmbedLinkedBankAccountGetParams{
-			CorrelationID: straddle.F("correlation-id"),
-			RequestID:     straddle.F("request-id"),
+			CorrelationID: straddle.String("correlation-id"),
+			RequestID:     straddle.String("request-id"),
 		},
 	)
 	if err != nil {
@@ -159,8 +197,8 @@ func TestEmbedLinkedBankAccountUnmaskWithOptionalParams(t *testing.T) {
 		context.TODO(),
 		"182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e",
 		straddle.EmbedLinkedBankAccountUnmaskParams{
-			CorrelationID: straddle.F("correlation-id"),
-			RequestID:     straddle.F("request-id"),
+			CorrelationID: straddle.String("correlation-id"),
+			RequestID:     straddle.String("request-id"),
 		},
 	)
 	if err != nil {
