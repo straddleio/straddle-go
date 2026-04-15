@@ -7,6 +7,7 @@ import (
 	"errors"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/straddleio/straddle-go"
 	"github.com/straddleio/straddle-go/internal/testutil"
@@ -26,6 +27,8 @@ func TestPaykeyListWithOptionalParams(t *testing.T) {
 		option.WithAPIKey("My API Key"),
 	)
 	_, err := client.Paykeys.List(context.TODO(), straddle.PaykeyListParams{
+		CreatedFrom:       straddle.Time(time.Now()),
+		CreatedTo:         straddle.Time(time.Now()),
 		CustomerID:        straddle.String("182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e"),
 		PageNumber:        straddle.Int(0),
 		PageSize:          straddle.Int(0),

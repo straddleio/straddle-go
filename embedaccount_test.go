@@ -33,10 +33,13 @@ func TestEmbedAccountNewWithOptionalParams(t *testing.T) {
 			Name:    "name",
 			Website: "https://example.com",
 			Address: straddle.AddressV1Param{
+				Address1:   "address1",
 				City:       straddle.String("city"),
 				Line1:      straddle.String("line1"),
 				PostalCode: straddle.String("21029-1360"),
 				State:      straddle.String("SE"),
+				Zip:        "zip",
+				Address2:   straddle.String("address2"),
 				Country:    straddle.String("country"),
 				Line2:      straddle.String("line2"),
 			},
@@ -94,10 +97,13 @@ func TestEmbedAccountUpdateWithOptionalParams(t *testing.T) {
 				Name:    "name",
 				Website: "https://example.com",
 				Address: straddle.AddressV1Param{
+					Address1:   "address1",
 					City:       straddle.String("city"),
 					Line1:      straddle.String("line1"),
 					PostalCode: straddle.String("21029-1360"),
 					State:      straddle.String("SE"),
+					Zip:        "zip",
+					Address2:   straddle.String("address2"),
 					Country:    straddle.String("country"),
 					Line2:      straddle.String("line2"),
 				},
@@ -148,6 +154,7 @@ func TestEmbedAccountListWithOptionalParams(t *testing.T) {
 		option.WithAPIKey("My API Key"),
 	)
 	_, err := client.Embed.Accounts.List(context.TODO(), straddle.EmbedAccountListParams{
+		ExternalID:    straddle.String("external_id"),
 		PageNumber:    straddle.Int(0),
 		PageSize:      straddle.Int(0),
 		SearchText:    straddle.String("search_text"),
