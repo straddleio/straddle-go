@@ -65,7 +65,7 @@ type Client struct {
 // DefaultClientOptions read from the environment (STRADDLE_API_KEY,
 // STRADDLE_BASE_URL). This should be used to initialize new clients.
 func DefaultClientOptions() []option.RequestOption {
-	defaults := []option.RequestOption{option.WithEnvironmentSandbox()}
+	defaults := []option.RequestOption{option.WithHTTPClient(defaultHTTPClient()), option.WithEnvironmentSandbox()}
 	if o, ok := os.LookupEnv("STRADDLE_BASE_URL"); ok {
 		defaults = append(defaults, option.WithBaseURL(o))
 	}
