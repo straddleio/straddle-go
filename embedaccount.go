@@ -815,6 +815,8 @@ const (
 
 // The address object is optional. If provided, it must be a valid address.
 type AddressV1 struct {
+	// Primary address line (e.g., street, PO Box).
+	Address1 string `json:"address1" api:"required"`
 	// City, district, suburb, town, or village.
 	City string `json:"city" api:"required"`
 	// Primary address line (e.g., street, PO Box).
@@ -823,16 +825,23 @@ type AddressV1 struct {
 	PostalCode string `json:"postal_code" api:"required"`
 	// Two-letter state code.
 	State string `json:"state" api:"required"`
+	// Zip or postal code.
+	Zip string `json:"zip" api:"required"`
+	// Secondary address line (e.g., apartment, suite, unit, or building).
+	Address2 string `json:"address2" api:"nullable"`
 	// The country of the address, in ISO 3166-1 alpha-2 format.
 	Country string `json:"country" api:"nullable"`
 	// Secondary address line (e.g., apartment, suite, unit, or building).
 	Line2 string `json:"line2" api:"nullable"`
 	// JSON contains metadata for fields, check presence with [respjson.Field.Valid].
 	JSON struct {
+		Address1    respjson.Field
 		City        respjson.Field
 		Line1       respjson.Field
 		PostalCode  respjson.Field
 		State       respjson.Field
+		Zip         respjson.Field
+		Address2    respjson.Field
 		Country     respjson.Field
 		Line2       respjson.Field
 		ExtraFields map[string]respjson.Field
@@ -857,7 +866,7 @@ func (r AddressV1) ToParam() AddressV1Param {
 
 // The address object is optional. If provided, it must be a valid address.
 //
-// The properties City, Line1, PostalCode, State are required.
+// The properties Address1, City, Line1, PostalCode, State, Zip are required.
 type AddressV1Param struct {
 	// City, district, suburb, town, or village.
 	City param.Opt[string] `json:"city,omitzero" api:"required"`
@@ -867,6 +876,12 @@ type AddressV1Param struct {
 	PostalCode param.Opt[string] `json:"postal_code,omitzero" api:"required"`
 	// Two-letter state code.
 	State param.Opt[string] `json:"state,omitzero" api:"required"`
+	// Primary address line (e.g., street, PO Box).
+	Address1 string `json:"address1" api:"required"`
+	// Zip or postal code.
+	Zip string `json:"zip" api:"required"`
+	// Secondary address line (e.g., apartment, suite, unit, or building).
+	Address2 param.Opt[string] `json:"address2,omitzero"`
 	// The country of the address, in ISO 3166-1 alpha-2 format.
 	Country param.Opt[string] `json:"country,omitzero"`
 	// Secondary address line (e.g., apartment, suite, unit, or building).
@@ -1236,6 +1251,7 @@ func (r *EmbedAccountUpdateParams) UnmarshalJSON(data []byte) error {
 }
 
 type EmbedAccountListParams struct {
+	ExternalID param.Opt[string] `query:"external_id,omitzero" json:"-"`
 	// Results page number. Starts at page 1. Default value: 1
 	PageNumber param.Opt[int64] `query:"page_number,omitzero" json:"-"`
 	// Page size. Default value: 100. Max value: 1000

@@ -258,6 +258,8 @@ type PayoutV1Data struct {
 	// The desired date on which the payment should be occur. For payouts, this means
 	// the date you want the funds to be sent from your bank account.
 	PaymentDate time.Time `json:"payment_date" api:"required" format:"date"`
+	// Is the payout a refund.
+	Refund bool `json:"refund" api:"required"`
 	// The current status of the payout.
 	//
 	// Any of "created", "scheduled", "failed", "cancelled", "on_hold", "pending",
@@ -306,6 +308,7 @@ type PayoutV1Data struct {
 		FundingIDs      respjson.Field
 		Paykey          respjson.Field
 		PaymentDate     respjson.Field
+		Refund          respjson.Field
 		Status          respjson.Field
 		StatusDetails   respjson.Field
 		StatusHistory   respjson.Field
@@ -473,6 +476,8 @@ type PayoutUnmaskResponseData struct {
 	Paykey string `json:"paykey" api:"required"`
 	// Payment date.
 	PaymentDate time.Time `json:"payment_date" api:"required" format:"date"`
+	// Is the payout a refund.
+	Refund bool `json:"refund" api:"required"`
 	// The current status of the `charge` or `payout`.
 	//
 	// Any of "created", "scheduled", "failed", "cancelled", "on_hold", "pending",
@@ -516,6 +521,7 @@ type PayoutUnmaskResponseData struct {
 		FundingIDs      respjson.Field
 		Paykey          respjson.Field
 		PaymentDate     respjson.Field
+		Refund          respjson.Field
 		Status          respjson.Field
 		StatusDetails   respjson.Field
 		StatusHistory   respjson.Field
