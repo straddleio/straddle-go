@@ -1067,10 +1067,6 @@ const (
 )
 
 type PaykeyListParams struct {
-	// Start date for filtering by creation date.
-	CreatedFrom param.Opt[time.Time] `query:"created_from,omitzero" format:"date-time" json:"-"`
-	// End date for filtering by creation date.
-	CreatedTo param.Opt[time.Time] `query:"created_to,omitzero" format:"date-time" json:"-"`
 	// Filter paykeys by related customer ID.
 	CustomerID param.Opt[string] `query:"customer_id,omitzero" format:"uuid" json:"-"`
 	// Page number for paginated results. Starts at 1.
