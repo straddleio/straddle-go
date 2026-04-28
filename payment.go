@@ -155,10 +155,6 @@ type PaymentSummaryPagedV1Data struct {
 	Metadata map[string]string `json:"metadata" api:"nullable"`
 	// Information about the paykey used for the `charge` or `payout`.
 	PaykeyDetails shared.PaykeyDetailsV1 `json:"paykey_details"`
-	// Related payments.
-	//
-	// Any of "original", "resubmit", "refund".
-	RelatedPayments map[string]string `json:"related_payments" api:"nullable"`
 	// JSON contains metadata for fields, check presence with [respjson.Field.Valid].
 	JSON struct {
 		ID              respjson.Field
@@ -180,7 +176,6 @@ type PaymentSummaryPagedV1Data struct {
 		FundingID       respjson.Field
 		Metadata        respjson.Field
 		PaykeyDetails   respjson.Field
-		RelatedPayments respjson.Field
 		ExtraFields     map[string]respjson.Field
 		raw             string
 	} `json:"-"`
