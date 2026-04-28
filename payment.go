@@ -129,7 +129,7 @@ type PaymentSummaryPagedV1Data struct {
 	PaymentDate time.Time `json:"payment_date" api:"required" format:"date"`
 	// The type of payment. Valid values are `charge` or `payout`.
 	//
-	// Any of "charge", "payout", "refund".
+	// Any of "charge", "payout".
 	PaymentType string `json:"payment_type" api:"required"`
 	// The current status of the `charge` or `payout`.
 	//
@@ -155,10 +155,6 @@ type PaymentSummaryPagedV1Data struct {
 	Metadata map[string]string `json:"metadata" api:"nullable"`
 	// Information about the paykey used for the `charge` or `payout`.
 	PaykeyDetails shared.PaykeyDetailsV1 `json:"paykey_details"`
-	// Related payments.
-	//
-	// Any of "original", "resubmit", "refund".
-	RelatedPayments map[string]string `json:"related_payments" api:"nullable"`
 	// JSON contains metadata for fields, check presence with [respjson.Field.Valid].
 	JSON struct {
 		ID              respjson.Field
@@ -180,7 +176,6 @@ type PaymentSummaryPagedV1Data struct {
 		FundingID       respjson.Field
 		Metadata        respjson.Field
 		PaykeyDetails   respjson.Field
-		RelatedPayments respjson.Field
 		ExtraFields     map[string]respjson.Field
 		raw             string
 	} `json:"-"`
@@ -302,7 +297,7 @@ type PaymentListParams struct {
 	PaymentStatus []string `query:"payment_status,omitzero" json:"-"`
 	// Search by the type of a `charge` or `payout`.
 	//
-	// Any of "charge", "payout", "refund".
+	// Any of "charge", "payout".
 	PaymentType []string `query:"payment_type,omitzero" json:"-"`
 	// The field to sort the results by.
 	//
