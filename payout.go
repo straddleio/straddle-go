@@ -253,12 +253,6 @@ type PayoutV1Data struct {
 	ExternalID string `json:"external_id" api:"required"`
 	// Funding Ids
 	FundingIDs []string `json:"funding_ids" api:"required" format:"uuid"`
-	// Has the payout been resubmitted.
-	HasResubmit bool `json:"has_resubmit" api:"required"`
-	// Is the payout a refund of an original charge.
-	IsRefund bool `json:"is_refund" api:"required"`
-	// Is the payout a resubmit of an original payout.
-	IsResubmit bool `json:"is_resubmit" api:"required"`
 	// Value of the `paykey` used for the payout.
 	Paykey string `json:"paykey" api:"required"`
 	// The desired date on which the payment should be occur. For payouts, this means
@@ -295,9 +289,7 @@ type PayoutV1Data struct {
 	// rail.
 	ProcessedAt time.Time `json:"processed_at" api:"nullable" format:"date-time"`
 	// Related payments.
-	//
-	// Any of "original", "resubmit", "refund".
-	RelatedPayments map[string]string `json:"related_payments" api:"nullable"`
+	RelatedPayments []PayoutV1DataRelatedPayment `json:"related_payments" api:"nullable"`
 	// The time the payout was last updated.
 	UpdatedAt time.Time `json:"updated_at" api:"nullable" format:"date-time"`
 	// JSON contains metadata for fields, check presence with [respjson.Field.Valid].
@@ -310,9 +302,6 @@ type PayoutV1Data struct {
 		Device          respjson.Field
 		ExternalID      respjson.Field
 		FundingIDs      respjson.Field
-		HasResubmit     respjson.Field
-		IsRefund        respjson.Field
-		IsResubmit      respjson.Field
 		Paykey          respjson.Field
 		PaymentDate     respjson.Field
 		Status          respjson.Field
@@ -417,6 +406,31 @@ func (r *PayoutV1DataStatusHistory) UnmarshalJSON(data []byte) error {
 	return apijson.UnmarshalRoot(data, r)
 }
 
+type PayoutV1DataRelatedPayment struct {
+	// The ID of the related payment.
+	ID string `json:"id" api:"required" format:"uuid"`
+	// The type of payment.
+	//
+	// Any of "charge", "payout".
+	PaymentType string `json:"payment_type" api:"required"`
+	// Any of "original", "resubmit", "refund".
+	Relationship string `json:"relationship" api:"required"`
+	// JSON contains metadata for fields, check presence with [respjson.Field.Valid].
+	JSON struct {
+		ID           respjson.Field
+		PaymentType  respjson.Field
+		Relationship respjson.Field
+		ExtraFields  map[string]respjson.Field
+		raw          string
+	} `json:"-"`
+}
+
+// Returns the unmodified JSON received from the API
+func (r PayoutV1DataRelatedPayment) RawJSON() string { return r.JSON.raw }
+func (r *PayoutV1DataRelatedPayment) UnmarshalJSON(data []byte) error {
+	return apijson.UnmarshalRoot(data, r)
+}
+
 // Indicates the structure of the returned content.
 //
 //   - "object" means the `data` field contains a single JSON object.
@@ -478,12 +492,6 @@ type PayoutUnmaskResponseData struct {
 	ExternalID string `json:"external_id" api:"required"`
 	// Funding Ids
 	FundingIDs []string `json:"funding_ids" api:"required" format:"uuid"`
-	// Has the payout been resubmitted.
-	HasResubmit bool `json:"has_resubmit" api:"required"`
-	// Is the payout a refund of an original charge.
-	IsRefund bool `json:"is_refund" api:"required"`
-	// Is the payout a resubmit of an original payout.
-	IsResubmit bool `json:"is_resubmit" api:"required"`
 	// Paykey.
 	Paykey string `json:"paykey" api:"required"`
 	// Payment date.
@@ -514,9 +522,7 @@ type PayoutUnmaskResponseData struct {
 	// Processed at.
 	ProcessedAt time.Time `json:"processed_at" api:"nullable" format:"date-time"`
 	// Related payments.
-	//
-	// Any of "original", "resubmit", "refund".
-	RelatedPayments map[string]string `json:"related_payments" api:"nullable"`
+	RelatedPayments []PayoutUnmaskResponseDataRelatedPayment `json:"related_payments" api:"nullable"`
 	// Updated at.
 	UpdatedAt time.Time `json:"updated_at" api:"nullable" format:"date-time"`
 	// JSON contains metadata for fields, check presence with [respjson.Field.Valid].
@@ -529,9 +535,6 @@ type PayoutUnmaskResponseData struct {
 		Device          respjson.Field
 		ExternalID      respjson.Field
 		FundingIDs      respjson.Field
-		HasResubmit     respjson.Field
-		IsRefund        respjson.Field
-		IsResubmit      respjson.Field
 		Paykey          respjson.Field
 		PaymentDate     respjson.Field
 		Status          respjson.Field
@@ -649,6 +652,31 @@ type PayoutUnmaskResponseDataStatusHistory struct {
 // Returns the unmodified JSON received from the API
 func (r PayoutUnmaskResponseDataStatusHistory) RawJSON() string { return r.JSON.raw }
 func (r *PayoutUnmaskResponseDataStatusHistory) UnmarshalJSON(data []byte) error {
+	return apijson.UnmarshalRoot(data, r)
+}
+
+type PayoutUnmaskResponseDataRelatedPayment struct {
+	// The ID of the related payment.
+	ID string `json:"id" api:"required" format:"uuid"`
+	// The type of payment.
+	//
+	// Any of "charge", "payout".
+	PaymentType string `json:"payment_type" api:"required"`
+	// Any of "original", "resubmit", "refund".
+	Relationship string `json:"relationship" api:"required"`
+	// JSON contains metadata for fields, check presence with [respjson.Field.Valid].
+	JSON struct {
+		ID           respjson.Field
+		PaymentType  respjson.Field
+		Relationship respjson.Field
+		ExtraFields  map[string]respjson.Field
+		raw          string
+	} `json:"-"`
+}
+
+// Returns the unmodified JSON received from the API
+func (r PayoutUnmaskResponseDataRelatedPayment) RawJSON() string { return r.JSON.raw }
+func (r *PayoutUnmaskResponseDataRelatedPayment) UnmarshalJSON(data []byte) error {
 	return apijson.UnmarshalRoot(data, r)
 }
 
