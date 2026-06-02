@@ -263,6 +263,12 @@ type ChargeV1Data struct {
 	ExternalID string `json:"external_id" api:"required"`
 	// Funding Ids
 	FundingIDs []string `json:"funding_ids" api:"required" format:"uuid"`
+	// Has the charge been refunded by an associated payout.
+	HasRefund bool `json:"has_refund" api:"required"`
+	// Has the charge been resubmitted.
+	HasResubmit bool `json:"has_resubmit" api:"required"`
+	// Is the charge a resubmit of an original charge.
+	IsResubmit bool `json:"is_resubmit" api:"required"`
 	// Value of the `paykey` used for the charge.
 	Paykey string `json:"paykey" api:"required"`
 	// The desired date on which the payment should be occur. For charges, this means
@@ -312,6 +318,9 @@ type ChargeV1Data struct {
 		Device          respjson.Field
 		ExternalID      respjson.Field
 		FundingIDs      respjson.Field
+		HasRefund       respjson.Field
+		HasResubmit     respjson.Field
+		IsResubmit      respjson.Field
 		Paykey          respjson.Field
 		PaymentDate     respjson.Field
 		Status          respjson.Field
@@ -516,6 +525,12 @@ type ChargeUnmaskResponseData struct {
 	ExternalID string `json:"external_id" api:"required"`
 	// Funding Ids
 	FundingIDs []string `json:"funding_ids" api:"required" format:"uuid"`
+	// Has the charge been refunded by an associated payout.
+	HasRefund bool `json:"has_refund" api:"required"`
+	// Has the charge been resubmitted.
+	HasResubmit bool `json:"has_resubmit" api:"required"`
+	// Is the charge a resubmit of an original charge.
+	IsResubmit bool `json:"is_resubmit" api:"required"`
 	// Paykey.
 	Paykey string `json:"paykey" api:"required"`
 	// Payment date.
@@ -559,6 +574,9 @@ type ChargeUnmaskResponseData struct {
 		Device          respjson.Field
 		ExternalID      respjson.Field
 		FundingIDs      respjson.Field
+		HasRefund       respjson.Field
+		HasResubmit     respjson.Field
+		IsResubmit      respjson.Field
 		Paykey          respjson.Field
 		PaymentDate     respjson.Field
 		Status          respjson.Field
