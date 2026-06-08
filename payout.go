@@ -253,6 +253,12 @@ type PayoutV1Data struct {
 	ExternalID string `json:"external_id" api:"required"`
 	// Funding Ids
 	FundingIDs []string `json:"funding_ids" api:"required" format:"uuid"`
+	// Has the payout been resubmitted.
+	HasResubmit bool `json:"has_resubmit" api:"required"`
+	// Is the payout a refund of an original charge.
+	IsRefund bool `json:"is_refund" api:"required"`
+	// Is the payout a resubmit of an original payout.
+	IsResubmit bool `json:"is_resubmit" api:"required"`
 	// Value of the `paykey` used for the payout.
 	Paykey string `json:"paykey" api:"required"`
 	// The desired date on which the payment should be occur. For payouts, this means
@@ -302,6 +308,9 @@ type PayoutV1Data struct {
 		Device          respjson.Field
 		ExternalID      respjson.Field
 		FundingIDs      respjson.Field
+		HasResubmit     respjson.Field
+		IsRefund        respjson.Field
+		IsResubmit      respjson.Field
 		Paykey          respjson.Field
 		PaymentDate     respjson.Field
 		Status          respjson.Field
@@ -492,6 +501,12 @@ type PayoutUnmaskResponseData struct {
 	ExternalID string `json:"external_id" api:"required"`
 	// Funding Ids
 	FundingIDs []string `json:"funding_ids" api:"required" format:"uuid"`
+	// Has the payout been resubmitted.
+	HasResubmit bool `json:"has_resubmit" api:"required"`
+	// Is the payout a refund of an original charge.
+	IsRefund bool `json:"is_refund" api:"required"`
+	// Is the payout a resubmit of an original payout.
+	IsResubmit bool `json:"is_resubmit" api:"required"`
 	// Paykey.
 	Paykey string `json:"paykey" api:"required"`
 	// Payment date.
@@ -535,6 +550,9 @@ type PayoutUnmaskResponseData struct {
 		Device          respjson.Field
 		ExternalID      respjson.Field
 		FundingIDs      respjson.Field
+		HasResubmit     respjson.Field
+		IsRefund        respjson.Field
+		IsResubmit      respjson.Field
 		Paykey          respjson.Field
 		PaymentDate     respjson.Field
 		Status          respjson.Field
