@@ -289,6 +289,9 @@ type ChargeV1Data struct {
 	UpdatedAt time.Time `json:"updated_at" api:"required" format:"date-time"`
 	// Information about the customer associated with the charge.
 	CustomerDetails shared.CustomerDetailsV1 `json:"customer_details"`
+	// Documents uploaded for this charge (e.g. proof of authorization), in the order
+	// they were uploaded.
+	Documents []ChargeV1DataDocument `json:"documents" api:"nullable"`
 	// Timestamp of when the charge was effective in the customer's bank account,
 	// otherwise known as the date on which the customer is debited.
 	EffectiveAt time.Time `json:"effective_at" api:"nullable" format:"date-time"`
@@ -329,6 +332,7 @@ type ChargeV1Data struct {
 		TraceIDs        respjson.Field
 		UpdatedAt       respjson.Field
 		CustomerDetails respjson.Field
+		Documents       respjson.Field
 		EffectiveAt     respjson.Field
 		Metadata        respjson.Field
 		PaykeyDetails   respjson.Field
@@ -427,6 +431,35 @@ type ChargeV1DataStatusHistory struct {
 // Returns the unmodified JSON received from the API
 func (r ChargeV1DataStatusHistory) RawJSON() string { return r.JSON.raw }
 func (r *ChargeV1DataStatusHistory) UnmarshalJSON(data []byte) error {
+	return apijson.UnmarshalRoot(data, r)
+}
+
+type ChargeV1DataDocument struct {
+	// Unique identifier for this document.
+	DocumentID string `json:"document_id" api:"required" format:"uuid"`
+	// The file name of this document as uploaded.
+	DocumentName string `json:"document_name" api:"required"`
+	// The size of this document in bytes.
+	DocumentSize int64 `json:"document_size" api:"required"`
+	// Any of "payment_authorization".
+	DocumentType string `json:"document_type" api:"required"`
+	// The UTC timestamp when this document was uploaded.
+	UploadedAt time.Time `json:"uploaded_at" api:"required" format:"date-time"`
+	// JSON contains metadata for fields, check presence with [respjson.Field.Valid].
+	JSON struct {
+		DocumentID   respjson.Field
+		DocumentName respjson.Field
+		DocumentSize respjson.Field
+		DocumentType respjson.Field
+		UploadedAt   respjson.Field
+		ExtraFields  map[string]respjson.Field
+		raw          string
+	} `json:"-"`
+}
+
+// Returns the unmodified JSON received from the API
+func (r ChargeV1DataDocument) RawJSON() string { return r.JSON.raw }
+func (r *ChargeV1DataDocument) UnmarshalJSON(data []byte) error {
 	return apijson.UnmarshalRoot(data, r)
 }
 
@@ -549,6 +582,9 @@ type ChargeUnmaskResponseData struct {
 	UpdatedAt time.Time `json:"updated_at" api:"required" format:"date-time"`
 	// Information about the customer associated with the charge or payout.
 	CustomerDetails shared.CustomerDetailsV1 `json:"customer_details"`
+	// Documents uploaded for this charge (e.g. proof of authorization), in the order
+	// they were uploaded.
+	Documents []ChargeUnmaskResponseDataDocument `json:"documents" api:"nullable"`
 	// Effective at.
 	EffectiveAt time.Time `json:"effective_at" api:"nullable" format:"date-time"`
 	// Metadata.
@@ -585,6 +621,7 @@ type ChargeUnmaskResponseData struct {
 		TraceIDs        respjson.Field
 		UpdatedAt       respjson.Field
 		CustomerDetails respjson.Field
+		Documents       respjson.Field
 		EffectiveAt     respjson.Field
 		Metadata        respjson.Field
 		PaykeyDetails   respjson.Field
@@ -698,6 +735,35 @@ type ChargeUnmaskResponseDataStatusHistory struct {
 // Returns the unmodified JSON received from the API
 func (r ChargeUnmaskResponseDataStatusHistory) RawJSON() string { return r.JSON.raw }
 func (r *ChargeUnmaskResponseDataStatusHistory) UnmarshalJSON(data []byte) error {
+	return apijson.UnmarshalRoot(data, r)
+}
+
+type ChargeUnmaskResponseDataDocument struct {
+	// Unique identifier for this document.
+	DocumentID string `json:"document_id" api:"required" format:"uuid"`
+	// The file name of this document as uploaded.
+	DocumentName string `json:"document_name" api:"required"`
+	// The size of this document in bytes.
+	DocumentSize int64 `json:"document_size" api:"required"`
+	// Any of "payment_authorization".
+	DocumentType string `json:"document_type" api:"required"`
+	// The UTC timestamp when this document was uploaded.
+	UploadedAt time.Time `json:"uploaded_at" api:"required" format:"date-time"`
+	// JSON contains metadata for fields, check presence with [respjson.Field.Valid].
+	JSON struct {
+		DocumentID   respjson.Field
+		DocumentName respjson.Field
+		DocumentSize respjson.Field
+		DocumentType respjson.Field
+		UploadedAt   respjson.Field
+		ExtraFields  map[string]respjson.Field
+		raw          string
+	} `json:"-"`
+}
+
+// Returns the unmodified JSON received from the API
+func (r ChargeUnmaskResponseDataDocument) RawJSON() string { return r.JSON.raw }
+func (r *ChargeUnmaskResponseDataDocument) UnmarshalJSON(data []byte) error {
 	return apijson.UnmarshalRoot(data, r)
 }
 
