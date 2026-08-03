@@ -269,7 +269,7 @@ type RepresentativeDataRelationship struct {
 	// direct the organization. One representative must be identified under the control
 	// prong for each legal entity.
 	Control bool `json:"control" api:"required"`
-	// Whether the representative owns any percentage of of the equity interests of the
+	// Whether the representative owns any percentage of the equity interests of the
 	// legal entity.
 	Owner bool `json:"owner" api:"required"`
 	// Whether the person is authorized as the primary representative of the account.
@@ -456,7 +456,7 @@ type RepresentativePagedDataRelationship struct {
 	// direct the organization. One representative must be identified under the control
 	// prong for each legal entity.
 	Control bool `json:"control" api:"required"`
-	// Whether the representative owns any percentage of of the equity interests of the
+	// Whether the representative owns any percentage of the equity interests of the
 	// legal entity.
 	Owner bool `json:"owner" api:"required"`
 	// Whether the person is authorized as the primary representative of the account.
@@ -580,7 +580,7 @@ type EmbedRepresentativeNewParamsRelationship struct {
 	// direct the organization. One representative must be identified under the control
 	// prong for each legal entity.
 	Control bool `json:"control" api:"required"`
-	// Whether the representative owns any percentage of of the equity interests of the
+	// Whether the representative owns any percentage of the equity interests of the
 	// legal entity.
 	Owner bool `json:"owner" api:"required"`
 	// Whether the person is authorized as the primary representative of the account.
@@ -645,7 +645,7 @@ type EmbedRepresentativeUpdateParamsRelationship struct {
 	// direct the organization. One representative must be identified under the control
 	// prong for each legal entity.
 	Control bool `json:"control" api:"required"`
-	// Whether the representative owns any percentage of of the equity interests of the
+	// Whether the representative owns any percentage of the equity interests of the
 	// legal entity.
 	Owner bool `json:"owner" api:"required"`
 	// Whether the person is authorized as the primary representative of the account.
