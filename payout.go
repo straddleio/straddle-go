@@ -3,13 +3,17 @@
 package straddle
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
+	"io"
+	"mime/multipart"
 	"net/http"
 	"slices"
 	"time"
 
+	"github.com/straddleio/straddle-go/internal/apiform"
 	"github.com/straddleio/straddle-go/internal/apijson"
 	"github.com/straddleio/straddle-go/internal/requestconfig"
 	"github.com/straddleio/straddle-go/option"
@@ -205,6 +209,31 @@ func (r *PayoutService) Unmask(ctx context.Context, id string, query PayoutUnmas
 	return res, err
 }
 
+// Uploads a document as proof of authorization for a payout. Uploading again adds
+// another entry to documents rather than replacing the previous one.
+func (r *PayoutService) UploadAuthorizationDocument(ctx context.Context, id string, params PayoutUploadAuthorizationDocumentParams, opts ...option.RequestOption) (res *PayoutV1, err error) {
+	if !param.IsOmitted(params.CorrelationID) {
+		opts = append(opts, option.WithHeader("Correlation-Id", fmt.Sprintf("%v", params.CorrelationID.Value)))
+	}
+	if !param.IsOmitted(params.IdempotencyKey) {
+		opts = append(opts, option.WithHeader("Idempotency-Key", fmt.Sprintf("%v", params.IdempotencyKey.Value)))
+	}
+	if !param.IsOmitted(params.RequestID) {
+		opts = append(opts, option.WithHeader("Request-Id", fmt.Sprintf("%v", params.RequestID.Value)))
+	}
+	if !param.IsOmitted(params.StraddleAccountID) {
+		opts = append(opts, option.WithHeader("Straddle-Account-Id", fmt.Sprintf("%v", params.StraddleAccountID.Value)))
+	}
+	opts = slices.Concat(r.options, opts)
+	if id == "" {
+		err = errors.New("missing required id parameter")
+		return nil, err
+	}
+	path := fmt.Sprintf("v1/payouts/%s/authorization", id)
+	err = requestconfig.ExecuteNewRequest(ctx, http.MethodPost, path, params, &res, opts...)
+	return res, err
+}
+
 type PayoutV1 struct {
 	Data PayoutV1Data `json:"data" api:"required"`
 	// Metadata about the API request, including an identifier and timestamp.
@@ -279,6 +308,9 @@ type PayoutV1Data struct {
 	CreatedAt time.Time `json:"created_at" api:"nullable" format:"date-time"`
 	// Information about the customer associated with the payout.
 	CustomerDetails shared.CustomerDetailsV1 `json:"customer_details"`
+	// Documents uploaded for this payout (e.g. proof of authorization), in the order
+	// they were uploaded.
+	Documents []PayoutV1DataDocument `json:"documents" api:"nullable"`
 	// The actual date on which the payment occurred. For payouts, this is the date the
 	// funds were sent from your bank account.
 	EffectiveAt time.Time `json:"effective_at" api:"nullable" format:"date-time"`
@@ -319,6 +351,7 @@ type PayoutV1Data struct {
 		TraceIDs        respjson.Field
 		CreatedAt       respjson.Field
 		CustomerDetails respjson.Field
+		Documents       respjson.Field
 		EffectiveAt     respjson.Field
 		Metadata        respjson.Field
 		PaykeyDetails   respjson.Field
@@ -412,6 +445,35 @@ type PayoutV1DataStatusHistory struct {
 // Returns the unmodified JSON received from the API
 func (r PayoutV1DataStatusHistory) RawJSON() string { return r.JSON.raw }
 func (r *PayoutV1DataStatusHistory) UnmarshalJSON(data []byte) error {
+	return apijson.UnmarshalRoot(data, r)
+}
+
+type PayoutV1DataDocument struct {
+	// Unique identifier for this document.
+	DocumentID string `json:"document_id" api:"required" format:"uuid"`
+	// The file name of this document as uploaded.
+	DocumentName string `json:"document_name" api:"required"`
+	// The size of this document in bytes.
+	DocumentSize int64 `json:"document_size" api:"required"`
+	// Any of "payment_authorization".
+	DocumentType string `json:"document_type" api:"required"`
+	// The UTC timestamp when this document was uploaded.
+	UploadedAt time.Time `json:"uploaded_at" api:"required" format:"date-time"`
+	// JSON contains metadata for fields, check presence with [respjson.Field.Valid].
+	JSON struct {
+		DocumentID   respjson.Field
+		DocumentName respjson.Field
+		DocumentSize respjson.Field
+		DocumentType respjson.Field
+		UploadedAt   respjson.Field
+		ExtraFields  map[string]respjson.Field
+		raw          string
+	} `json:"-"`
+}
+
+// Returns the unmodified JSON received from the API
+func (r PayoutV1DataDocument) RawJSON() string { return r.JSON.raw }
+func (r *PayoutV1DataDocument) UnmarshalJSON(data []byte) error {
 	return apijson.UnmarshalRoot(data, r)
 }
 
@@ -525,6 +587,9 @@ type PayoutUnmaskResponseData struct {
 	CreatedAt time.Time `json:"created_at" api:"nullable" format:"date-time"`
 	// Information about the customer associated with the charge or payout.
 	CustomerDetails shared.CustomerDetailsV1 `json:"customer_details"`
+	// Documents uploaded for this payout (e.g. proof of authorization), in the order
+	// they were uploaded.
+	Documents []PayoutUnmaskResponseDataDocument `json:"documents" api:"nullable"`
 	// Effective at.
 	EffectiveAt time.Time `json:"effective_at" api:"nullable" format:"date-time"`
 	// Metadata.
@@ -561,6 +626,7 @@ type PayoutUnmaskResponseData struct {
 		TraceIDs        respjson.Field
 		CreatedAt       respjson.Field
 		CustomerDetails respjson.Field
+		Documents       respjson.Field
 		EffectiveAt     respjson.Field
 		Metadata        respjson.Field
 		PaykeyDetails   respjson.Field
@@ -670,6 +736,35 @@ type PayoutUnmaskResponseDataStatusHistory struct {
 // Returns the unmodified JSON received from the API
 func (r PayoutUnmaskResponseDataStatusHistory) RawJSON() string { return r.JSON.raw }
 func (r *PayoutUnmaskResponseDataStatusHistory) UnmarshalJSON(data []byte) error {
+	return apijson.UnmarshalRoot(data, r)
+}
+
+type PayoutUnmaskResponseDataDocument struct {
+	// Unique identifier for this document.
+	DocumentID string `json:"document_id" api:"required" format:"uuid"`
+	// The file name of this document as uploaded.
+	DocumentName string `json:"document_name" api:"required"`
+	// The size of this document in bytes.
+	DocumentSize int64 `json:"document_size" api:"required"`
+	// Any of "payment_authorization".
+	DocumentType string `json:"document_type" api:"required"`
+	// The UTC timestamp when this document was uploaded.
+	UploadedAt time.Time `json:"uploaded_at" api:"required" format:"date-time"`
+	// JSON contains metadata for fields, check presence with [respjson.Field.Valid].
+	JSON struct {
+		DocumentID   respjson.Field
+		DocumentName respjson.Field
+		DocumentSize respjson.Field
+		DocumentType respjson.Field
+		UploadedAt   respjson.Field
+		ExtraFields  map[string]respjson.Field
+		raw          string
+	} `json:"-"`
+}
+
+// Returns the unmodified JSON received from the API
+func (r PayoutUnmaskResponseDataDocument) RawJSON() string { return r.JSON.raw }
+func (r *PayoutUnmaskResponseDataDocument) UnmarshalJSON(data []byte) error {
 	return apijson.UnmarshalRoot(data, r)
 }
 
@@ -872,4 +967,32 @@ type PayoutUnmaskParams struct {
 	RequestID         param.Opt[string] `header:"Request-Id,omitzero" json:"-"`
 	StraddleAccountID param.Opt[string] `header:"Straddle-Account-Id,omitzero" format:"uuid" json:"-"`
 	paramObj
+}
+
+type PayoutUploadAuthorizationDocumentParams struct {
+	// The document file to upload as proof of authorization for this payout.
+	File              io.Reader         `json:"File,omitzero" api:"required" format:"binary"`
+	CorrelationID     param.Opt[string] `header:"Correlation-Id,omitzero" json:"-"`
+	IdempotencyKey    param.Opt[string] `header:"Idempotency-Key,omitzero" json:"-"`
+	RequestID         param.Opt[string] `header:"Request-Id,omitzero" json:"-"`
+	StraddleAccountID param.Opt[string] `header:"Straddle-Account-Id,omitzero" format:"uuid" json:"-"`
+	paramObj
+}
+
+func (r PayoutUploadAuthorizationDocumentParams) MarshalMultipart() (data []byte, contentType string, err error) {
+	buf := bytes.NewBuffer(nil)
+	writer := multipart.NewWriter(buf)
+	err = apiform.MarshalRoot(r, writer)
+	if err == nil {
+		err = apiform.WriteExtras(writer, r.ExtraFields())
+	}
+	if err != nil {
+		writer.Close()
+		return nil, "", err
+	}
+	err = writer.Close()
+	if err != nil {
+		return nil, "", err
+	}
+	return buf.Bytes(), writer.FormDataContentType(), nil
 }
