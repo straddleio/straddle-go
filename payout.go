@@ -382,7 +382,8 @@ type PayoutV1DataConfig struct {
 	// "cancelled_for_balance_check", "failed_insufficient_funds",
 	// "reversed_insufficient_funds", "failed_customer_dispute",
 	// "reversed_customer_dispute", "failed_closed_bank_account",
-	// "reversed_closed_bank_account".
+	// "reversed_closed_bank_account", "failed_not_authorized",
+	// "reversed_not_authorized".
 	SandboxOutcome string `json:"sandbox_outcome"`
 	// JSON contains metadata for fields, check presence with [respjson.Field.Valid].
 	JSON struct {
@@ -656,7 +657,8 @@ type PayoutUnmaskResponseDataConfig struct {
 	// "cancelled_for_balance_check", "failed_insufficient_funds",
 	// "reversed_insufficient_funds", "failed_customer_dispute",
 	// "reversed_customer_dispute", "failed_closed_bank_account",
-	// "reversed_closed_bank_account".
+	// "reversed_closed_bank_account", "failed_not_authorized",
+	// "reversed_not_authorized".
 	SandboxOutcome string `json:"sandbox_outcome"`
 	// JSON contains metadata for fields, check presence with [respjson.Field.Valid].
 	JSON struct {
@@ -856,7 +858,8 @@ type PayoutNewParamsConfig struct {
 	// "cancelled_for_balance_check", "failed_insufficient_funds",
 	// "reversed_insufficient_funds", "failed_customer_dispute",
 	// "reversed_customer_dispute", "failed_closed_bank_account",
-	// "reversed_closed_bank_account".
+	// "reversed_closed_bank_account", "failed_not_authorized",
+	// "reversed_not_authorized".
 	SandboxOutcome string `json:"sandbox_outcome,omitzero"`
 	paramObj
 }
@@ -871,7 +874,7 @@ func (r *PayoutNewParamsConfig) UnmarshalJSON(data []byte) error {
 
 func init() {
 	apijson.RegisterFieldValidator[PayoutNewParamsConfig](
-		"sandbox_outcome", "standard", "paid", "on_hold_daily_limit", "cancelled_for_fraud_risk", "cancelled_for_balance_check", "failed_insufficient_funds", "reversed_insufficient_funds", "failed_customer_dispute", "reversed_customer_dispute", "failed_closed_bank_account", "reversed_closed_bank_account",
+		"sandbox_outcome", "standard", "paid", "on_hold_daily_limit", "cancelled_for_fraud_risk", "cancelled_for_balance_check", "failed_insufficient_funds", "reversed_insufficient_funds", "failed_customer_dispute", "reversed_customer_dispute", "failed_closed_bank_account", "reversed_closed_bank_account", "failed_not_authorized", "reversed_not_authorized",
 	)
 }
 

@@ -312,6 +312,8 @@ type PaymentListParams struct {
 	MaxEffectiveAt param.Opt[time.Time] `query:"max_effective_at,omitzero" format:"date-time" json:"-"`
 	// Search using the latest `payment_date` of a `charge` or `payout`.
 	MaxPaymentDate param.Opt[time.Time] `query:"max_payment_date,omitzero" format:"date" json:"-"`
+	// Filter to payments last updated on or before this timestamp.
+	MaxUpdatedAt param.Opt[time.Time] `query:"max_updated_at,omitzero" format:"date-time" json:"-"`
 	// Search using the minimum `amount of a `charge`or`payout`.
 	MinAmount param.Opt[int64] `query:"min_amount,omitzero" json:"-"`
 	// Search using the earliest `created_at` date of a `charge` or `payout`.
@@ -320,6 +322,8 @@ type PaymentListParams struct {
 	MinEffectiveAt param.Opt[time.Time] `query:"min_effective_at,omitzero" format:"date-time" json:"-"`
 	// Search using the earliest ` `of a `charge` or `payout`.
 	MinPaymentDate param.Opt[time.Time] `query:"min_payment_date,omitzero" format:"date" json:"-"`
+	// Filter to payments last updated on or after this timestamp.
+	MinUpdatedAt param.Opt[time.Time] `query:"min_updated_at,omitzero" format:"date-time" json:"-"`
 	// Results page number. Starts at page 1.
 	PageNumber param.Opt[int64] `query:"page_number,omitzero" json:"-"`
 	// Results page size. Max value: 1000
@@ -337,7 +341,8 @@ type PaymentListParams struct {
 	StraddleAccountID param.Opt[string] `header:"Straddle-Account-Id,omitzero" format:"uuid" json:"-"`
 	// The field to sort the results by.
 	//
-	// Any of "created_at", "payment_date", "effective_at", "id", "amount".
+	// Any of "created_at", "payment_date", "effective_at", "id", "amount",
+	// "updated_at".
 	DefaultSort PaymentListParamsDefaultSort `query:"default_sort,omitzero" json:"-"`
 	// Any of "asc", "desc".
 	DefaultSortOrder PaymentListParamsDefaultSortOrder `query:"default_sort_order,omitzero" json:"-"`
@@ -352,7 +357,8 @@ type PaymentListParams struct {
 	PaymentType []string `query:"payment_type,omitzero" json:"-"`
 	// The field to sort the results by.
 	//
-	// Any of "created_at", "payment_date", "effective_at", "id", "amount".
+	// Any of "created_at", "payment_date", "effective_at", "id", "amount",
+	// "updated_at".
 	SortBy PaymentListParamsSortBy `query:"sort_by,omitzero" json:"-"`
 	// Any of "asc", "desc".
 	SortOrder PaymentListParamsSortOrder `query:"sort_order,omitzero" json:"-"`
@@ -391,6 +397,7 @@ const (
 	PaymentListParamsDefaultSortEffectiveAt PaymentListParamsDefaultSort = "effective_at"
 	PaymentListParamsDefaultSortID          PaymentListParamsDefaultSort = "id"
 	PaymentListParamsDefaultSortAmount      PaymentListParamsDefaultSort = "amount"
+	PaymentListParamsDefaultSortUpdatedAt   PaymentListParamsDefaultSort = "updated_at"
 )
 
 type PaymentListParamsDefaultSortOrder string
@@ -409,6 +416,7 @@ const (
 	PaymentListParamsSortByEffectiveAt PaymentListParamsSortBy = "effective_at"
 	PaymentListParamsSortByID          PaymentListParamsSortBy = "id"
 	PaymentListParamsSortByAmount      PaymentListParamsSortBy = "amount"
+	PaymentListParamsSortByUpdatedAt   PaymentListParamsSortBy = "updated_at"
 )
 
 type PaymentListParamsSortOrder string
