@@ -253,9 +253,7 @@ type AccountPagedV1Data struct {
 	ExternalID string `json:"external_id" api:"nullable"`
 	// Up to 20 additional user-defined key-value pairs. Useful for storing additional
 	// information about the account in a structured format.
-	Metadata map[string]string `json:"metadata" api:"nullable"`
-	// The unique identifier of the pricing plan currently assigned to this account.
-	PlanID         string                     `json:"plan_id" api:"nullable" format:"uuid"`
+	Metadata       map[string]string          `json:"metadata" api:"nullable"`
 	Settings       AccountPagedV1DataSettings `json:"settings"`
 	TermsOfService TermsOfServiceV1           `json:"terms_of_service"`
 	// Timestamp of the most recent update to the account.
@@ -273,7 +271,6 @@ type AccountPagedV1Data struct {
 		CreatedAt       respjson.Field
 		ExternalID      respjson.Field
 		Metadata        respjson.Field
-		PlanID          respjson.Field
 		Settings        respjson.Field
 		TermsOfService  respjson.Field
 		UpdatedAt       respjson.Field
@@ -565,9 +562,7 @@ type AccountV1Data struct {
 	ExternalID string `json:"external_id" api:"nullable"`
 	// Up to 20 additional user-defined key-value pairs. Useful for storing additional
 	// information about the account in a structured format.
-	Metadata map[string]string `json:"metadata" api:"nullable"`
-	// The unique identifier of the pricing plan currently assigned to this account.
-	PlanID         string                `json:"plan_id" api:"nullable" format:"uuid"`
+	Metadata       map[string]string     `json:"metadata" api:"nullable"`
 	Settings       AccountV1DataSettings `json:"settings"`
 	TermsOfService TermsOfServiceV1      `json:"terms_of_service"`
 	// Timestamp of the most recent update to the account.
@@ -585,7 +580,6 @@ type AccountV1Data struct {
 		CreatedAt       respjson.Field
 		ExternalID      respjson.Field
 		Metadata        respjson.Field
-		PlanID          respjson.Field
 		Settings        respjson.Field
 		TermsOfService  respjson.Field
 		UpdatedAt       respjson.Field
@@ -821,8 +815,6 @@ const (
 
 // The address object is optional. If provided, it must be a valid address.
 type AddressV1 struct {
-	// Primary address line (e.g., street, PO Box).
-	Address1 string `json:"address1" api:"required"`
 	// City, district, suburb, town, or village.
 	City string `json:"city" api:"required"`
 	// Primary address line (e.g., street, PO Box).
@@ -831,23 +823,16 @@ type AddressV1 struct {
 	PostalCode string `json:"postal_code" api:"required"`
 	// Two-letter state code.
 	State string `json:"state" api:"required"`
-	// Zip or postal code.
-	Zip string `json:"zip" api:"required"`
-	// Secondary address line (e.g., apartment, suite, unit, or building).
-	Address2 string `json:"address2" api:"nullable"`
 	// The country of the address, in ISO 3166-1 alpha-2 format.
 	Country string `json:"country" api:"nullable"`
 	// Secondary address line (e.g., apartment, suite, unit, or building).
 	Line2 string `json:"line2" api:"nullable"`
 	// JSON contains metadata for fields, check presence with [respjson.Field.Valid].
 	JSON struct {
-		Address1    respjson.Field
 		City        respjson.Field
 		Line1       respjson.Field
 		PostalCode  respjson.Field
 		State       respjson.Field
-		Zip         respjson.Field
-		Address2    respjson.Field
 		Country     respjson.Field
 		Line2       respjson.Field
 		ExtraFields map[string]respjson.Field
@@ -872,7 +857,7 @@ func (r AddressV1) ToParam() AddressV1Param {
 
 // The address object is optional. If provided, it must be a valid address.
 //
-// The properties Address1, City, Line1, PostalCode, State, Zip are required.
+// The properties City, Line1, PostalCode, State are required.
 type AddressV1Param struct {
 	// City, district, suburb, town, or village.
 	City param.Opt[string] `json:"city,omitzero" api:"required"`
@@ -882,12 +867,6 @@ type AddressV1Param struct {
 	PostalCode param.Opt[string] `json:"postal_code,omitzero" api:"required"`
 	// Two-letter state code.
 	State param.Opt[string] `json:"state,omitzero" api:"required"`
-	// Primary address line (e.g., street, PO Box).
-	Address1 string `json:"address1" api:"required"`
-	// Zip or postal code.
-	Zip string `json:"zip" api:"required"`
-	// Secondary address line (e.g., apartment, suite, unit, or building).
-	Address2 param.Opt[string] `json:"address2,omitzero"`
 	// The country of the address, in ISO 3166-1 alpha-2 format.
 	Country param.Opt[string] `json:"country,omitzero"`
 	// Secondary address line (e.g., apartment, suite, unit, or building).
