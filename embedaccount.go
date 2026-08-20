@@ -1236,6 +1236,7 @@ func (r *EmbedAccountUpdateParams) UnmarshalJSON(data []byte) error {
 }
 
 type EmbedAccountListParams struct {
+	ExternalID param.Opt[string] `query:"external_id,omitzero" json:"-"`
 	// Results page number. Starts at page 1. Default value: 1
 	PageNumber param.Opt[int64] `query:"page_number,omitzero" json:"-"`
 	// Page size. Default value: 100. Max value: 1000

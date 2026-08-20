@@ -121,6 +121,15 @@ type PaymentSummaryPagedV1Data struct {
 	ExternalID string `json:"external_id" api:"required"`
 	// Funding ids.
 	FundingIDs []string `json:"funding_ids" api:"required" format:"uuid"`
+	// Has the payment been refunded by an associated payout (only applicable to
+	// charges).
+	HasRefund bool `json:"has_refund" api:"required"`
+	// Has the payment been resubmitted.
+	HasResubmit bool `json:"has_resubmit" api:"required"`
+	// Is the payment a refund of an original charge (only applicable to payouts).
+	IsRefund bool `json:"is_refund" api:"required"`
+	// Is the payment a resubmit of an original payment.
+	IsResubmit bool `json:"is_resubmit" api:"required"`
 	// Value of the `paykey` used for the `charge` or `payout`.
 	Paykey string `json:"paykey" api:"required"`
 	// The desired date on which the payment should be occur. For charges, this means
@@ -155,6 +164,9 @@ type PaymentSummaryPagedV1Data struct {
 	Metadata map[string]string `json:"metadata" api:"nullable"`
 	// Information about the paykey used for the `charge` or `payout`.
 	PaykeyDetails shared.PaykeyDetailsV1 `json:"paykey_details"`
+	// Payments related to this one (e.g. refunds, resubmissions), mapped by payment ID
+	// to relationship type.
+	RelatedPayments []PaymentSummaryPagedV1DataRelatedPayment `json:"related_payments" api:"nullable"`
 	// JSON contains metadata for fields, check presence with [respjson.Field.Valid].
 	JSON struct {
 		ID              respjson.Field
@@ -164,6 +176,10 @@ type PaymentSummaryPagedV1Data struct {
 		Description     respjson.Field
 		ExternalID      respjson.Field
 		FundingIDs      respjson.Field
+		HasRefund       respjson.Field
+		HasResubmit     respjson.Field
+		IsRefund        respjson.Field
+		IsResubmit      respjson.Field
 		Paykey          respjson.Field
 		PaymentDate     respjson.Field
 		PaymentType     respjson.Field
@@ -176,6 +192,7 @@ type PaymentSummaryPagedV1Data struct {
 		FundingID       respjson.Field
 		Metadata        respjson.Field
 		PaykeyDetails   respjson.Field
+		RelatedPayments respjson.Field
 		ExtraFields     map[string]respjson.Field
 		raw             string
 	} `json:"-"`
@@ -184,6 +201,31 @@ type PaymentSummaryPagedV1Data struct {
 // Returns the unmodified JSON received from the API
 func (r PaymentSummaryPagedV1Data) RawJSON() string { return r.JSON.raw }
 func (r *PaymentSummaryPagedV1Data) UnmarshalJSON(data []byte) error {
+	return apijson.UnmarshalRoot(data, r)
+}
+
+type PaymentSummaryPagedV1DataRelatedPayment struct {
+	// The ID of the related payment.
+	ID string `json:"id" api:"required" format:"uuid"`
+	// The type of payment.
+	//
+	// Any of "charge", "payout".
+	PaymentType string `json:"payment_type" api:"required"`
+	// Any of "original", "resubmit", "refund".
+	Relationship string `json:"relationship" api:"required"`
+	// JSON contains metadata for fields, check presence with [respjson.Field.Valid].
+	JSON struct {
+		ID           respjson.Field
+		PaymentType  respjson.Field
+		Relationship respjson.Field
+		ExtraFields  map[string]respjson.Field
+		raw          string
+	} `json:"-"`
+}
+
+// Returns the unmodified JSON received from the API
+func (r PaymentSummaryPagedV1DataRelatedPayment) RawJSON() string { return r.JSON.raw }
+func (r *PaymentSummaryPagedV1DataRelatedPayment) UnmarshalJSON(data []byte) error {
 	return apijson.UnmarshalRoot(data, r)
 }
 
@@ -251,8 +293,17 @@ type PaymentListParams struct {
 	ExternalID param.Opt[string] `query:"external_id,omitzero" json:"-"`
 	// Search using the `funding_id` of a `charge` or `payout`.
 	FundingID param.Opt[string] `query:"funding_id,omitzero" format:"uuid" json:"-"`
+	// Has the payment been refunded by an associated payout (only applicable to
+	// charges).
+	HasRefund param.Opt[bool] `query:"has_refund,omitzero" json:"-"`
+	// Has the payment been resubmitted.
+	HasResubmit param.Opt[bool] `query:"has_resubmit,omitzero" json:"-"`
 	// Include the metadata for payments in the returned data.
 	IncludeMetadata param.Opt[bool] `query:"include_metadata,omitzero" json:"-"`
+	// Is the payment a refund of an original charge (only applicable to payouts).
+	IsRefund param.Opt[bool] `query:"is_refund,omitzero" json:"-"`
+	// Is the payment a resubmit of an original payment.
+	IsResubmit param.Opt[bool] `query:"is_resubmit,omitzero" json:"-"`
 	// Search using a maximum `amount` of a `charge` or `payout`.
 	MaxAmount param.Opt[int64] `query:"max_amount,omitzero" json:"-"`
 	// Search using the latest `created_at` date of a `charge` or `payout`.
@@ -261,6 +312,8 @@ type PaymentListParams struct {
 	MaxEffectiveAt param.Opt[time.Time] `query:"max_effective_at,omitzero" format:"date-time" json:"-"`
 	// Search using the latest `payment_date` of a `charge` or `payout`.
 	MaxPaymentDate param.Opt[time.Time] `query:"max_payment_date,omitzero" format:"date" json:"-"`
+	// Filter to payments last updated on or before this timestamp.
+	MaxUpdatedAt param.Opt[time.Time] `query:"max_updated_at,omitzero" format:"date-time" json:"-"`
 	// Search using the minimum `amount of a `charge`or`payout`.
 	MinAmount param.Opt[int64] `query:"min_amount,omitzero" json:"-"`
 	// Search using the earliest `created_at` date of a `charge` or `payout`.
@@ -269,6 +322,8 @@ type PaymentListParams struct {
 	MinEffectiveAt param.Opt[time.Time] `query:"min_effective_at,omitzero" format:"date-time" json:"-"`
 	// Search using the earliest ` `of a `charge` or `payout`.
 	MinPaymentDate param.Opt[time.Time] `query:"min_payment_date,omitzero" format:"date" json:"-"`
+	// Filter to payments last updated on or after this timestamp.
+	MinUpdatedAt param.Opt[time.Time] `query:"min_updated_at,omitzero" format:"date-time" json:"-"`
 	// Results page number. Starts at page 1.
 	PageNumber param.Opt[int64] `query:"page_number,omitzero" json:"-"`
 	// Results page size. Max value: 1000
@@ -286,7 +341,8 @@ type PaymentListParams struct {
 	StraddleAccountID param.Opt[string] `header:"Straddle-Account-Id,omitzero" format:"uuid" json:"-"`
 	// The field to sort the results by.
 	//
-	// Any of "created_at", "payment_date", "effective_at", "id", "amount".
+	// Any of "created_at", "payment_date", "effective_at", "id", "amount",
+	// "updated_at".
 	DefaultSort PaymentListParamsDefaultSort `query:"default_sort,omitzero" json:"-"`
 	// Any of "asc", "desc".
 	DefaultSortOrder PaymentListParamsDefaultSortOrder `query:"default_sort_order,omitzero" json:"-"`
@@ -301,7 +357,8 @@ type PaymentListParams struct {
 	PaymentType []string `query:"payment_type,omitzero" json:"-"`
 	// The field to sort the results by.
 	//
-	// Any of "created_at", "payment_date", "effective_at", "id", "amount".
+	// Any of "created_at", "payment_date", "effective_at", "id", "amount",
+	// "updated_at".
 	SortBy PaymentListParamsSortBy `query:"sort_by,omitzero" json:"-"`
 	// Any of "asc", "desc".
 	SortOrder PaymentListParamsSortOrder `query:"sort_order,omitzero" json:"-"`
@@ -340,6 +397,7 @@ const (
 	PaymentListParamsDefaultSortEffectiveAt PaymentListParamsDefaultSort = "effective_at"
 	PaymentListParamsDefaultSortID          PaymentListParamsDefaultSort = "id"
 	PaymentListParamsDefaultSortAmount      PaymentListParamsDefaultSort = "amount"
+	PaymentListParamsDefaultSortUpdatedAt   PaymentListParamsDefaultSort = "updated_at"
 )
 
 type PaymentListParamsDefaultSortOrder string
@@ -358,6 +416,7 @@ const (
 	PaymentListParamsSortByEffectiveAt PaymentListParamsSortBy = "effective_at"
 	PaymentListParamsSortByID          PaymentListParamsSortBy = "id"
 	PaymentListParamsSortByAmount      PaymentListParamsSortBy = "amount"
+	PaymentListParamsSortByUpdatedAt   PaymentListParamsSortBy = "updated_at"
 )
 
 type PaymentListParamsSortOrder string

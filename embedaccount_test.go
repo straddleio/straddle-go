@@ -148,6 +148,7 @@ func TestEmbedAccountListWithOptionalParams(t *testing.T) {
 		option.WithAPIKey("My API Key"),
 	)
 	_, err := client.Embed.Accounts.List(context.TODO(), straddle.EmbedAccountListParams{
+		ExternalID:    straddle.String("external_id"),
 		PageNumber:    straddle.Int(0),
 		PageSize:      straddle.Int(0),
 		SearchText:    straddle.String("search_text"),

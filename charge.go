@@ -263,6 +263,12 @@ type ChargeV1Data struct {
 	ExternalID string `json:"external_id" api:"required"`
 	// Funding Ids
 	FundingIDs []string `json:"funding_ids" api:"required" format:"uuid"`
+	// Has the charge been refunded by an associated payout.
+	HasRefund bool `json:"has_refund" api:"required"`
+	// Has the charge been resubmitted.
+	HasResubmit bool `json:"has_resubmit" api:"required"`
+	// Is the charge a resubmit of an original charge.
+	IsResubmit bool `json:"is_resubmit" api:"required"`
 	// Value of the `paykey` used for the charge.
 	Paykey string `json:"paykey" api:"required"`
 	// The desired date on which the payment should be occur. For charges, this means
@@ -283,6 +289,9 @@ type ChargeV1Data struct {
 	UpdatedAt time.Time `json:"updated_at" api:"required" format:"date-time"`
 	// Information about the customer associated with the charge.
 	CustomerDetails shared.CustomerDetailsV1 `json:"customer_details"`
+	// Documents uploaded for this charge (e.g. proof of authorization), in the order
+	// they were uploaded.
+	Documents []ChargeV1DataDocument `json:"documents" api:"nullable"`
 	// Timestamp of when the charge was effective in the customer's bank account,
 	// otherwise known as the date on which the customer is debited.
 	EffectiveAt time.Time `json:"effective_at" api:"nullable" format:"date-time"`
@@ -299,9 +308,7 @@ type ChargeV1Data struct {
 	// payment rail.
 	ProcessedAt time.Time `json:"processed_at" api:"nullable" format:"date-time"`
 	// Related payments.
-	//
-	// Any of "original", "resubmit", "refund".
-	RelatedPayments map[string]string `json:"related_payments" api:"nullable"`
+	RelatedPayments []ChargeV1DataRelatedPayment `json:"related_payments" api:"nullable"`
 	// JSON contains metadata for fields, check presence with [respjson.Field.Valid].
 	JSON struct {
 		ID              respjson.Field
@@ -314,6 +321,9 @@ type ChargeV1Data struct {
 		Device          respjson.Field
 		ExternalID      respjson.Field
 		FundingIDs      respjson.Field
+		HasRefund       respjson.Field
+		HasResubmit     respjson.Field
+		IsResubmit      respjson.Field
 		Paykey          respjson.Field
 		PaymentDate     respjson.Field
 		Status          respjson.Field
@@ -322,6 +332,7 @@ type ChargeV1Data struct {
 		TraceIDs        respjson.Field
 		UpdatedAt       respjson.Field
 		CustomerDetails respjson.Field
+		Documents       respjson.Field
 		EffectiveAt     respjson.Field
 		Metadata        respjson.Field
 		PaykeyDetails   respjson.Field
@@ -355,7 +366,8 @@ type ChargeV1DataConfig struct {
 	// "cancelled_for_balance_check", "failed_insufficient_funds",
 	// "reversed_insufficient_funds", "failed_customer_dispute",
 	// "reversed_customer_dispute", "failed_closed_bank_account",
-	// "reversed_closed_bank_account".
+	// "reversed_closed_bank_account", "failed_not_authorized",
+	// "reversed_not_authorized".
 	SandboxOutcome string `json:"sandbox_outcome"`
 	// JSON contains metadata for fields, check presence with [respjson.Field.Valid].
 	JSON struct {
@@ -420,6 +432,60 @@ type ChargeV1DataStatusHistory struct {
 // Returns the unmodified JSON received from the API
 func (r ChargeV1DataStatusHistory) RawJSON() string { return r.JSON.raw }
 func (r *ChargeV1DataStatusHistory) UnmarshalJSON(data []byte) error {
+	return apijson.UnmarshalRoot(data, r)
+}
+
+type ChargeV1DataDocument struct {
+	// Unique identifier for this document.
+	DocumentID string `json:"document_id" api:"required" format:"uuid"`
+	// The file name of this document as uploaded.
+	DocumentName string `json:"document_name" api:"required"`
+	// The size of this document in bytes.
+	DocumentSize int64 `json:"document_size" api:"required"`
+	// Any of "payment_authorization".
+	DocumentType string `json:"document_type" api:"required"`
+	// The UTC timestamp when this document was uploaded.
+	UploadedAt time.Time `json:"uploaded_at" api:"required" format:"date-time"`
+	// JSON contains metadata for fields, check presence with [respjson.Field.Valid].
+	JSON struct {
+		DocumentID   respjson.Field
+		DocumentName respjson.Field
+		DocumentSize respjson.Field
+		DocumentType respjson.Field
+		UploadedAt   respjson.Field
+		ExtraFields  map[string]respjson.Field
+		raw          string
+	} `json:"-"`
+}
+
+// Returns the unmodified JSON received from the API
+func (r ChargeV1DataDocument) RawJSON() string { return r.JSON.raw }
+func (r *ChargeV1DataDocument) UnmarshalJSON(data []byte) error {
+	return apijson.UnmarshalRoot(data, r)
+}
+
+type ChargeV1DataRelatedPayment struct {
+	// The ID of the related payment.
+	ID string `json:"id" api:"required" format:"uuid"`
+	// The type of payment.
+	//
+	// Any of "charge", "payout".
+	PaymentType string `json:"payment_type" api:"required"`
+	// Any of "original", "resubmit", "refund".
+	Relationship string `json:"relationship" api:"required"`
+	// JSON contains metadata for fields, check presence with [respjson.Field.Valid].
+	JSON struct {
+		ID           respjson.Field
+		PaymentType  respjson.Field
+		Relationship respjson.Field
+		ExtraFields  map[string]respjson.Field
+		raw          string
+	} `json:"-"`
+}
+
+// Returns the unmodified JSON received from the API
+func (r ChargeV1DataRelatedPayment) RawJSON() string { return r.JSON.raw }
+func (r *ChargeV1DataRelatedPayment) UnmarshalJSON(data []byte) error {
 	return apijson.UnmarshalRoot(data, r)
 }
 
@@ -493,6 +559,12 @@ type ChargeUnmaskResponseData struct {
 	ExternalID string `json:"external_id" api:"required"`
 	// Funding Ids
 	FundingIDs []string `json:"funding_ids" api:"required" format:"uuid"`
+	// Has the charge been refunded by an associated payout.
+	HasRefund bool `json:"has_refund" api:"required"`
+	// Has the charge been resubmitted.
+	HasResubmit bool `json:"has_resubmit" api:"required"`
+	// Is the charge a resubmit of an original charge.
+	IsResubmit bool `json:"is_resubmit" api:"required"`
 	// Paykey.
 	Paykey string `json:"paykey" api:"required"`
 	// Payment date.
@@ -511,6 +583,9 @@ type ChargeUnmaskResponseData struct {
 	UpdatedAt time.Time `json:"updated_at" api:"required" format:"date-time"`
 	// Information about the customer associated with the charge or payout.
 	CustomerDetails shared.CustomerDetailsV1 `json:"customer_details"`
+	// Documents uploaded for this charge (e.g. proof of authorization), in the order
+	// they were uploaded.
+	Documents []ChargeUnmaskResponseDataDocument `json:"documents" api:"nullable"`
 	// Effective at.
 	EffectiveAt time.Time `json:"effective_at" api:"nullable" format:"date-time"`
 	// Metadata.
@@ -523,9 +598,7 @@ type ChargeUnmaskResponseData struct {
 	// Processed at.
 	ProcessedAt time.Time `json:"processed_at" api:"nullable" format:"date-time"`
 	// Related payments.
-	//
-	// Any of "original", "resubmit", "refund".
-	RelatedPayments map[string]string `json:"related_payments" api:"nullable"`
+	RelatedPayments []ChargeUnmaskResponseDataRelatedPayment `json:"related_payments" api:"nullable"`
 	// JSON contains metadata for fields, check presence with [respjson.Field.Valid].
 	JSON struct {
 		ID              respjson.Field
@@ -538,6 +611,9 @@ type ChargeUnmaskResponseData struct {
 		Device          respjson.Field
 		ExternalID      respjson.Field
 		FundingIDs      respjson.Field
+		HasRefund       respjson.Field
+		HasResubmit     respjson.Field
+		IsResubmit      respjson.Field
 		Paykey          respjson.Field
 		PaymentDate     respjson.Field
 		Status          respjson.Field
@@ -546,6 +622,7 @@ type ChargeUnmaskResponseData struct {
 		TraceIDs        respjson.Field
 		UpdatedAt       respjson.Field
 		CustomerDetails respjson.Field
+		Documents       respjson.Field
 		EffectiveAt     respjson.Field
 		Metadata        respjson.Field
 		PaykeyDetails   respjson.Field
@@ -578,7 +655,8 @@ type ChargeUnmaskResponseDataConfig struct {
 	// "cancelled_for_balance_check", "failed_insufficient_funds",
 	// "reversed_insufficient_funds", "failed_customer_dispute",
 	// "reversed_customer_dispute", "failed_closed_bank_account",
-	// "reversed_closed_bank_account".
+	// "reversed_closed_bank_account", "failed_not_authorized",
+	// "reversed_not_authorized".
 	SandboxOutcome string `json:"sandbox_outcome"`
 	// JSON contains metadata for fields, check presence with [respjson.Field.Valid].
 	JSON struct {
@@ -662,6 +740,60 @@ func (r *ChargeUnmaskResponseDataStatusHistory) UnmarshalJSON(data []byte) error
 	return apijson.UnmarshalRoot(data, r)
 }
 
+type ChargeUnmaskResponseDataDocument struct {
+	// Unique identifier for this document.
+	DocumentID string `json:"document_id" api:"required" format:"uuid"`
+	// The file name of this document as uploaded.
+	DocumentName string `json:"document_name" api:"required"`
+	// The size of this document in bytes.
+	DocumentSize int64 `json:"document_size" api:"required"`
+	// Any of "payment_authorization".
+	DocumentType string `json:"document_type" api:"required"`
+	// The UTC timestamp when this document was uploaded.
+	UploadedAt time.Time `json:"uploaded_at" api:"required" format:"date-time"`
+	// JSON contains metadata for fields, check presence with [respjson.Field.Valid].
+	JSON struct {
+		DocumentID   respjson.Field
+		DocumentName respjson.Field
+		DocumentSize respjson.Field
+		DocumentType respjson.Field
+		UploadedAt   respjson.Field
+		ExtraFields  map[string]respjson.Field
+		raw          string
+	} `json:"-"`
+}
+
+// Returns the unmodified JSON received from the API
+func (r ChargeUnmaskResponseDataDocument) RawJSON() string { return r.JSON.raw }
+func (r *ChargeUnmaskResponseDataDocument) UnmarshalJSON(data []byte) error {
+	return apijson.UnmarshalRoot(data, r)
+}
+
+type ChargeUnmaskResponseDataRelatedPayment struct {
+	// The ID of the related payment.
+	ID string `json:"id" api:"required" format:"uuid"`
+	// The type of payment.
+	//
+	// Any of "charge", "payout".
+	PaymentType string `json:"payment_type" api:"required"`
+	// Any of "original", "resubmit", "refund".
+	Relationship string `json:"relationship" api:"required"`
+	// JSON contains metadata for fields, check presence with [respjson.Field.Valid].
+	JSON struct {
+		ID           respjson.Field
+		PaymentType  respjson.Field
+		Relationship respjson.Field
+		ExtraFields  map[string]respjson.Field
+		raw          string
+	} `json:"-"`
+}
+
+// Returns the unmodified JSON received from the API
+func (r ChargeUnmaskResponseDataRelatedPayment) RawJSON() string { return r.JSON.raw }
+func (r *ChargeUnmaskResponseDataRelatedPayment) UnmarshalJSON(data []byte) error {
+	return apijson.UnmarshalRoot(data, r)
+}
+
 // Indicates the structure of the returned content.
 //
 //   - "object" means the `data` field contains a single JSON object.
@@ -736,7 +868,8 @@ type ChargeNewParamsConfig struct {
 	// "cancelled_for_balance_check", "failed_insufficient_funds",
 	// "reversed_insufficient_funds", "failed_customer_dispute",
 	// "reversed_customer_dispute", "failed_closed_bank_account",
-	// "reversed_closed_bank_account".
+	// "reversed_closed_bank_account", "failed_not_authorized",
+	// "reversed_not_authorized".
 	SandboxOutcome string `json:"sandbox_outcome,omitzero"`
 	paramObj
 }
@@ -754,7 +887,7 @@ func init() {
 		"balance_check", "required", "enabled", "disabled",
 	)
 	apijson.RegisterFieldValidator[ChargeNewParamsConfig](
-		"sandbox_outcome", "standard", "paid", "on_hold_daily_limit", "cancelled_for_fraud_risk", "cancelled_for_balance_check", "failed_insufficient_funds", "reversed_insufficient_funds", "failed_customer_dispute", "reversed_customer_dispute", "failed_closed_bank_account", "reversed_closed_bank_account",
+		"sandbox_outcome", "standard", "paid", "on_hold_daily_limit", "cancelled_for_fraud_risk", "cancelled_for_balance_check", "failed_insufficient_funds", "reversed_insufficient_funds", "failed_customer_dispute", "reversed_customer_dispute", "failed_closed_bank_account", "reversed_closed_bank_account", "failed_not_authorized", "reversed_not_authorized",
 	)
 }
 

@@ -3,8 +3,10 @@
 package straddle_test
 
 import (
+	"bytes"
 	"context"
 	"errors"
+	"io"
 	"os"
 	"testing"
 	"time"
@@ -239,6 +241,38 @@ func TestPayoutUnmaskWithOptionalParams(t *testing.T) {
 		"182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e",
 		straddle.PayoutUnmaskParams{
 			CorrelationID:     straddle.String("Correlation-Id"),
+			RequestID:         straddle.String("Request-Id"),
+			StraddleAccountID: straddle.String("182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e"),
+		},
+	)
+	if err != nil {
+		var apierr *straddle.Error
+		if errors.As(err, &apierr) {
+			t.Log(string(apierr.DumpRequest(true)))
+		}
+		t.Fatalf("err should be nil: %s", err.Error())
+	}
+}
+
+func TestPayoutUploadAuthorizationDocumentWithOptionalParams(t *testing.T) {
+	baseURL := "http://localhost:4010"
+	if envURL, ok := os.LookupEnv("TEST_API_BASE_URL"); ok {
+		baseURL = envURL
+	}
+	if !testutil.CheckTestServer(t, baseURL) {
+		return
+	}
+	client := straddle.NewClient(
+		option.WithBaseURL(baseURL),
+		option.WithAPIKey("My API Key"),
+	)
+	_, err := client.Payouts.UploadAuthorizationDocument(
+		context.TODO(),
+		"182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e",
+		straddle.PayoutUploadAuthorizationDocumentParams{
+			File:              io.Reader(bytes.NewBuffer([]byte("Example data"))),
+			CorrelationID:     straddle.String("Correlation-Id"),
+			IdempotencyKey:    straddle.String("xxxxxxxxxx"),
 			RequestID:         straddle.String("Request-Id"),
 			StraddleAccountID: straddle.String("182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e"),
 		},
