@@ -173,7 +173,7 @@ type PaykeyReviewGetResponseDataPaykeyDetails struct {
 	// The tokenized paykey value. This value is used to create payments and should be
 	// stored securely.
 	Paykey string `json:"paykey" api:"required"`
-	// Any of "bank_account", "straddle", "mx", "plaid", "tan", "quiltt".
+	// Any of "bank_account", "straddle", "mx", "plaid", "tan", "quiltt", "mastercard".
 	Source string `json:"source" api:"required"`
 	// Any of "pending", "active", "inactive", "rejected", "review", "blocked".
 	Status string `json:"status" api:"required"`
