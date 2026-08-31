@@ -246,7 +246,7 @@ type PaykeySummaryPagedV1Data struct {
 	// The tokenized paykey value. This value is used to create payments and should be
 	// stored securely.
 	Paykey string `json:"paykey" api:"required"`
-	// Any of "bank_account", "straddle", "mx", "plaid", "tan", "quiltt".
+	// Any of "bank_account", "straddle", "mx", "plaid", "tan", "quiltt", "mastercard".
 	Source string `json:"source" api:"required"`
 	// Any of "pending", "active", "inactive", "rejected", "review", "blocked".
 	Status string `json:"status" api:"required"`
@@ -472,7 +472,7 @@ type PaykeyUnmaskedV1Data struct {
 	// The tokenized paykey value. This value is used to create payments and should be
 	// stored securely.
 	Paykey string `json:"paykey" api:"required"`
-	// Any of "bank_account", "straddle", "mx", "plaid", "tan", "quiltt".
+	// Any of "bank_account", "straddle", "mx", "plaid", "tan", "quiltt", "mastercard".
 	Source string `json:"source" api:"required"`
 	// Any of "pending", "active", "inactive", "rejected", "review", "blocked".
 	Status string `json:"status" api:"required"`
@@ -681,7 +681,7 @@ type PaykeyV1Data struct {
 	// The tokenized paykey value. This value is used to create payments and should be
 	// stored securely.
 	Paykey string `json:"paykey" api:"required"`
-	// Any of "bank_account", "straddle", "mx", "plaid", "tan", "quiltt".
+	// Any of "bank_account", "straddle", "mx", "plaid", "tan", "quiltt", "mastercard".
 	Source string `json:"source" api:"required"`
 	// Any of "pending", "active", "inactive", "rejected", "review", "blocked".
 	Status string `json:"status" api:"required"`
@@ -897,7 +897,7 @@ type PaykeyRevealResponseData struct {
 	// The tokenized paykey value. This token is used to create payments and should be
 	// stored securely.
 	Paykey string `json:"paykey" api:"required"`
-	// Any of "bank_account", "straddle", "mx", "plaid", "tan", "quiltt".
+	// Any of "bank_account", "straddle", "mx", "plaid", "tan", "quiltt", "mastercard".
 	Source string `json:"source" api:"required"`
 	// Any of "pending", "active", "inactive", "rejected", "review", "blocked".
 	Status string `json:"status" api:"required"`
@@ -1093,7 +1093,7 @@ type PaykeyListParams struct {
 	SortOrder PaykeyListParamsSortOrder `query:"sort_order,omitzero" json:"-"`
 	// Filter paykeys by their source.
 	//
-	// Any of "bank_account", "straddle", "mx", "plaid", "tan", "quiltt".
+	// Any of "bank_account", "straddle", "mx", "plaid", "tan", "quiltt", "mastercard".
 	Source []string `query:"source,omitzero" json:"-"`
 	// Filter paykeys by their current status.
 	//
