@@ -1,3 +1,6 @@
+> [!IMPORTANT]
+> This SDK has moved to [straddle-build/straddle-go](https://github.com/straddle-build/straddle-go), and the Go module path changed with it. New releases are published as [`github.com/straddle-build/straddle-go`](https://pkg.go.dev/github.com/straddle-build/straddle-go); `github.com/straddleio/straddle-go` stays at v0.2.0. Moving over means changing your imports and client setup, so follow the [migration guide](https://github.com/straddle-build/straddle-go/blob/scalar-next/README.md#migrating-from-githubcomstraddleiostraddle-go). The rest of this README describes the SDK as released from this repository and has not been updated for the new one.
+
 # Straddle Go API Library
 
 <!-- x-release-please-start-version -->
